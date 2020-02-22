@@ -5,11 +5,11 @@
 EXEC="kernel"
 
 # compiler and assembler (for boot.asm)
-CC="i686-elf-gcc"
+CC="i686-elf-g++"
 AS="nasm"
 
 # flags
-CFLAGS="-Wall -Wextra -O2 -ffreestanding -std=gnu99"
+CFLAGS="-Wall -Wextra -Wno-unused-variable -ffreestanding -fno-exceptions -fno-rtti -O2"
 FFLAGS="-nostdlib"
 AFLAGS="-felf32"
 LFLAGS="-lgcc"
@@ -33,7 +33,7 @@ function stageone() {
             printf "Assembling %s...\n" "$file"
         fi
 
-        if [ "$fext" == "c" ] ; then
+        if [ "$fext" == "cpp" ] ; then
             ${CC} ${CFLAGS} -c ${file} -o obj/${fname}.o
             printf "Compiling %s...\n" "$file"
         fi
@@ -55,4 +55,4 @@ if [ "$1" == "build" ] ; then
     stagetwo
 fi
 
-qemu-system-i386 -display sdl -kernel bin/kernel.bin
+qemu-system-i386 -M q35 -display sdl -kernel bin/kernel.bin
