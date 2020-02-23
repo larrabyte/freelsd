@@ -4,10 +4,10 @@
 #include <stdint.h>
 
 namespace vga {
-    static uint16_t *buffer;
-    static uint8_t colour;
-    static size_t column;
-    static size_t row;
+    extern uint16_t *buffer;  // Pointer to video memory.
+    extern uint8_t colour;    // Current terminal colours.
+    extern size_t column;     // Current terminal column.
+    extern size_t row;        // Current terminal row.
 
     typedef enum colours {
         VGA_BLACK          = 0,
@@ -39,5 +39,4 @@ namespace vga {
 
     // A wrapper around termputentryat(). Keeps track of rows and columns for you :)
     void write(const char *data);
-
 }

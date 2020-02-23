@@ -1,14 +1,27 @@
 #include "head/memory.hpp"
-#include <stddef.h>
+
+void *memory::move(const void *dest, const void *source, size_t n) {
+	if(dest == NULL || source == NULL || dest == source) return NULL;
+	if(dest < source) return memory::copy(dest, source, n);
+
+	char *sourcecast = (char*) source;
+	char *destcast = (char*) dest;	
+
+	while(n) {
+		*(destcast--) = *(sourcecast--);
+		n--;
+	}
+
+	return (void*) dest;
+}
 
 void *memory::copy(const void *dest, const void *source, size_t n) {
-	if(dest == NULL || source == NULL) return NULL;
+	if(dest == NULL || source == NULL || dest == source) return NULL;
 	char *sourcecast = (char*) source;
 	char *destcast = (char*) dest;
 
-	while(n) {
-		*(destcast++) = *(sourcecast++);
-		n--;
+	for(size_t i = 0; i < n; i++) {
+		destcast[i] = sourcecast[i];
 	}
 
 	return (void*) dest;
