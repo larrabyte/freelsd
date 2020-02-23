@@ -1,18 +1,8 @@
 #include "head/memory.hpp"
 
-void *memory::move(const void *dest, const void *source, size_t n) {
-	if(dest == NULL || source == NULL || dest == source) return NULL;
-	if(dest < source) return memory::copy(dest, source, n);
-
-	char *sourcecast = (char*) source;
-	char *destcast = (char*) dest;	
-
-	while(n) {
-		*(destcast--) = *(sourcecast--);
-		n--;
-	}
-
-	return (void*) dest;
+void memory::set(const void *memory, size_t n, unsigned char value) {
+	char *memcharptr = (char*) memory;
+	while(n) memcharptr[n--] = value;
 }
 
 void *memory::copy(const void *dest, const void *source, size_t n) {

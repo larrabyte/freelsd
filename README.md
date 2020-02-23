@@ -3,9 +3,9 @@ An attempt to make an OS, following the [OSDev Wiki](https://wiki.osdev.org) alo
 See [Lemon](https://github.com/fido2020/Lemon-OS) and [OSDev: Beginner Mistakes](https://wiki.osdev.org/Beginner_Mistakes) for reasons I shouldn't be doing this.
 
 ## Features
-   - Can print hello world in kernel mode
-   - **(Upcoming)** Terminal scrolling
+   - Printing in kernel mode
    - Newline '\n' support
+   - Terminal scrolling
    - Can hang itself
 
-p.s if you want to compile, use nasm and i686-elf-gcc (that's what I used.)
+p.s if you want to compile, use nasm and i686-elf-g++ (that's what I used.)

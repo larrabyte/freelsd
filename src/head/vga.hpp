@@ -28,6 +28,9 @@ namespace vga {
         VGA_WHITE          = 15,
     } colour_td;
 
+    // Scrolls the terminal by n lines.
+    void scroll(size_t n);
+
     // Initialise a VGA text mode terminal.
     void initialise(void);
 
@@ -37,6 +40,6 @@ namespace vga {
     // Place a character at (x, y).
     void putentryat(char c, uint8_t colour, size_t x, size_t y);
 
-    // A wrapper around termputentryat(). Keeps track of rows and columns for you :)
+    // A wrapper around putentryat(). Keeps track of rows and columns for you :)
     void write(const char *data);
 }

@@ -27,29 +27,22 @@ void vga::putentryat(char c, uint8_t colour, size_t x, size_t y) {
     buffer[index] = entry(c, colour);
 }
 
+void vga::scroll(size_t n) {
+    memory::copy(buffer, buffer + VGA_WIDTH * n, VGA_WIDTH * VGA_HEIGHT * 2);
+}
+
 void vga::write(const char *data) {
     for(size_t i = 0; i < cstr::len(data); i++) {
+        if(data[i] == '\n') { column = 0; row++; }
+        else putentryat(data[i], colour, column++, row);
 
-        if(data[i] == '\n') {
-            column = 0;
-            row++;
-        } else {
-            putentryat(data[i], colour, column++, row);
+        if(column == VGA_WIDTH) row++;
+        else if(row == VGA_HEIGHT) {
+            row = VGA_HEIGHT - 1;
+            scroll(1);
         }
 
-        if(column == VGA_WIDTH) {
-            column = 0;
-            row++;
-        } else if(row == VGA_HEIGHT) {
-            column = 0;
-            row = 0;
-        }
-
-        /* if(column == VGA_WIDTH) {
-            if(row == VGA_HEIGHT) row = 0;
-            else row++;
-            column = 0;
-        } else if(row == VGA_HEIGHT) */
+        if(column == VGA_WIDTH || row == VGA_HEIGHT) column = 0;
     }
 }
 
