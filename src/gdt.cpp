@@ -23,10 +23,10 @@ void gdt::initialise(void) {
     gdtptr.base = (uint32_t) &gdtarray;
 
     setgate(0, 0, 0, 0, 0);                 // Null segment.
-	setgate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);  // Code segment.
-	setgate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);  // Data segment.
-	setgate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);  // User code segment.
-	setgate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);  // User data segment.
+    setgate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF);  // Code segment.
+    setgate(2, 0, 0xFFFFFFFF, 0x92, 0xCF);  // Data segment.
+    setgate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);  // User code segment.
+    setgate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);  // User data segment.
 
     gdtflush((uint32_t) &gdtptr);          // Flush and reload the global descriptor table.
 }   
