@@ -1,7 +1,8 @@
-# bin/boot folder
-bin/boot
+# ISO files
+*.iso
 
-# Visual Studio Code folder
+# Unwanted folders
+bin/boot
 .vscode/
 
 # Prerequisites
