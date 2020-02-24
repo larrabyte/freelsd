@@ -49,10 +49,18 @@ function stagetwo() {
     ${CC} -T src/linker.ld ${CFLAGS} ${FFLAGS} ${OBJLIST} -o bin/${EXEC}.bin ${LFLAGS}
 }
 
+function stagethree() {
+    printf "Creating a bootable ISO... (grub.cfg)\n"
+    echo -ne "menuentry \"FreeLSD\" {\n    multiboot /${EXEC}.bin\n}" > bin/boot/grub/grub.cfg
+    printf "Creating a bootable ISO... (grub-mkrescue)\n"
+    grub-mkrescue -o iso/freelsd.iso bin &> /dev/null
+}
+
 # argument parser
 if [ "$1" == "build" ] ; then
     stageone
     stagetwo
+    stagethree
 fi
 
-qemu-system-i386 -M q35 -display sdl -kernel bin/kernel.bin
+qemu-system-i386 -M q35 -display sdl -cdrom iso/freelsd.iso
