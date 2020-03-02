@@ -14,7 +14,9 @@ FFLAGS="-nostdlib"
 AFLAGS="-felf32"
 LFLAGS="-lgcc"
 
-# do not change these :)
+# don't change these please :)
+CRTBEGIN="$(${CC} ${CFLAGS} -print-file-name=crtbegin.o)"
+CRTEND="$(${CC} ${CFLAGS} -print-file-name=crtend.o)"
 OBJLIST=""
 set -e
 
@@ -46,7 +48,7 @@ function stagetwo() {
     done
 
     printf "Linking object files...\n"
-    ${CC} -T src/linker.ld ${CFLAGS} ${FFLAGS} ${OBJLIST} -o bin/${EXEC}.bin ${LFLAGS}
+    ${CC} -T src/linker.ld ${CFLAGS} ${FFLAGS} ${CRTBEGIN} ${OBJLIST} ${CRTEND} -o bin/${EXEC}.bin ${LFLAGS}
 }
 
 function stagethree() {
