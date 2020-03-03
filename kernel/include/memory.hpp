@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FREELSD_KERNEL_MEMORY_HEADER
+#define FREELSD_KERNEL_MEMORY_HEADER
 
 #include <stddef.h>
 
@@ -9,3 +10,5 @@ namespace memory {
     // Copies n bytes from source -> dest. Unaware of overlapping memory regions.
     void *copy(const void *dest, const void *source, size_t n);
 }
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FREELSD_KERNEL_VGA_HEADER
+#define FREELSD_KERNEL_VGA_HEADER
 
 #include <stddef.h>
 #include <stdint.h>
@@ -43,3 +44,5 @@ namespace vga {
     // A wrapper around putentryat(). Keeps track of rows and columns for you :)
     void write(const char *data);
 }
+
+#endif
