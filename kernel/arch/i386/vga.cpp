@@ -1,6 +1,6 @@
-#include "head/memory.hpp"
-#include "head/cstr.hpp"
-#include "head/vga.hpp"
+#include <memory.hpp>
+#include <cstr.hpp>
+#include <vga.hpp>
 
 static const size_t VGA_HEIGHT = 25;
 static const size_t VGA_WIDTH = 80;

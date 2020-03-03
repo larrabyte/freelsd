@@ -1,8 +1,8 @@
-#include "head/memory.hpp"
-#include "head/cstr.hpp"
-#include "head/gdt.hpp"
-#include "head/vga.hpp"
+#include <memory.hpp>
 #include <stdint.h>
+#include <cstr.hpp>
+#include <gdt.hpp>
+#include <vga.hpp>
 
 extern "C" {
     void kernelmain() {

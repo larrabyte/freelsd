@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FREELSD_KERNEL_CSTR_HEADER
+#define FREELSD_KERNEL_CSTR_HEADER
 
 #include <stddef.h>
 #include <stdint.h>
@@ -16,3 +17,5 @@ namespace cstr {
     // Return the size of a C-style string minus the terminating NULL character.
     size_t len(const char *str);
 }
+
+#endif

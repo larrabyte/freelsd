@@ -3,14 +3,15 @@
 # cant make a makefile
 
 EXEC="kernel"
+ARCH="i386"
 
 # compiler and assembler (for boot.asm)
 CC="i686-elf-g++"
 AS="nasm"
 
 # flags
-CFLAGS="-Wall -Wextra -Wno-unused-variable -ffreestanding -fno-exceptions -fno-rtti -O2"
-FFLAGS="-nostdlib"
+CFLAGS="-Wall -Wextra -Wno-unused-variable -ffreestanding -fno-exceptions -fno-rtti -O2 -nostdlib"
+IFLAGS="-Ikernel/include"
 AFLAGS="-felf32"
 LFLAGS="-lgcc"
 
@@ -20,8 +21,8 @@ CRTEND="$(${CC} ${CFLAGS} -print-file-name=crtend.o)"
 OBJLIST=""
 set -e
 
-function stageone() {
-    for file in src/* ; do
+function kernelcompile() {
+    for file in kernel/arch/${ARCH}/* ; do
         if [ -d "$file" ] ; then
             continue
         fi
@@ -31,38 +32,38 @@ function stageone() {
         fext="${fbase##*.}"
 
         if [ "$fext" == "asm" ] ; then
-            ${AS} ${AFLAGS} ${file} -o obj/${fname}.o
+            ${AS} ${AFLAGS} ${file} -o kernel/obj/${fname}.o
             printf "Assembling %s...\n" "$file"
         fi
 
         if [ "$fext" == "cpp" ] ; then
-            ${CC} ${CFLAGS} -c ${file} -o obj/${fname}.o
+            ${CC} ${CFLAGS} ${IFLAGS} -c ${file} -o kernel/obj/${fname}.o
             printf "Compiling %s...\n" "$file"
         fi
     done
 }
 
-function stagetwo() {
-    for file in obj/* ; do
+function kernellink() {
+    for file in kernel/obj/* ; do
         OBJLIST="${OBJLIST}${file} "
     done
 
     printf "Linking object files...\n"
-    ${CC} -T src/linker.ld ${CFLAGS} ${FFLAGS} ${CRTBEGIN} ${OBJLIST} ${CRTEND} -o bin/${EXEC}.bin ${LFLAGS}
+    ${CC} -T kernel/arch/${ARCH}/linker.ld ${CFLAGS} ${CRTBEGIN} ${OBJLIST} ${CRTEND} -o isoroot/${EXEC}.bin ${LFLAGS}
 }
 
-function stagethree() {
+function kerneliso() {
     printf "Creating a bootable ISO... (grub.cfg)\n"
-    echo -ne "menuentry \"FreeLSD\" {\n    multiboot /${EXEC}.bin\n}" > bin/boot/grub/grub.cfg
+    echo -ne "menuentry \"FreeLSD\" {\n    multiboot /${EXEC}.bin\n}" > isoroot/boot/grub/grub.cfg
     printf "Creating a bootable ISO... (grub-mkrescue)\n"
-    grub-mkrescue -o iso/freelsd.iso bin &> /dev/null
+    grub-mkrescue -o freelsd.iso isoroot &> /dev/null
 }
 
 # argument parser
 if [ "$1" == "build" ] ; then
-    stageone
-    stagetwo
-    stagethree
+    kernelcompile
+    kernellink
+    kerneliso
 fi
 
-qemu-system-i386 -M q35 -display sdl -cdrom iso/freelsd.iso
+qemu-system-i386 -M q35 -display sdl -cdrom freelsd.iso

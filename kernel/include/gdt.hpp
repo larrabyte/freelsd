@@ -1,6 +1,9 @@
-#pragma once
+#ifndef FREELSD_KERNEL_GDT_HEADER
+#define FREELSD_KERNEL_GDT_HEADER
 
 #include <stdint.h>
+
+#define GDTSIZE 5
 
 namespace gdt {
     typedef struct entry {
@@ -17,9 +20,11 @@ namespace gdt {
         uint32_t base;
     } __attribute__((packed)) ptr_t;
 
-    extern gdt::entry_t array[5];
+    extern gdt::entry_t array[GDTSIZE];
     extern gdt::ptr_t pointer;
 
     // Initialise the global descriptor table.
     void initialise(void);
 }
+
+#endif

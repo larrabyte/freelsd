@@ -1,4 +1,4 @@
-#include "head/cstr.hpp"
+#include <cstr.hpp>
 
 char *cstr::itoa(int64_t num, char *str, uint64_t base) {
     bool negative = false;

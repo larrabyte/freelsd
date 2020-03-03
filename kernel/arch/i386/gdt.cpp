@@ -1,6 +1,4 @@
-#include "head/gdt.hpp"
-
-#define GDTSIZE 5
+#include <gdt.hpp>
 
 extern "C" void gdtflush(uint32_t ptr);
 

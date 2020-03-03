@@ -2,7 +2,6 @@
 *.iso
 
 # Unwanted folders
-bin/boot
 .vscode/
 
 # Prerequisites
