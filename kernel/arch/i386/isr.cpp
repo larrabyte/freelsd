@@ -7,6 +7,6 @@ extern "C" {
         char asciinum[20];
 
         vga::write("\n[isr] unhandled interrupt: ");
-        vga::write(cstr::itoa(regs.intnum, asciinum, 16));
+        vga::write(cstr::itoa(regs.intnum, asciinum, 10));
     }
 }
