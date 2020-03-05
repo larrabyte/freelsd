@@ -27,4 +27,4 @@ void gdt::initialise(void) {
     setgate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);  // User data segment.
 
     gdtflush((uint32_t) &gdtptr);          // Flush and reload the global descriptor table.
-}   
+}

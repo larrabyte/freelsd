@@ -20,8 +20,8 @@ namespace gdt {
         uint32_t base;
     } __attribute__((packed)) ptr_t;
 
-    extern gdt::entry_t array[GDTSIZE];
-    extern gdt::ptr_t pointer;
+    extern entry_t array[GDTSIZE];
+    extern ptr_t pointer;
 
     // Initialise the global descriptor table.
     void initialise(void);
