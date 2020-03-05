@@ -9,7 +9,7 @@ extern "C" {
         #if __STDC_HOSTED__
             abort();
         #else
-            vga::write("\n\n[ssp] Stack smashing guard overwritten.\n[ssp] Halting kernel execution.");
+            vga::write("\n[ssp] Stack smashing guard overwritten.\n[ssp] Halting kernel execution.");
         #endif
 
         while(true) {  }
