@@ -3,7 +3,7 @@
 
 void memory::set(const void *memory, size_t n, uint8_t value) {
     char *memcharptr = (char*) memory;
-    while(n) memcharptr[n--] = value;
+    for(size_t i = 0; i < n; i++) memcharptr[i] = value;
 }
 
 void *memory::copy(const void *dest, const void *source, size_t n) {
