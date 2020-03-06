@@ -10,7 +10,7 @@ extern "C" {
         gdt::initialise();
         idt::initialise();
         vga::initialise();
-
+ 
         vga::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  welcome 2 larrabyte's hell\n \\/   \\/\n");
     }
 }

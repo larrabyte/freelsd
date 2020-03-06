@@ -1,12 +1,34 @@
 #include <memory.hpp>
+#include <hwio.hpp>
+#include <cstr.hpp>
 #include <idt.hpp>
+#include <vga.hpp>
 
-extern "C" void idtflush(uint32_t ptr);
-
+idt::handler_t handlers[IDTSIZE];
 idt::entry_t idtarray[IDTSIZE];
 idt::ptr_t idtptr;
 
-static inline void setgate(uint8_t num, uint32_t base, uint16_t selector, uint8_t flags) {
+extern "C" {
+    void irqhandler(idt::registers_t regs) {
+        if(regs.intnum >= 40) outportb(0xA0, 0x20);
+        outportb(0x20, 0x20);
+
+        if(handlers[regs.intnum] != 0) {
+            idt::handler_t handle = handlers[regs.intnum];
+            handle(regs);
+        }
+    }
+
+    void isrhandler(idt::registers_t regs) {
+        char asciinum[20];
+        vga::write("\n[isr] unhandled interrupt: ");
+        vga::write(cstr::itoa(regs.intnum, asciinum, 10));
+    }
+
+    void idtflush(uint32_t ptr);
+}
+
+static void setgate(uint8_t num, uint32_t base, uint16_t selector, uint8_t flags) {
     idtarray[num].basehigh = (base >> 16) & 0xFFFF;
     idtarray[num].baselow = base & 0xFFFF;
     idtarray[num].selector = selector;
@@ -14,9 +36,24 @@ static inline void setgate(uint8_t num, uint32_t base, uint16_t selector, uint8_
     idtarray[num].zero = 0x0;
 }
 
+void idt::registerhandler(uint8_t interrupt, handler_t function) {
+    handlers[interrupt] = function;
+}
+
 void idt::initialise(void) {
     idtptr.limit = sizeof(idt::entry_t) * IDTSIZE - 1;
     idtptr.base = (uint32_t) &idtarray;
+
+    outportb(0x20, 0x11);
+    outportb(0xA0, 0x11);
+    outportb(0x21, 0x20);
+    outportb(0xA1, 0x28);
+    outportb(0x21, 0x04);
+    outportb(0xA1, 0x02);
+    outportb(0x21, 0x01);
+    outportb(0xA1, 0x01);
+    outportb(0x21, 0x0);
+    outportb(0xA1, 0x0);
 
     memory::set(idtarray, sizeof(idt::entry_t) * IDTSIZE, 0);
     setgate(0, (uint32_t) isr0, 0x08, 0x8E);
@@ -51,5 +88,21 @@ void idt::initialise(void) {
     setgate(29, (uint32_t) isr29, 0x08, 0x8E);
     setgate(30, (uint32_t) isr30, 0x08, 0x8E);
     setgate(31, (uint32_t) isr31, 0x08, 0x8E);
+    setgate(32, (uint32_t) irq0, 0x08, 0x8E);
+    setgate(33, (uint32_t) irq1, 0x08, 0x8E);
+    setgate(34, (uint32_t) irq2, 0x08, 0x8E);
+    setgate(35, (uint32_t) irq3, 0x08, 0x8E);
+    setgate(36, (uint32_t) irq4, 0x08, 0x8E);
+    setgate(37, (uint32_t) irq5, 0x08, 0x8E);
+    setgate(38, (uint32_t) irq6, 0x08, 0x8E);
+    setgate(39, (uint32_t) irq7, 0x08, 0x8E);
+    setgate(40, (uint32_t) irq8, 0x08, 0x8E);
+    setgate(41, (uint32_t) irq9, 0x08, 0x8E);
+    setgate(42, (uint32_t) irq10, 0x08, 0x8E);
+    setgate(43, (uint32_t) irq11, 0x08, 0x8E);
+    setgate(44, (uint32_t) irq12, 0x08, 0x8E);
+    setgate(45, (uint32_t) irq13, 0x08, 0x8E);
+    setgate(46, (uint32_t) irq14, 0x08, 0x8E);
+    setgate(47, (uint32_t) irq15, 0x08, 0x8E);
     idtflush((uint32_t) &idtptr);
 }
