@@ -1,7 +1,7 @@
 #include <memory.hpp>
 #include <stdint.h>
 
-void memory::set(const void *memory, size_t n, uint8_t value) {
+void memory::set(const void *memory, uint8_t value, size_t n) {
     char *memcharptr = (char*) memory;
     for(size_t i = 0; i < n; i++) memcharptr[i] = value;
 }

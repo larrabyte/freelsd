@@ -36,7 +36,7 @@ namespace vga {
     void initialise(void);
 
     // Set the terminal colour.
-    void setcolour(uint8_t colour);
+    void setcolour(colour_td fg, colour_td bg);
 
     // Place a character at (x, y).
     void putentryat(char c, uint8_t colour, size_t x, size_t y);

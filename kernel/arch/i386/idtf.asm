@@ -1,5 +1,9 @@
 global idtflush
 
+extern idtptr
+extern isrhandler
+extern irqhandler
+
 %macro ISR_NOERRCODE 1
     global isr%1
     isr%1:
@@ -87,7 +91,6 @@ irq_common_stub:
     mov fs, ax
     mov gs, ax
 
-    extern irqhandler
     call irqhandler
 
     pop eax
@@ -112,7 +115,6 @@ isr_common_stub:
     mov fs, ax
     mov gs, ax
 
-    extern isrhandler
     call isrhandler
 
     pop eax
@@ -127,6 +129,5 @@ isr_common_stub:
     iret
 
 idtflush:
-    mov eax, [esp+4]
-    lidt [eax]
+    lidt [idtptr]
     ret

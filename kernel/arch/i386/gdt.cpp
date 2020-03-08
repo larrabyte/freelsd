@@ -1,6 +1,6 @@
 #include <gdt.hpp>
 
-extern "C" void gdtflush(uint32_t ptr);
+extern "C" void gdtflush(void);
 
 gdt::entry_t gdtarray[GDTSIZE];
 gdt::ptr_t gdtptr;
@@ -26,5 +26,5 @@ void gdt::initialise(void) {
     setgate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF);  // User code segment.
     setgate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF);  // User data segment.
 
-    gdtflush((uint32_t) &gdtptr);          // Flush and reload the global descriptor table.
+    gdtflush();          // Flush and reload the global descriptor table.
 }

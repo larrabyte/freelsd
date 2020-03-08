@@ -13,7 +13,7 @@ extern "C" {
         if(regs.intnum >= 40) outportb(0xA0, 0x20);
         outportb(0x20, 0x20);
 
-        if(handlers[regs.intnum] != 0) {
+        if(handlers[regs.intnum]) {
             idt::handler_t handle = handlers[regs.intnum];
             handle(regs);
         }
@@ -22,7 +22,7 @@ extern "C" {
     void isrhandler(idt::registers_t regs) {
         char asciinum[20];
 
-        if(handlers[regs.intnum] != 0) {
+        if(handlers[regs.intnum]) {
             idt::handler_t handle = handlers[regs.intnum];
             handle(regs);
         } else {
@@ -32,7 +32,7 @@ extern "C" {
         }
     }
 
-    void idtflush(uint32_t ptr);
+    void idtflush(void);
 }
 
 static void setgate(uint8_t num, uint32_t base, uint16_t selector, uint8_t flags) {
@@ -51,19 +51,8 @@ void idt::initialise(void) {
     idtptr.limit = sizeof(idt::entry_t) * IDTSIZE - 1;
     idtptr.base = (uint32_t) &idtarray;
 
-    memory::set(handlers, sizeof(idt::handler_t) * IDTSIZE, 0);
-    memory::set(idtarray, sizeof(idt::entry_t) * IDTSIZE, 0);
-
-    outportb(0x20, 0x11);
-    outportb(0xA0, 0x11);
-    outportb(0x21, 0x20);
-    outportb(0xA1, 0x28);
-    outportb(0x21, 0x04);
-    outportb(0xA1, 0x02);
-    outportb(0x21, 0x01);
-    outportb(0xA1, 0x01);
-    outportb(0x21, 0x0);
-    outportb(0xA1, 0x0);
+    memory::set(handlers, 0, sizeof(idt::handler_t) * IDTSIZE);
+    memory::set(idtarray, 0, sizeof(idt::entry_t) * IDTSIZE);
 
     setgate(0, (uint32_t) isr0, 0x08, 0x8E);
     setgate(1, (uint32_t) isr1, 0x08, 0x8E);
@@ -97,6 +86,19 @@ void idt::initialise(void) {
     setgate(29, (uint32_t) isr29, 0x08, 0x8E);
     setgate(30, (uint32_t) isr30, 0x08, 0x8E);
     setgate(31, (uint32_t) isr31, 0x08, 0x8E);
+    idtflush();
+    
+    outportb(0x20, 0x11);
+    outportb(0xA0, 0x11);
+    outportb(0x21, 0x20);
+    outportb(0xA1, 0x28);
+    outportb(0x21, 0x04);
+    outportb(0xA1, 0x02);
+    outportb(0x21, 0x01);
+    outportb(0xA1, 0x01);
+    outportb(0x21, 0x0);
+    outportb(0xA1, 0x0);
+
     setgate(32, (uint32_t) irq0, 0x08, 0x8E);
     setgate(33, (uint32_t) irq1, 0x08, 0x8E);
     setgate(34, (uint32_t) irq2, 0x08, 0x8E);
@@ -113,5 +115,4 @@ void idt::initialise(void) {
     setgate(45, (uint32_t) irq13, 0x08, 0x8E);
     setgate(46, (uint32_t) irq14, 0x08, 0x8E);
     setgate(47, (uint32_t) irq15, 0x08, 0x8E);
-    idtflush((uint32_t) &idtptr);
 }

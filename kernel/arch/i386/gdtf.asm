@@ -1,8 +1,8 @@
 global gdtflush
+extern gdtptr
 
 gdtflush:
-	mov eax, [esp+4]
-    lgdt [eax]
+    lgdt [gdtptr]
 
     mov ax, 0x10
     mov ds, ax
