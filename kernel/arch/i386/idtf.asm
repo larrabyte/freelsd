@@ -101,7 +101,6 @@ irq_common_stub:
     sti
     iret
 
-
 isr_common_stub:
     pusha
     mov ax, ds

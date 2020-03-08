@@ -21,8 +21,15 @@ extern "C" {
 
     void isrhandler(idt::registers_t regs) {
         char asciinum[20];
-        vga::write("\n[isr] unhandled interrupt: ");
-        vga::write(cstr::itoa(regs.intnum, asciinum, 10));
+
+        if(handlers[regs.intnum] != 0) {
+            idt::handler_t handle = handlers[regs.intnum];
+            handle(regs);
+        } else {
+            vga::write("[isr] unhandled interrupt: ");
+            vga::write(cstr::itoa(regs.intnum, asciinum, 10));
+            vga::write("\n");
+        }
     }
 
     void idtflush(uint32_t ptr);
@@ -44,6 +51,9 @@ void idt::initialise(void) {
     idtptr.limit = sizeof(idt::entry_t) * IDTSIZE - 1;
     idtptr.base = (uint32_t) &idtarray;
 
+    memory::set(handlers, sizeof(idt::handler_t) * IDTSIZE, 0);
+    memory::set(idtarray, sizeof(idt::entry_t) * IDTSIZE, 0);
+
     outportb(0x20, 0x11);
     outportb(0xA0, 0x11);
     outportb(0x21, 0x20);
@@ -55,7 +65,6 @@ void idt::initialise(void) {
     outportb(0x21, 0x0);
     outportb(0xA1, 0x0);
 
-    memory::set(idtarray, sizeof(idt::entry_t) * IDTSIZE, 0);
     setgate(0, (uint32_t) isr0, 0x08, 0x8E);
     setgate(1, (uint32_t) isr1, 0x08, 0x8E);
     setgate(2, (uint32_t) isr2, 0x08, 0x8E);
