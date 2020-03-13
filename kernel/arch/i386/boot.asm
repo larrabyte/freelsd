@@ -28,7 +28,6 @@ _start:
     call _init
     call kernelmain
     call _fini
-    cli
 .hang:
     hlt
     jmp .hang

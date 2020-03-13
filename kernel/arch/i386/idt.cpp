@@ -9,25 +9,25 @@ idt::entry_t idtarray[IDTSIZE];
 idt::ptr_t idtptr;
 
 extern "C" {
-    void irqhandler(idt::registers_t regs) {
-        if(regs.intnum >= 40) outportb(0xA0, 0x20);
+    void irqhandler(idt::registers_t* regs) {
+        if(regs->intnum >= 40) outportb(0xA0, 0x20);
         outportb(0x20, 0x20);
 
-        if(handlers[regs.intnum]) {
-            idt::handler_t handle = handlers[regs.intnum];
-            handle(regs);
+        if(handlers[regs->intnum]) {
+            idt::handler_t handle = handlers[regs->intnum];
+            handle(*regs);
         }
     }
 
-    void isrhandler(idt::registers_t regs) {
+    void isrhandler(idt::registers_t* regs) {
         char asciinum[20];
 
-        if(handlers[regs.intnum]) {
-            idt::handler_t handle = handlers[regs.intnum];
-            handle(regs);
+        if(handlers[regs->intnum]) {
+            idt::handler_t handle = handlers[regs->intnum];
+            handle(*regs);
         } else {
             vga::write("[isr] unhandled interrupt: ");
-            vga::write(cstr::itoa(regs.intnum, asciinum, 10));
+            vga::write(cstr::itoa(regs->intnum, asciinum, 10));
             vga::write("\n");
         }
     }
@@ -53,6 +53,17 @@ void idt::initialise(void) {
 
     memory::set(handlers, 0, sizeof(idt::handler_t) * IDTSIZE);
     memory::set(idtarray, 0, sizeof(idt::entry_t) * IDTSIZE);
+
+    outportb(0x20, 0x11);
+    outportb(0xA0, 0x11);
+    outportb(0x21, 0x20);
+    outportb(0xA1, 0x28);
+    outportb(0x21, 0x04);
+    outportb(0xA1, 0x02);
+    outportb(0x21, 0x01);
+    outportb(0xA1, 0x01);
+    outportb(0x21, 0x0);
+    outportb(0xA1, 0x0);
 
     setgate(0, (uint32_t) isr0, 0x08, 0x8E);
     setgate(1, (uint32_t) isr1, 0x08, 0x8E);
@@ -86,19 +97,6 @@ void idt::initialise(void) {
     setgate(29, (uint32_t) isr29, 0x08, 0x8E);
     setgate(30, (uint32_t) isr30, 0x08, 0x8E);
     setgate(31, (uint32_t) isr31, 0x08, 0x8E);
-    idtflush();
-    
-    outportb(0x20, 0x11);
-    outportb(0xA0, 0x11);
-    outportb(0x21, 0x20);
-    outportb(0xA1, 0x28);
-    outportb(0x21, 0x04);
-    outportb(0xA1, 0x02);
-    outportb(0x21, 0x01);
-    outportb(0xA1, 0x01);
-    outportb(0x21, 0x0);
-    outportb(0xA1, 0x0);
-
     setgate(32, (uint32_t) irq0, 0x08, 0x8E);
     setgate(33, (uint32_t) irq1, 0x08, 0x8E);
     setgate(34, (uint32_t) irq2, 0x08, 0x8E);
@@ -115,4 +113,5 @@ void idt::initialise(void) {
     setgate(45, (uint32_t) irq13, 0x08, 0x8E);
     setgate(46, (uint32_t) irq14, 0x08, 0x8E);
     setgate(47, (uint32_t) irq15, 0x08, 0x8E);
+    idtflush();
 }

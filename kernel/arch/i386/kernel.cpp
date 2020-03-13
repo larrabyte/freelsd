@@ -13,5 +13,7 @@ extern "C" void kernelmain() {
 
     vga::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  welcome 2 larrabyte's hell\n \\/   \\/\n\n");
     asm volatile("sti");
-    timer::initpit(50);
+    timer::initpit(1000);
+
+    while(true);
 }

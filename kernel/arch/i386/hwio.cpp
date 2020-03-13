@@ -19,13 +19,13 @@ uint32_t inportl(uint16_t port) {
 }
 
 void outportb(uint16_t port, uint8_t value) {
-    asm volatile ("outb %1, %0" : : "dN" (port), "a" (value));
+    asm volatile("outb %1, %0" : : "dN" (port), "a" (value));
 }
 
 void outportw(uint16_t port, uint16_t value) {
-    asm volatile ("outw %1, %0" : : "dN" (port), "a" (value));
+    asm volatile("outw %1, %0" : : "dN" (port), "a" (value));
 }
 
 void outportl(uint16_t port, uint32_t value) {
-    asm volatile ("outl %1, %0" : : "dN" (port), "a" (value));
+    asm volatile("outl %1, %0" : : "dN" (port), "a" (value));
 }

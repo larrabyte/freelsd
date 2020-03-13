@@ -82,32 +82,40 @@ IRQ 15, 47
 
 irq_common_stub:
     pusha
-    mov ax, ds
-    push eax
+
+    push ds
+    push es
+    push fs
+    push gs
 
     mov ax, 0x10
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
+
+    mov eax, esp
+    push eax
 
     call irqhandler
 
     pop eax
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+    pop gs
+    pop fs
+    pop es
+    pop ds
 
     popa
     add esp, 8
-    sti
     iret
 
 isr_common_stub:
     pusha
-    mov ax, ds
-    push eax
+
+    push ds
+    push es
+    push fs
+    push gs
 
     mov ax, 0x10
     mov ds, ax
@@ -115,17 +123,19 @@ isr_common_stub:
     mov fs, ax
     mov gs, ax
 
+    mov eax, esp
+    push eax
+
     call isrhandler
 
     pop eax
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+    pop gs
+    pop fs
+    pop es
+    pop ds
 
     popa
     add esp, 8
-    sti
     iret
 
 idtflush:
