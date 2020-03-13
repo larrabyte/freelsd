@@ -4,7 +4,7 @@
 #include <idt.hpp>
 #include <vga.hpp>
 
-void kbcallback(idt::registers_t regs) {
+void kboard::handler(idt::registers_t regs) {
     char numascii[20];
 
     uint8_t scancode = inportb(0x60);
@@ -14,5 +14,5 @@ void kbcallback(idt::registers_t regs) {
 }
 
 void kboard::initialise(void) {
-    idt::registerhandler(IRQ1, &kbcallback);
+    idt::registerhandler(IRQ1, &handler);
 }
