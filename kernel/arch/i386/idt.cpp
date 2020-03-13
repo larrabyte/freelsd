@@ -10,26 +10,23 @@ idt::ptr_t idtptr;
 
 extern "C" {
     void irqhandler(idt::registers_t *regs) {
+        // If there is an interrupt handler, call it.
+        if(handlers[regs->intnum]) handlers[regs->intnum](*regs);
+
+        // Acknowledge the interrupt, if required send to both slave and master PICs.
         if(regs->intnum >= 40) outportb(0xA0, 0x20);
         outportb(0x20, 0x20);
-
-        if(handlers[regs->intnum]) {
-            idt::handler_t handle = handlers[regs->intnum];
-            handle(*regs);
-        }
     }
 
     void isrhandler(idt::registers_t *regs) {
         char asciinum[20];
 
-        if(handlers[regs->intnum]) {
-            idt::handler_t handle = handlers[regs->intnum];
-            handle(*regs);
-        } else {
+        // Call interrupt handler or print an error.
+        if(!handlers[regs->intnum]) {
             vga::write("[isr] unhandled interrupt: ");
             vga::write(cstr::itoa(regs->intnum, asciinum, 10));
             vga::write("\n");
-        }
+        } else handlers[regs->intnum](*regs);
     }
 
     void idtflush(void);
@@ -51,9 +48,11 @@ void idt::initialise(void) {
     idtptr.limit = sizeof(idt::entry_t) * IDTSIZE - 1;
     idtptr.base = (uint32_t) &idtarray;
 
+    // Initialise arrays to zero.
     memory::set(handlers, 0, sizeof(idt::handler_t) * IDTSIZE);
     memory::set(idtarray, 0, sizeof(idt::entry_t) * IDTSIZE);
 
+    // Remap the PICs to work with interrupts from 32 onwards.
     outportb(0x20, 0x11);
     outportb(0xA0, 0x11);
     outportb(0x21, 0x20);
@@ -65,6 +64,7 @@ void idt::initialise(void) {
     outportb(0x21, 0x0);
     outportb(0xA1, 0x0);
 
+    // Map ISRs 0-47 to their respective functions.
     setgate(0, (uint32_t) isr0, 0x08, 0x8E);
     setgate(1, (uint32_t) isr1, 0x08, 0x8E);
     setgate(2, (uint32_t) isr2, 0x08, 0x8E);
@@ -114,4 +114,7 @@ void idt::initialise(void) {
     setgate(46, (uint32_t) irq14, 0x08, 0x8E);
     setgate(47, (uint32_t) irq15, 0x08, 0x8E);
     idtflush();
+
+    // Finally, enable interrupts.
+    asm volatile("sti");
 }

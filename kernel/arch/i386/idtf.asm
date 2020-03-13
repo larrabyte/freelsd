@@ -82,7 +82,6 @@ IRQ 15, 47
 
 irq_common_stub:
     pusha
-
     push ds
     push es
     push fs
@@ -93,7 +92,6 @@ irq_common_stub:
     mov es, ax
     mov fs, ax
     mov gs, ax
-
     mov eax, esp
     push eax
 
@@ -111,7 +109,6 @@ irq_common_stub:
 
 isr_common_stub:
     pusha
-
     push ds
     push es
     push fs
@@ -122,7 +119,6 @@ isr_common_stub:
     mov es, ax
     mov fs, ax
     mov gs, ax
-
     mov eax, esp
     push eax
 

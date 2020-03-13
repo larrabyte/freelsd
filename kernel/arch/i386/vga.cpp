@@ -38,9 +38,11 @@ void vga::setcolour(colour_td fg, colour_td bg) {
 }
 
 void vga::scroll(size_t n) {
+    // Copies ahead of the buffer back into the base pointer, effectively scrolling.
     memory::copy(buffer, buffer + VGA_WIDTH * n, VGA_WIDTH * VGA_HEIGHT * 2);
 }
 
 void vga::initialise(void) {
+    // Zero the VGA buffer. Effectively clears the screen.
     memory::set(buffer, 0, VGA_WIDTH * VGA_HEIGHT * 2);
 }

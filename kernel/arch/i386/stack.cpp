@@ -4,6 +4,7 @@
 extern "C" {
     uintptr_t __stack_chk_guard = 0xdeadbeef;  // find out how to randomise later
 
+    // Only called when the stack smashing guard is overwritten.
     __attribute__ ((noreturn))
     void __stack_chk_fail(void) {
         #if __STDC_HOSTED__

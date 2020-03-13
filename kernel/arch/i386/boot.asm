@@ -1,8 +1,8 @@
-MBALIGN  equ  1 << 0            ; align loaded modules on page boundaries
-MEMINFO  equ  1 << 1            ; provide memory map
-FLAGS    equ  MBALIGN | MEMINFO ; this is the Multiboot 'flag' field
-MAGIC    equ  0x1BADB002        ; 'magic number' lets bootloader find the header
-CHECKSUM equ -(MAGIC + FLAGS)   ; checksum of above, to prove we are multiboot
+MBALIGN  equ  1 << 0             ; Align loaded modules on page boundaries.
+MEMINFO  equ  1 << 1             ; Provide a memory map.
+FLAGS    equ  MBALIGN | MEMINFO  ; The multiboot 'flag' field.
+MAGIC    equ  0x1BADB002         ; The multiboot magic number.
+CHECKSUM equ -(MAGIC + FLAGS)    ; Checksum of above.
 
 extern kernelmain
 extern _init
@@ -22,13 +22,17 @@ stack_top:
 
 section .text
 global _start:function (_start.end - _start)
+
 _start:
+    cli
     mov esp, stack_top
 
     call _init
     call kernelmain
     call _fini
+
 .hang:
     hlt
     jmp .hang
+
 .end:

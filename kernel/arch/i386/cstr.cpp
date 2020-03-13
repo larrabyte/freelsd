@@ -13,6 +13,7 @@ char *cstr::itoa(int64_t num, char *str, uint64_t base) {
         num = -num;
     }
 
+    // Converts the number into ASCII in reverse order.
     while(num) {
         int rem = num % base;
         str[index++] = (rem > 9) ? (rem > 10) + 'a' : rem + '0';
@@ -22,6 +23,7 @@ char *cstr::itoa(int64_t num, char *str, uint64_t base) {
     if(negative) str[index++] = '-';
     str[index] = '\0';
 
+    // Reverse and return.
     reverse(str, index);
     return str;
 }

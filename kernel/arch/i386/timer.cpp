@@ -6,7 +6,7 @@
 
 uint32_t tick = 0;
 
-void tcallback(idt::registers_t regs) {
+void timercallback(idt::registers_t regs) {
     char numascii[20];
 
     vga::write("[pit] Received int. ");
@@ -17,13 +17,12 @@ void tcallback(idt::registers_t regs) {
 }
 
 void timer::initpit(uint32_t frequency) {
-    idt::registerhandler(IRQ0, &tcallback);
+    // Register handler and determine frequency divisor.
+    idt::registerhandler(IRQ0, &timercallback);
     uint32_t divisor = 1193180 / frequency;
-    outportb(0x43, 0x36);
 
-    uint8_t l = (uint8_t) divisor & 0xFF;
-    uint8_t h = (uint8_t) ((divisor >> 8) & 0xFF);
-    
-    outportb(0x40, l);
-    outportb(0x40, h);
+    // Send init signal and divisor (split into two 8-bit messages) to PIT.
+    outportb(0x43, 0x36);
+    outportb(0x40, divisor & 0xFF);
+    outportb(0x40, (divisor >> 8) & 0xFF);
 }
