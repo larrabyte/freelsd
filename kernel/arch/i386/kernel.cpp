@@ -10,7 +10,7 @@ extern "C" void kernelmain() {
     gdt::initialise();
     idt::initialise();
     vga::initialise();
+    timer::initpit(1000);
 
-    vga::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  welcome 2 larrabyte's hell\n \\/   \\/\n\n");
-    timer::initpit(5);
+    vga::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n");
 }
