@@ -9,7 +9,7 @@ idt::entry_t idtarray[IDTSIZE];
 idt::ptr_t idtptr;
 
 extern "C" {
-    void irqhandler(idt::registers_t* regs) {
+    void irqhandler(idt::registers_t *regs) {
         if(regs->intnum >= 40) outportb(0xA0, 0x20);
         outportb(0x20, 0x20);
 
@@ -19,7 +19,7 @@ extern "C" {
         }
     }
 
-    void isrhandler(idt::registers_t* regs) {
+    void isrhandler(idt::registers_t *regs) {
         char asciinum[20];
 
         if(handlers[regs->intnum]) {
