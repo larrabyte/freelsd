@@ -1,4 +1,5 @@
 #include <memory.hpp>
+#include <hwio.hpp>
 #include <cstr.hpp>
 #include <vga.hpp>
 
@@ -20,9 +21,19 @@ inline void vga::putentryat(char c, uint8_t colour, size_t x, size_t y) {
 
 void vga::write(const char *data) {
     for(size_t i = 0; i < cstr::len(data); i++) {
+        // If character is a newline, advance rows.
         if(data[i] == '\n') { column = 0; row++; }
+
+        // If character is a backspace, reverse columns.
+        else if(data[i] == '\b') {
+            if(column != 0) column--;
+            putentryat(' ', colour, column, row);
+        }
+
+        // Otherwise, print character to screen.
         else putentryat(data[i], colour, column++, row);
 
+        // Scrolling code.
         if(column == VGA_WIDTH) row++;
         else if(row == VGA_HEIGHT) {
             row = VGA_HEIGHT - 1;
