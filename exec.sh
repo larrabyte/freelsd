@@ -10,7 +10,7 @@ CC="i686-elf-g++"
 AS="nasm"
 
 # flags
-CFLAGS="-Wall -Wextra -Wno-unused-variable -ffreestanding -fstack-protector -fno-exceptions -fno-rtti -O2 -nostdlib"
+CFLAGS="-Wall -Wextra -Wno-unused-parameter -ffreestanding -fstack-protector -fno-exceptions -fno-rtti -O2 -nostdlib"
 IFLAGS="-Ikernel/include"
 AFLAGS="-felf32"
 LFLAGS="-lgcc"
