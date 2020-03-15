@@ -24,15 +24,17 @@ section .text
 global _start:function (_start.end - _start)
 
 _start:
-    cli
-    mov esp, stack_top
+    cli                 ; Disable interrupts.
+    mov esp, stack_top  ; Move the stackptr into esp.
+    push eax            ; Push pointer to mb_info_t.
+    push ebx            ; Push the magic number.
 
-    call _init
-    call kernelmain
-    call _fini
+    call _init          ; Call global constructors.
+    call kernelmain     ; Call the kernel and start FreeLSD.
+    call _fini          ; Call global destructors.
 
 .hang:
-    hlt
-    jmp .hang
+    hlt                 ; Infinite loop :)
+    jmp .hang           ; Infinite loop :)
 
 .end:

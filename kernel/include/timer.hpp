@@ -5,6 +5,9 @@
 #include <idt.hpp>
 
 namespace timer {
+    // System tick count since boot.
+    extern uint64_t ticks;
+
     // Timer interrupt handler.
     void handler(idt::registers_t regs);
 

@@ -4,15 +4,15 @@
 #include <idt.hpp>
 #include <vga.hpp>
 
-int64_t systemtick = 0;
+uint64_t systicks = 0;
 
 void timer::handler(idt::registers_t regs) {
-    systemtick++;
+    systicks++;
 }
 
 void timer::sleep(uint64_t milliseconds) {
-    int64_t end = systemtick + milliseconds;
-    while(end > systemtick) asm volatile("hlt");
+    uint64_t end = systicks + milliseconds;
+    while(end > systicks) asm volatile("hlt");
 }
 
 void timer::initpit(uint32_t frequency) {
