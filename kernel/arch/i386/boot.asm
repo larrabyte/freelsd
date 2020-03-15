@@ -31,7 +31,6 @@ _start:
 
     call _init          ; Call global constructors.
     call kernelmain     ; Call the kernel and start FreeLSD.
-    call _fini          ; Call global destructors.
 
 .hang:
     hlt                 ; Infinite loop :)
