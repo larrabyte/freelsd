@@ -29,7 +29,7 @@ CPPFILES := $(wildcard $(KERNELSRC)/*.cpp)
 ASMFILES := $(wildcard $(KERNELSRC)/*.asm)
 CRTFINAL := $(shell $(CPP) $(CFLAGS) -print-file-name=crtend.o)
 CRTBEGIN := $(shell $(CPP) $(CFLAGS) -print-file-name=crtbegin.o)
-OBJFILES := $(sort $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELSRC)/%.cpp=$(KERNELOBJ)/%.o))
+OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELSRC)/%.cpp=$(KERNELOBJ)/%.o)
 
 # --------
 # Targets.
@@ -37,19 +37,26 @@ OBJFILES := $(sort $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(
 all: $(ARCH)
 
 clean:
-	rm -f build/freelsd.iso
-	rm -f isoroot/kernel.bin
-	rm -f $(KERNELOBJ)/*.o
+	@rm -f build/freelsd.iso
+	@printf "[wipe] Deleted build/freelsd.iso.\n"
+	@rm -f isoroot/kernel.bin
+	@printf "[wipe] Deleted isoroot/kernel.bin.\n"
+	@rm -f $(KERNELOBJ)/*.o
+	@printf "[wipe] Deleted object files from kernel/obj.\n"
 
 i686: build/freelsd.iso
-	$(QEMU) $(QFLAGS)
+	@printf "[qemu] Now booting FreeLSD.\n"
+	@$(QEMU) $(QFLAGS)
 
 build/freelsd.iso: $(OBJFILES)
-	$(CPP) -T $(KERNELSRC)/linker.ld $(CFLAGS) $(CRTBEGIN) $(OBJFILES) $(CRTFINAL) -o isoroot/kernel.bin -lgcc
-	grub-mkrescue -o build/freelsd.iso isoroot
+	@printf "[link] Linking object files and creating ISO.\n"
+	@$(CPP) -T $(KERNELSRC)/linker.ld $(CFLAGS) $(CRTBEGIN) $(sort $(OBJFILES)) $(CRTFINAL) -o isoroot/kernel.bin -lgcc
+	@grub-mkrescue -o build/freelsd.iso isoroot &> /dev/null
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.cpp
-	$(CPP) $(CFLAGS) -I $(KERNELINC) -c $< -o $@
+	@printf "[g+++] $< compiled.\n"
+	@$(CPP) $(CFLAGS) -I $(KERNELINC) -c $< -o $@
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.asm
-	$(ASM) $(AFLAGS) $< -o $@
+	@printf "[nasm] $< assembled.\n"
+	@$(ASM) $(AFLAGS) $< -o $@
