@@ -5,7 +5,7 @@
 
 namespace kboard {
     // Keyboard interrupt handler.
-    void handler(idt::registers_t regs);
+    void handler(idt::registers_t *regs);
 
     // Initialise the keyboard and register IRQ1 for interrupts.
     void initialise(void);

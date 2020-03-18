@@ -6,7 +6,7 @@
 
 uint64_t systicks = 0;
 
-void timer::handler(idt::registers_t regs) {
+void timer::handler(idt::registers_t *regs) {
     systicks++;
 }
 

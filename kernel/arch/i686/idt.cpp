@@ -11,7 +11,7 @@ idt::ptr_t idtptr;
 extern "C" {
     void irqhandler(idt::registers_t *regs) {
         // If there is an interrupt handler, call it.
-        if(handlers[regs->intnum]) handlers[regs->intnum](*regs);
+        if(handlers[regs->intnum]) handlers[regs->intnum](regs);
 
         // Acknowledge the interrupt, if required send to both slave and master PICs.
         if(regs->intnum >= 40) outportb(0xA0, 0x20);
@@ -26,7 +26,7 @@ extern "C" {
             vga::write("[isr] unhandled interrupt: ");
             vga::write(cstr::itoa(regs->intnum, asciinum, 10));
             vga::write("\n");
-        } else handlers[regs->intnum](*regs);
+        } else handlers[regs->intnum](regs);
     }
 
     void idtflush(void);

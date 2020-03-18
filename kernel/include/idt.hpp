@@ -29,7 +29,7 @@ namespace idt {
         uint32_t eip, cs, eflags, useresp, ss;
     } registers_t;
 
-    typedef void (*handler_t)(registers_t);
+    typedef void (*handler_t)(registers_t*);
 
     typedef struct entry {
         uint16_t baselow;

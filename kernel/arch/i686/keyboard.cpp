@@ -15,7 +15,7 @@ static const char kbamerica[128] = {
     0 /* insert */,	0 /* delete */,	0, 0, 0, 0 /* f11 */, 0 /* f12 */, 0, /* All other keys are undefined */
 };
 
-void kboard::handler(idt::registers_t regs) {
+void kboard::handler(idt::registers_t *regs) {
     uint8_t scancode = inportb(0x60);
     char buffer[2];
 
