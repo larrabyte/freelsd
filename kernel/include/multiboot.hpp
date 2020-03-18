@@ -124,10 +124,10 @@ typedef struct multiboot_info {
     uint32_t modcount;
     uint32_t modaddr;
 
-    union {
+    union executables {
         mbst_aout_t aout;
         mbht_elf_t elf;
-    } u;
+    } ex;
 
     // Memory mapping buffer.
     uint32_t mmaplength;
@@ -160,21 +160,21 @@ typedef struct multiboot_info {
     uint64_t framebufferheight;
     uint8_t framebuffertype;
 
-    union {
-        struct {
-            uint32_t framebufferpaletteaddr;
-            uint16_t framebufferpalettenumcolours;
+    union framebuffer_colours {
+        struct palette_info {
+            uint32_t addr;
+            uint16_t numcolours;
         };
 
-        struct {
-            uint8_t framebufferredfieldpos;
-            uint8_t framebufferredmasksize;
-            uint8_t framebuffergreenfieldpos;
-            uint8_t framebuffergreenmasksize;
-            uint8_t framebufferbluefieldpos;
-            uint8_t framebufferbluemasksize;
+        struct rgb_info {
+            uint8_t redfieldpos;
+            uint8_t redmasksize;
+            uint8_t greenfieldpos;
+            uint8_t greenmasksize;
+            uint8_t bluefieldpos;
+            uint8_t bluemasksize;
         };
-    };
+    } fb_colours;
 } mb_info_t;
 
 typedef struct multiboot_colour {
