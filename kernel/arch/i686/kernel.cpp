@@ -1,5 +1,6 @@
 #include <multiboot.hpp>
 #include <keyboard.hpp>
+#include <memory.hpp>
 #include <timer.hpp>
 #include <cstr.hpp>
 #include <gdt.hpp>
@@ -8,12 +9,12 @@
 
 extern "C" {
     void kernelmain(mb_info_t *mbd, uint32_t magic) {
-        vga::initialise();
         gdt::initialise();
         idt::initialise();
         timer::initpit(1000);
         kboard::initialise();
 
+        memory::set((void*) mbd->framebufferaddr, 0xFF, 640*480*4);
         vga::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n");
 
         if(checkbit(mbd->flags, 0)) {

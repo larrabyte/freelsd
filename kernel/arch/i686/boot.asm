@@ -1,18 +1,28 @@
-MBALIGN  equ  1 << 0             ; Align loaded modules on page boundaries.
-MEMINFO  equ  1 << 1             ; Provide a memory map.
-FLAGS    equ  MBALIGN | MEMINFO  ; The multiboot 'flag' field.
-MAGIC    equ  0x1BADB002         ; The multiboot magic number.
-CHECKSUM equ -(MAGIC + FLAGS)    ; Checksum of above.
+MBALIGN  equ  1 << 0                       ; Align loaded modules on page boundaries.
+MEMINFO  equ  1 << 1                       ; Provide a memory map.
+GFXMODE  equ  1 << 2                       ; Not-text mode.
+FLAGS    equ  MBALIGN | MEMINFO | GFXMODE  ; The multiboot 'flag' field.
+MAGIC    equ  0x1BADB002                   ; The multiboot magic number.
+CHECKSUM equ -(MAGIC + FLAGS)              ; Checksum of above.
 
 extern kernelmain
 extern _init
 extern _fini
-
 section .multiboot
 align 4
     dd MAGIC
     dd FLAGS
     dd CHECKSUM
+
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 0
+    dd 32
 
 section .bss
 align 16

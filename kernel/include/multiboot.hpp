@@ -164,7 +164,7 @@ typedef struct multiboot_info {
         struct palette_info {
             uint32_t addr;
             uint16_t numcolours;
-        };
+        } palette;
 
         struct rgb_info {
             uint8_t redfieldpos;
@@ -173,9 +173,9 @@ typedef struct multiboot_info {
             uint8_t greenmasksize;
             uint8_t bluefieldpos;
             uint8_t bluemasksize;
-        };
+        } rgb;
     } fb_colours;
-} mb_info_t;
+} __attribute__((packed)) mb_info_t;
 
 typedef struct multiboot_colour {
     uint8_t red;

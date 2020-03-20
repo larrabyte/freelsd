@@ -1,7 +1,7 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: all i686 clean
+.PHONY: all i686 clean build/freelsd.iso
 
 ARCH := i686
 QEMU := qemu-system-i386
