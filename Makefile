@@ -15,7 +15,7 @@ WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter
 CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector \
 			-fno-exceptions -fno-rtti -O2 -nostdlib
 
-QFLAGS := -M q35 -display sdl -cdrom build/freelsd.iso
+QFLAGS := -M q35 -display sdl -serial file:serial.log -cdrom build/freelsd.iso
 AFLAGS := -felf32
 
 # -----------------------------
@@ -37,12 +37,14 @@ OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELS
 all: $(ARCH)
 
 clean:
-	@rm -f build/freelsd.iso
-	@printf "[wipe] Deleted build/freelsd.iso.\n"
-	@rm -f isoroot/kernel.bin
-	@printf "[wipe] Deleted isoroot/kernel.bin.\n"
 	@rm -f $(KERNELOBJ)/*.o
 	@printf "[wipe] Deleted object files from kernel/obj.\n"
+	@rm -f isoroot/kernel.bin
+	@printf "[wipe] Deleted isoroot/kernel.bin.\n"
+	@rm -f build/freelsd.iso
+	@printf "[wipe] Deleted build/freelsd.iso.\n"
+	@rm -f serial.log
+	@printf "[wipe] Deleted serial.log.\n"
 
 i686: build/freelsd.iso
 	@printf "[qemu] Now booting FreeLSD.\n"
