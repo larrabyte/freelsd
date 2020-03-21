@@ -1,8 +1,8 @@
+#include <interrupts.hpp>
 #include <memory.hpp>
 #include <hwio.hpp>
 #include <cstr.hpp>
-#include <idt.hpp>
-#include <vga.hpp>
+#include <gfx.hpp>
 
 idt::handler_t handlers[IDTSIZE];
 idt::entry_t idtarray[IDTSIZE];
@@ -23,9 +23,9 @@ extern "C" {
 
         // Call interrupt handler or print an error.
         if(!handlers[regs->intnum]) {
-            vga::write("[isr] unhandled interrupt: ");
-            vga::write(cstr::itoa(regs->intnum, asciinum, 10));
-            vga::write("\n");
+            vgatext::write("[isr] unhandled interrupt: ");
+            vgatext::write(cstr::itoa(regs->intnum, asciinum, 10));
+            vgatext::write("\n");
         } else handlers[regs->intnum](regs);
     }
 

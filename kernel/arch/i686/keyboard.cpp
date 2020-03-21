@@ -1,8 +1,8 @@
+#include <interrupts.hpp>
 #include <keyboard.hpp>
 #include <hwio.hpp>
 #include <cstr.hpp>
-#include <idt.hpp>
-#include <vga.hpp>
+#include <gfx.hpp>
 
 static const char kbamerica[128] = {
     0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	'9', '0', '-', '=', '\b' /* backspace */,
@@ -23,7 +23,7 @@ void kboard::handler(idt::registers_t *regs) {
     if((scancode & 0x80) != 0x80) {
         buffer[0] = kbamerica[scancode];
         buffer[1] = '\0';
-        vga::write(buffer);
+        vgatext::write(buffer);
     }
 }
 

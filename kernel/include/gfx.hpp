@@ -1,10 +1,10 @@
-#ifndef FREELSD_KERNEL_VGA_HEADER
-#define FREELSD_KERNEL_VGA_HEADER
+#ifndef FREELSD_KERNEL_GFX_HEADER
+#define FREELSD_KERNEL_GFX_HEADER
 
 #include <stddef.h>
 #include <stdint.h>
 
-namespace vga {
+namespace vgatext {
     extern uint16_t *buffer;  // Pointer to video memory.
     extern uint8_t colour;    // Current terminal colours.
     extern size_t column;     // Current terminal column.
@@ -32,10 +32,10 @@ namespace vga {
     // Scrolls the terminal by n lines.
     void scroll(size_t n);
 
-    // Initialise a VGA text mode terminal.
+    // Initialise VGA-compatiable text mode.
     void initialise(void);
 
-    // Set the terminal colour.
+    // Set VGA colours.
     void setcolour(colour_td fg, colour_td bg);
 
     // Place a character at (x, y).

@@ -2,7 +2,7 @@
 #define FREELSD_KERNEL_TIMER_HEADER
 
 #include <stdint.h>
-#include <idt.hpp>
+#include <interrupts.hpp>
 
 namespace timer {
     // System tick count since boot.

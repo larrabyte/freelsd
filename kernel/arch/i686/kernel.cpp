@@ -1,3 +1,4 @@
+#include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
 #include <memory.hpp>
@@ -5,8 +6,7 @@
 #include <timer.hpp>
 #include <cstr.hpp>
 #include <gdt.hpp>
-#include <idt.hpp>
-#include <vga.hpp>
+#include <gfx.hpp>
 
 extern "C" {
     void kernelmain(mb_info_t *mbd, uint32_t magic) {
@@ -16,7 +16,7 @@ extern "C" {
         serial::initialise();
         kboard::initialise();
 
-        // vga::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n");
+        // vgatext::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n");
         serial::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n");
 
         /* if(checkbit(mbd->flags, 0)) {
@@ -25,9 +25,9 @@ extern "C" {
             uint64_t megapages = memorypages / 1024;
             char numascii[20];
 
-            vga::write("[kernel] memory available: ");
-            vga::write(cstr::itoa(megapages, numascii, 10));
-            vga::write("MB\n");
+            vgatext::write("[kernel] memory available: ");
+            vgatext::write(cstr::itoa(megapages, numascii, 10));
+            vgatext::write("MB\n");
         } */
     }
 }

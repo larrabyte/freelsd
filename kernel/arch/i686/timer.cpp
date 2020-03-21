@@ -1,8 +1,8 @@
+#include <interrupts.hpp>
 #include <timer.hpp>
 #include <cstr.hpp>
 #include <hwio.hpp>
-#include <idt.hpp>
-#include <vga.hpp>
+#include <gfx.hpp>
 
 uint64_t systicks = 0;
 

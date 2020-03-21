@@ -1,7 +1,7 @@
 #ifndef FREELSD_KERNEL_KEYBOARD_HEADER
 #define FREELSD_KERNEL_KEYBOARD_HEADER
 
-#include <idt.hpp>
+#include <interrupts.hpp>
 
 namespace kboard {
     // Keyboard interrupt handler.
