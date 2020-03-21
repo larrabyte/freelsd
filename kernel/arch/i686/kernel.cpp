@@ -9,11 +9,14 @@
 #include <gfx.hpp>
 
 void lighthouse(mb_info_t *mbd) {
+    uint32_t height = mbd->framebufferheight;
+    uint32_t width = mbd->framebufferwidth;
+    uint32_t bpp = mbd->framebufferbpp / 8;
     uint8_t pixeldata = 0;
 
     while(true) {
-        while(pixeldata < 255) memory::set(gfx::buffer, pixeldata++, mbd->framebufferwidth * mbd->framebufferheight * (mbd->framebufferbpp / 8));
-        while(pixeldata > 000) memory::set(gfx::buffer, pixeldata--, mbd->framebufferwidth * mbd->framebufferheight * (mbd->framebufferbpp / 8));
+        while(pixeldata < 255) memory::set(gfx::buffer, pixeldata++, height * width * bpp);
+        while(pixeldata > 000) memory::set(gfx::buffer, pixeldata--, height * width * bpp);
     }
 }
 
