@@ -15,8 +15,15 @@ void lighthouse(mb_info_t *mbd) {
     uint8_t pixeldata = 0;
 
     while(true) {
-        while(pixeldata < 255) memory::set(screen, pixeldata++, mbd->framebufferwidth * mbd->framebufferheight * bpp);
-        while(pixeldata > 0)   memory::set(screen, pixeldata--, mbd->framebufferwidth * mbd->framebufferheight * bpp);
+        while(pixeldata < 249) {
+            memory::set(screen, pixeldata, mbd->framebufferwidth * mbd->framebufferheight * bpp);
+            pixeldata += 5;
+        }
+
+        while(pixeldata > 10) {
+            memory::set(screen, pixeldata, mbd->framebufferwidth * mbd->framebufferheight * bpp);
+            pixeldata -= 5;
+        }
     }
 }
 

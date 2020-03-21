@@ -2,15 +2,19 @@
 #include <stdint.h>
 
 void memory::set(const void *memory, uint8_t value, size_t n) {
-    uint32_t manybits  = (value << 24) | (value << 16) | (value << 8) | value;
+    // Stuff 8-bit value into a 64-bit integer using bitshifting.
+    uint32_t manybits = (value << 24) | (value << 16) | (value << 8) | value;
+    uint64_t morebits = ((uint64_t) manybits << 32) | manybits;
     char *memoryptr = (char*) memory;
 
-    while(n >= sizeof(uint32_t)) {
-        *((uint32_t*) memoryptr) = manybits;
-        memoryptr += sizeof(uint32_t);
-        n -= sizeof(uint32_t);
+    // Set memory in 8-byte chunks.
+    while(n >= sizeof(uint64_t)) {
+        *((uint64_t*) memoryptr) = morebits;
+        memoryptr += sizeof(uint64_t);
+        n -= sizeof(uint64_t);
     }
 
+    // Set memory, one byte at a time.
     for(size_t i = 0; i < n; i++) {
         memoryptr[i] = value;
     }
