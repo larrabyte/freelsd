@@ -6,6 +6,26 @@
 static const size_t VGA_HEIGHT = 25;
 static const size_t VGA_WIDTH = 80;
 
+namespace gfx {
+    pixel_t *buffer = NULL;  // Pointer to framebuffer.
+    uint32_t height = 0;      // Height of the screen.
+    uint32_t width = 0;       // Width of the screen.
+    uint32_t pitch = 0;       // Number of bytes to advance one line.
+    uint8_t bpp = 0;          // Number of bytes per pixel.
+
+    void drawpixel(size_t x, size_t y, pixel_t colours) {
+        buffer[y * width + x] = colours;
+    }
+
+    void initialise(mb_info_t *mbd) {
+        buffer = (pixel_t*) mbd->framebufferaddr;
+        height = mbd->framebufferheight;
+        width = mbd->framebufferwidth;
+        pitch = mbd->framebufferpitch;
+        bpp = mbd->framebufferpitch / 8;
+    }
+}
+
 namespace vgatext {
     uint16_t *buffer = NULL;  // Pointer to video memory.
     size_t column = 0;        // Current terminal column.
@@ -20,7 +40,7 @@ namespace vgatext {
         buffer[y * VGA_WIDTH + x] = entry(c, colour);
     }
 
-    void setcolour(colour_td fg, colour_td bg) {
+    void setcolour(colour_t fg, colour_t bg) {
         colour = fg | bg << 4;
     }
 

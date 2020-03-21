@@ -9,21 +9,11 @@
 #include <gfx.hpp>
 
 void lighthouse(mb_info_t *mbd) {
-    // Cache framebuffer address and bytes per pixel.
-    void *screen = (void*) mbd->framebufferaddr;
-    uint8_t bpp = mbd->framebufferbpp / 8;
     uint8_t pixeldata = 0;
 
     while(true) {
-        while(pixeldata < 249) {
-            memory::set(screen, pixeldata, mbd->framebufferwidth * mbd->framebufferheight * bpp);
-            pixeldata += 5;
-        }
-
-        while(pixeldata > 10) {
-            memory::set(screen, pixeldata, mbd->framebufferwidth * mbd->framebufferheight * bpp);
-            pixeldata -= 5;
-        }
+        while(pixeldata < 255) memory::set(gfx::buffer, pixeldata++, mbd->framebufferwidth * mbd->framebufferheight * (mbd->framebufferbpp / 8));
+        while(pixeldata > 000) memory::set(gfx::buffer, pixeldata--, mbd->framebufferwidth * mbd->framebufferheight * (mbd->framebufferbpp / 8));
     }
 }
 
@@ -31,6 +21,7 @@ extern "C" {
     void kernelmain(mb_info_t *mbd, uint32_t magic) {
         gdt::initialise();
         idt::initialise();
+        gfx::initialise(mbd);
         timer::initpit(1000);
         serial::initialise();
         kboard::initialise();
@@ -49,9 +40,16 @@ extern "C" {
             serial::write("MB\n");
         }
 
-        // Write framebuffer address to serial.
+        // Write VESA video mode information to serial.
         serial::write("[kernel] framebuffer address: ");
         serial::write(cstr::itoa(mbd->framebufferaddr, numascii, 10));
+        serial::write("\n");
+        serial::write("[kernel] resolution: ");
+        serial::write(cstr::itoa(mbd->framebufferwidth, numascii, 10));
+        serial::write("x");
+        serial::write(cstr::itoa(mbd->framebufferheight, numascii, 10));
+        serial::write("x");
+        serial::write(cstr::itoa(mbd->framebufferbpp, numascii, 10));
         serial::write("\n");
 
         // Start the lightshow!
