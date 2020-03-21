@@ -3,9 +3,10 @@ An attempt to make an OS, following the [OSDev Wiki](https://wiki.osdev.org) alo
 See [Lemon](https://github.com/fido2020/Lemon-OS) and [OSDev: Beginner Mistakes](https://wiki.osdev.org/Beginner_Mistakes) for reasons I shouldn't be doing this.
 
 ## Features
+   - Lighthouse demo in VESA graphics mode
    - Interrupt handling (keyboard/timer)
+   - Support for serial ports (writing)
    - Stack smashing protection
-   - Printing in kernel mode
    - Multiboot compatible
    - Terminal scrolling
    - Can hang itself
