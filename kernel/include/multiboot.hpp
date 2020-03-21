@@ -149,15 +149,16 @@ typedef struct multiboot_info {
     // Video variables.
     uint32_t vbecontrolinfo;
     uint32_t vbemodeinfo;
-    uint32_t vbemode;
-    uint32_t vbeinterfaceseg;
-    uint32_t vbeinterfaceoff;
-    uint32_t vbeinterfacelen;
+    uint16_t vbemode;
+    uint16_t vbeinterfaceseg;
+    uint16_t vbeinterfaceoff;
+    uint16_t vbeinterfacelen;
 
     uint64_t framebufferaddr;
-    uint64_t framebufferpitch;
-    uint64_t framebufferwidth;
-    uint64_t framebufferheight;
+    uint32_t framebufferpitch;
+    uint32_t framebufferwidth;
+    uint32_t framebufferheight;
+    uint8_t framebufferbpp;
     uint8_t framebuffertype;
 
     union framebuffer_colours {
