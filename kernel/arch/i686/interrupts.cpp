@@ -1,5 +1,6 @@
 #include <interrupts.hpp>
 #include <memory.hpp>
+#include <serial.hpp>
 #include <hwio.hpp>
 #include <cstr.hpp>
 #include <gfx.hpp>
@@ -19,13 +20,11 @@ extern "C" {
     }
 
     void isrhandler(idt::registers_t *regs) {
-        char asciinum[20];
-
         // Call interrupt handler or print an error.
         if(!handlers[regs->intnum]) {
-            vgatext::write("[isr] unhandled interrupt: ");
-            vgatext::write(cstr::itoa(regs->intnum, asciinum, 10));
-            vgatext::write("\n");
+            serial::write("[isr] unhandled interrupt: ");
+            serial::write(cstr::itoa(regs->intnum, 10));
+            serial::write("\n");
         } else handlers[regs->intnum](regs);
     }
 

@@ -8,6 +8,8 @@
 #include <gdt.hpp>
 #include <gfx.hpp>
 
+static const char frog[] = "\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n";
+
 void lighthouse(mb_info_t *mbd) {
     uint32_t height = mbd->framebufferheight;
     uint32_t width = mbd->framebufferwidth;
@@ -28,34 +30,31 @@ extern "C" {
         timer::initpit(1000);
         serial::initialise();
         kboard::initialise();
-        char numascii[20];
 
         // The FreeLSD frog!
-        serial::write("\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n");
+        serial::write(frog);
+        gfx::write(frog);
 
         if(checkbit(mbd->flags, 0)) {
             // Read number of memory blocks and divide to retrieve megabytes.
             uint64_t mempages = (mbd->lowermem + mbd->uppermem) / 1024;
 
-            // Write available memory to serial.
-            serial::write("[kernel] available memory: ");
-            serial::write(cstr::itoa(mempages, numascii, 10));
-            serial::write("MB\n");
+            // Write available memory to screen.
+            gfx::write("[kernel] available memory: ");
+            gfx::write(cstr::itoa(mempages, 10));
+            gfx::write("MB\n");
         }
 
         // Write VESA video mode information to serial.
         serial::write("[kernel] framebuffer address: ");
-        serial::write(cstr::itoa(mbd->framebufferaddr, numascii, 10));
+        serial::write(cstr::itoa(mbd->framebufferaddr, 10));
         serial::write("\n");
         serial::write("[kernel] resolution: ");
-        serial::write(cstr::itoa(mbd->framebufferwidth, numascii, 10));
+        serial::write(cstr::itoa(mbd->framebufferwidth, 10));
         serial::write("x");
-        serial::write(cstr::itoa(mbd->framebufferheight, numascii, 10));
+        serial::write(cstr::itoa(mbd->framebufferheight, 10));
         serial::write("x");
-        serial::write(cstr::itoa(mbd->framebufferbpp, numascii, 10));
+        serial::write(cstr::itoa(mbd->framebufferbpp, 10));
         serial::write("\n");
-
-        // Start the lightshow!
-        lighthouse(mbd);
     }
 }

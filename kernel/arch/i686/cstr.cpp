@@ -1,13 +1,15 @@
 #include <cstr.hpp>
 
-char *cstr::itoa(int64_t num, char *str, uint64_t base) {
+static char numascii[20];
+
+char *cstr::itoa(int64_t num, uint64_t base) {
     bool negative = false;
     size_t index = 0;
 
     if(num == 0) {
-        str[index++] = '0';
-        str[index] = '\0';
-        return str;
+        numascii[index++] = '0';
+        numascii[index] = '\0';
+        return numascii;
     } else if(num < 0 && base == 10) {
         negative = true;
         num = -num;
@@ -16,16 +18,16 @@ char *cstr::itoa(int64_t num, char *str, uint64_t base) {
     // Converts the number into ASCII in reverse order.
     while(num) {
         int rem = num % base;
-        str[index++] = (rem > 9) ? (rem > 10) + 'a' : rem + '0';
+        numascii[index++] = (rem > 9) ? (rem > 10) + 'a' : rem + '0';
         num = num / base;
     }
 
-    if(negative) str[index++] = '-';
-    str[index] = '\0';
+    if(negative) numascii[index++] = '-';
+    numascii[index] = '\0';
 
     // Reverse and return.
-    reverse(str, index);
-    return str;
+    reverse(numascii, index);
+    return numascii;
 }
 
 void cstr::reverse(char *str, uint64_t length) {
