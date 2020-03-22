@@ -19,7 +19,7 @@ namespace gfx {
     uint32_t cursory = 0;    // Current location of text cursor (y).
     pixel_t colour = 0x0;    // Currently selected colour.
 
-    uint64_t fontmap[128] = {
+    uint64_t fontmap[129] = {
         0x0200000000000000UL,  // U+000 (nul)
 
         0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -124,6 +124,7 @@ namespace gfx {
         0x070C0C380C0C0700UL,  // U+007D (})
         0x6E3B000000000000UL,  // U+007E (~)
         0x0000000000000000UL,  // U+007F
+        0xFFFFFFFFFFFFFFFFUL,  // U+0080 (backspace character for now.)
     };
 
     void drawpixel(size_t x, size_t y, pixel_t colours) {
@@ -155,7 +156,7 @@ namespace gfx {
             // If character is a backspace, reverse columns.
             else if(str[i] == '\b') {
                 if(cursorx != 0) cursorx--;
-                drawchar(cursorx, cursory, ' ', colour);
+                drawchar(cursorx, cursory, 128, 0x000000);
             }
 
             // Otherwise, print character to screen.

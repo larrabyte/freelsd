@@ -23,7 +23,7 @@ void kboard::handler(idt::registers_t *regs) {
     if((scancode & 0x80) != 0x80) {
         buffer[0] = kbamerica[scancode];
         buffer[1] = '\0';
-        vgatext::write(buffer);
+        gfx::write(buffer);
     }
 }
 
