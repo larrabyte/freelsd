@@ -54,5 +54,5 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::write(cstr::itoa(mbd->framebufferbpp, 10));
     serial::write("\n");
 
-    lighthouse(mbd);
+    // lighthouse(mbd);
 }
