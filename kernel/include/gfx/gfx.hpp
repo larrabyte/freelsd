@@ -3,6 +3,8 @@
 
 #define VESA_TEXT_HEIGHT  8
 #define VESA_TEXT_WIDTH   8
+#define TEXT_SPACING_H    12
+#define TEXT_SPACING_W    8
 
 #include <multiboot.hpp>
 #include <stddef.h>

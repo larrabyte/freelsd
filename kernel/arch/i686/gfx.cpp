@@ -23,7 +23,7 @@ namespace gfx {
         for(size_t i = 0; i < VESA_TEXT_HEIGHT; i++) {
             for(size_t j = 0; j < VESA_TEXT_WIDTH; j++) {
                 // If the bit at (x, y) is set, draw the pixel.
-                if(checkbit(c.rows[i], j)) drawpixel(j + (x * 8), i + (y * 8), colours);
+                if(checkbit(c.rows[i], j)) drawpixel(j + (x * TEXT_SPACING_W), i + (y * TEXT_SPACING_H), colours);
             }
         }
     }
