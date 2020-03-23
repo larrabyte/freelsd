@@ -17,8 +17,8 @@ void lighthouse(mb_info_t *mbd) {
     uint8_t pixeldata = 0;
 
     while(true) {
-        while(pixeldata < 255) memory::set(gfx::buffer, pixeldata++, height * width * bpp);
-        while(pixeldata > 000) memory::set(gfx::buffer, pixeldata--, height * width * bpp);
+        while(pixeldata < 255) memory::set(gfx::info.buffer, pixeldata++, height * width * bpp);
+        while(pixeldata > 000) memory::set(gfx::info.buffer, pixeldata--, height * width * bpp);
     }
 }
 

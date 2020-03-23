@@ -3,21 +3,11 @@
 #include <cstr.hpp>
 #include <gfx.hpp>
 
-static const size_t VGA_HEIGHT = 25;
-static const size_t VGA_WIDTH = 80;
-
 namespace gfx {
-    pixel_t *buffer = NULL;  // Pointer to framebuffer.
-    uint32_t textmaxw = 0;   // Number of 8x8 characters that can be displayed horizontally.
-    uint32_t textmaxh = 0;   // Number of 8x8 characters that can be displayed vertically.
-    uint32_t height = 0;     // Height of the screen.
-    uint32_t width = 0;      // Width of the screen.
-    uint32_t pitch = 0;      // Number of bytes to advance one line.
-    uint8_t bpp = 0;         // Number of bytes per pixel.
-
-    uint32_t cursorx = 0;    // Current location of text cursor (x).
-    uint32_t cursory = 0;    // Current location of text cursor (y).
-    pixel_t colour = 0x0;    // Currently selected colour.
+    video_info_t info;
+    pixel_t colour;
+    size_t column;
+    size_t row;
 
     uint64_t fontmap[129] = {
         0x0200000000000000UL,  // U+000 (nul)
@@ -128,7 +118,7 @@ namespace gfx {
     };
 
     void drawpixel(size_t x, size_t y, pixel_t colours) {
-        buffer[y * width + x] = colours;
+        info.buffer[y * info.pixelwidth + x] = colours;
     }
 
     void drawchar(size_t x, size_t y, int index, pixel_t colours) {
@@ -143,74 +133,11 @@ namespace gfx {
 
     void scroll(size_t n) {
         // Copies ahead of the buffer back into the base pointer, effectively scrolling.
-        memory::copy(buffer, buffer + width * n, width * height * bpp);
+        memory::copy(info.buffer, info.buffer + info.pixelwidth * n, info.pixelwidth * info.pixelheight * info.bpp);
     }
 
     void write(const char *str) {
-        if(buffer == NULL) return;
-
-        for(size_t i = 0; i < cstr::len(str); i++) {
-            // If character is a newline, advance rows.
-            if(str[i] == '\n') { cursorx = 0; cursory++; }
-
-            // If character is a backspace, reverse columns.
-            else if(str[i] == '\b') {
-                if(cursorx != 0) cursorx--;
-                drawchar(cursorx, cursory, 128, 0x000000);
-            }
-
-            // Otherwise, print character to screen.
-            else drawchar(cursorx++, cursory, str[i], colour);
-
-            // Scrolling code.
-            if(cursorx == width) cursory++;
-            else if(cursory == height) {
-                cursory = height - 1;
-                scroll(1);
-            }
-
-            if(cursorx == width || cursory == height) cursorx = 0;
-        }
-    }
-
-    void initialise(mb_info_t *mbd) {
-        buffer = (pixel_t*) mbd->framebufferaddr;
-        textmaxh = mbd->framebufferheight / 8;
-        textmaxw = mbd->framebufferwidth / 8;
-        height = mbd->framebufferheight;
-        width = mbd->framebufferwidth;
-        pitch = mbd->framebufferpitch;
-        bpp = mbd->framebufferpitch / 8;
-        colour = 0xFFFFFF;
-    }
-}
-
-namespace vgatext {
-    uint16_t *buffer = NULL;  // Pointer to video memory.
-    size_t column = 0;        // Current terminal column.
-    size_t row = 0;           // Current terminal row.
-    uint8_t colour;           // Current terminal colours.
-
-    static inline uint16_t entry(unsigned char uc, uint8_t colour) {
-        return (uint16_t) uc | (uint16_t) colour << 8;
-    }
-
-    void putentryat(char c, uint8_t colour, size_t x, size_t y) {
-        buffer[y * VGA_WIDTH + x] = entry(c, colour);
-    }
-
-    void setcolour(colour_t fg, colour_t bg) {
-        colour = fg | bg << 4;
-    }
-
-    void scroll(size_t n) {
-        // Copies ahead of the buffer back into the base pointer, effectively scrolling.
-        memory::copy(buffer, buffer + VGA_WIDTH * n, VGA_WIDTH * VGA_HEIGHT * 2);
-    }
-
-    void write(const char *str) {
-        // Don't try and print if VGA isn't initialised.
-        if(buffer == NULL) return;
+        if(info.buffer == NULL) return;
 
         for(size_t i = 0; i < cstr::len(str); i++) {
             // If character is a newline, advance rows.
@@ -219,31 +146,34 @@ namespace vgatext {
             // If character is a backspace, reverse columns.
             else if(str[i] == '\b') {
                 if(column != 0) column--;
-                putentryat(' ', colour, column, row);
+                drawchar(column, row, 128, 0x000000);
             }
 
             // Otherwise, print character to screen.
-            else putentryat(str[i], colour, column++, row);
+            else drawchar(column++, row, str[i], colour);
 
             // Scrolling code.
-            if(column == VGA_WIDTH) row++;
-            else if(row == VGA_HEIGHT) {
-                row = VGA_HEIGHT - 1;
+            if(column == info.textwidth) row++;
+            else if(row == info.textheight) {
+                row = info.textheight - 1;
                 scroll(1);
             }
 
-            if(column == VGA_WIDTH || row == VGA_HEIGHT) column = 0;
+            if(column == info.textwidth || row == info.textheight) column = 0;
         }
     }
 
-    void initialise(void) {
-        // Set the default VGA colours.
-        colour = VGA_LIGHT_GREY | VGA_BLACK << 4;
+    void initialise(mb_info_t *mbd) {
+        // Cache resolutions into a video_mode_t.
+        info.textheight = mbd->framebufferwidth / VESA_TEXT_HEIGHT;
+        info.textwidth = mbd->framebufferwidth / VESA_TEXT_WIDTH;
+        info.pixelheight = mbd->framebufferheight;
+        info.pixelwidth = mbd->framebufferwidth;
 
-        // Assign the address of the VGA text buffer.
-        buffer = (uint16_t*) 0xb8000;
-
-        // Zero the buffer (clearing the screen).
-        memory::set(buffer, 0, VGA_WIDTH * VGA_HEIGHT * 2);  
+        // Cache address, pitch, bytes per pixel and assign colour.
+        info.buffer = (pixel_t*) mbd->framebufferaddr;
+        info.pitch = mbd->framebufferpitch;
+        info.bpp = mbd->framebufferbpp;
+        colour = 0xFFFFFFFF;
     }
 }
