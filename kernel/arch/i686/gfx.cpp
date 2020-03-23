@@ -5,7 +5,9 @@
 #include <cstr.hpp>
 
 namespace gfx {
+    video_info_t *infoptr;
     video_info_t info;
+
     pixel_t colour;
     size_t column;
     size_t row;
@@ -70,5 +72,8 @@ namespace gfx {
         info.pitch = mbd->framebufferpitch;
         info.bpp = mbd->framebufferbpp;
         colour = 0xFFFFFFFF;
+
+        // Match address to video_mode_t.
+        infoptr = &info;
     }
 }

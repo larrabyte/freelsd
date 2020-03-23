@@ -11,14 +11,12 @@
 static const char frog[] = "\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n";
 
 void lighthouse(mb_info_t *mbd) {
-    uint32_t height = mbd->framebufferheight;
-    uint32_t width = mbd->framebufferwidth;
-    uint32_t bpp = mbd->framebufferbpp / 8;
+    gfx::video_info_t *vinf = gfx::infoptr;
     uint8_t pixeldata = 0;
 
     while(true) {
-        while(pixeldata < 255) memory::set(gfx::info.buffer, pixeldata++, height * width * bpp);
-        while(pixeldata > 000) memory::set(gfx::info.buffer, pixeldata--, height * width * bpp);
+        while(pixeldata < 255) memory::set(vinf->buffer, pixeldata++, vinf->pixelheight * vinf->pixelwidth * (vinf->bpp / 8));
+        while(pixeldata > 000) memory::set(vinf->buffer, pixeldata--, vinf->pixelheight * vinf->pixelwidth * (vinf->bpp / 8));
     }
 }
 
@@ -55,4 +53,6 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::write("x");
     serial::write(cstr::itoa(mbd->framebufferbpp, 10));
     serial::write("\n");
+
+    lighthouse(mbd);
 }

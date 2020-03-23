@@ -56,7 +56,9 @@ namespace gfx {
         size_t pitch, bpp;
     } video_info_t;
 
+    extern video_info_t *infoptr;
     extern video_info_t info;
+
     extern pixel_t colour;
     extern size_t column;
     extern size_t row;
