@@ -10,7 +10,7 @@ extern "C" {
         #if __STDC_HOSTED__
             abort();
         #else
-            serial::write("\n[ssp] Stack smashing guard overwritten.\n[ssp] Halting kernel execution.");
+            serial::write("[ssp] Stack smashing guard overwritten.\n[ssp] Halting kernel execution.\n");
         #endif
 
         while(true) {  }

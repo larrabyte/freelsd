@@ -1,6 +1,4 @@
 global idtflush
-
-extern idtptr
 extern isrhandler
 extern irqhandler
 
@@ -135,5 +133,6 @@ isr_common_stub:
     iret
 
 idtflush:
-    lidt [idtptr]
+    mov eax, [esp+4]
+    lidt [eax]
     ret

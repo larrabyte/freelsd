@@ -5,6 +5,10 @@
 
 #define GDTSIZE 5
 
+extern "C" {
+    void gdtflush(uintptr_t pointer);
+}
+
 namespace gdt {
     typedef struct entry {
         uint16_t limitlow;

@@ -16,7 +16,7 @@ namespace gfx {
         // Converts three 8-bit values into a pixel_t struct.
         pixel(uint8_t reds, uint8_t greens, uint8_t blues, uint8_t alphas) { red = reds; green = greens; blue = blues; alpha = alphas; }
 
-        // Default constructor, no arguments.
+        // Default constructor.
         pixel(void) { alpha = 0; red = 0; green = 0; blue = 0; }
 
         // Converts an integer into pixel_t.
@@ -43,24 +43,17 @@ namespace gfx {
     } bitmap_font_t;
 
     typedef struct video_info {
-        // Default constructor, no arguments.
+        // Default constructor.
         video_info(void) {
-            buffer = NULL;
-            pixelheight = 0;
-            pixelwidth = 0;
-            textwidth = 0;
-            textheight = 0;
-            pitch = 0;
-            bpp = 0;
+            buffer = NULL; pitch = 0; bpp = 0;
+            pixelheight = 0; pixelwidth = 0;
+            textwidth = 0; textheight = 0;
         }
 
         pixel_t *buffer;
-        size_t pixelheight;
-        size_t pixelwidth;
-        size_t textwidth;
-        size_t textheight;
-        size_t pitch;
-        size_t bpp;
+        size_t pixelwidth, pixelheight;
+        size_t textwidth, textheight;
+        size_t pitch, bpp;
     } video_info_t;
 
     extern video_info_t info;
@@ -68,17 +61,17 @@ namespace gfx {
     extern size_t column;
     extern size_t row;
 
-    // Initialise GFX namespace values.
-    void initialise(mb_info_t *mbd);
-
     // Draw a pixel at (x, y) with specified colours.
     void drawpixel(size_t x, size_t y, pixel_t colours);
 
-    // Draw a character.
+    // Draw a character on screen.
     void drawchar(size_t x, size_t y, int index, pixel_t colours);
 
     // A wrapper around drawpixel(). Keeps track of (x, y) for you :)
     void write(const char *str);
+
+    // Initialise GFX namespace values.
+    void initialise(mb_info_t *mbd);
 }
 
 #endif
