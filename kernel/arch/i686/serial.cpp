@@ -1,6 +1,6 @@
 #include <serial.hpp>
+#include <string.hpp>
 #include <hwio.hpp>
-#include <cstr.hpp>
 
 namespace serial {
     inline uint8_t transmitempty(void) {
@@ -8,7 +8,7 @@ namespace serial {
     }
 
     void write(const char *str) {
-        for(size_t i = 0; i < cstr::len(str); i++) {
+        for(size_t i = 0; i < strlen(str); i++) {
             while(transmitempty() == 0);
             outportb(SERIAL_COM1, str[i]);
         }

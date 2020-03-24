@@ -4,8 +4,8 @@
 #include <gfx/gfx.hpp>
 #include <memory.hpp>
 #include <serial.hpp>
+#include <string.hpp>
 #include <timer.hpp>
-#include <cstr.hpp>
 #include <gdt.hpp>
 
 static const char frog[] = "\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  beep boop keeping track of time\n \\/   \\/\n\n";
@@ -38,20 +38,20 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
 
         // Write available memory to screen.
         gfx::write("[kernel] available memory: ");
-        gfx::write(cstr::itoa(mempages, 10));
+        gfx::write(itoa(mempages, 10));
         gfx::write("MB\n");
     }
 
     // Write VESA video mode information to serial.
     serial::write("[kernel] framebuffer address: ");
-    serial::write(cstr::itoa(mbd->framebufferaddr, 10));
+    serial::write(itoa(mbd->framebufferaddr, 10));
     serial::write("\n");
     serial::write("[kernel] resolution: ");
-    serial::write(cstr::itoa(mbd->framebufferwidth, 10));
+    serial::write(itoa(mbd->framebufferwidth, 10));
     serial::write("x");
-    serial::write(cstr::itoa(mbd->framebufferheight, 10));
+    serial::write(itoa(mbd->framebufferheight, 10));
     serial::write("x");
-    serial::write(cstr::itoa(mbd->framebufferbpp, 10));
+    serial::write(itoa(mbd->framebufferbpp, 10));
     serial::write("\n");
 
     // lighthouse(mbd);

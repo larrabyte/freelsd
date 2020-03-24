@@ -2,8 +2,8 @@
 #include <gfx/gfx.hpp>
 #include <memory.hpp>
 #include <serial.hpp>
+#include <string.hpp>
 #include <hwio.hpp>
-#include <cstr.hpp>
 
 extern "C" {
     void irqhandler(idt::regs32_t *regs) {
@@ -19,7 +19,7 @@ extern "C" {
         // Call interrupt handler or print an error.
         if(!idt::inthandlers[regs->intnum]) {
             serial::write("[isr] unhandled interrupt: ");
-            serial::write(cstr::itoa(regs->intnum, 10));
+            serial::write(itoa(regs->intnum, 10));
             serial::write("\n");
         } else idt::inthandlers[regs->intnum](regs);
     }

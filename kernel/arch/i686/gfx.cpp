@@ -1,8 +1,8 @@
 #include <gfx/fonts.hpp>
 #include <gfx/gfx.hpp>
 #include <memory.hpp>
+#include <string.hpp>
 #include <hwio.hpp>
-#include <cstr.hpp>
 
 namespace gfx {
     video_info_t *infoptr;
@@ -36,7 +36,7 @@ namespace gfx {
     void write(const char *str) {
         if(info.buffer == NULL) return;
 
-        for(size_t i = 0; i < cstr::len(str); i++) {
+        for(size_t i = 0; i < strlen(str); i++) {
             // If character is a newline, advance rows.
             if(str[i] == '\n') { column = 0; row++; }
 
