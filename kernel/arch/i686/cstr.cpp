@@ -48,8 +48,8 @@ namespace cstr {
     }
 
     size_t len(const char *str) {
-        size_t len = 0;
-        while(str[len]) len++;
-        return len;
+        const char *start = str;
+        while(*str) str++;
+        return (str - start);
     }
 }

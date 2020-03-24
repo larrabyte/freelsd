@@ -71,7 +71,7 @@ namespace gfx {
     // Draw a character on screen.
     void drawchar(size_t x, size_t y, int index, pixel_t colours);
 
-    // A wrapper around drawpixel(). Keeps track of (x, y) for you :)
+    // A wrapper around drawchar(). Prints a string.
     void write(const char *str);
 
     // Initialise GFX namespace values.
