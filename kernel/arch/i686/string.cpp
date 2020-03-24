@@ -3,6 +3,13 @@
 // Static storage for string functions.
 static char internalbuf[256];
 
+static void swap(char *a, char *b) {
+    char temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+
 static void reverse(char *str, size_t length) {
     size_t end = length - 1;
     size_t start = 0;
@@ -10,12 +17,6 @@ static void reverse(char *str, size_t length) {
     while(start < end) {
         swap(&str[start++], &str[end--]);
     }
-}
-
-static void swap(char *a, char *b) {
-    char temp = *a;
-    *a = *b;
-    *b = temp;
 }
 
 size_t strlen(const char *str) {
