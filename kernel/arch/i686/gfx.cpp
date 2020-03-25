@@ -33,30 +33,35 @@ namespace gfx {
         memory::copy(info.buffer, info.buffer + info.pixelwidth * n, info.pixelwidth * info.pixelheight * info.bpp);
     }
 
+    void writechar(const char c) {
+        // If character is a newline, advance rows.
+        if(c == '\n') { column = 0; row++; }
+
+        // If character is a backspace, reverse columns.
+        else if(c == '\b') {
+            if(column != 0) column--;
+            drawchar(column, row, 128, 0x000000);
+        }
+
+        // Otherwise, print character to screen.
+        else drawchar(column++, row, c, colour);
+
+        // Scrolling code.
+        if(column == info.textwidth) row++;
+        else if(row == info.textheight) {
+            row = info.textheight - 1;
+            scroll(1);
+        }
+
+        if(column == info.textwidth || row == info.textheight) column = 0;
+    }
+
     void write(const char *str) {
         if(info.buffer == NULL) return;
 
+        // Call writechar() on each character.
         for(size_t i = 0; i < strlen(str); i++) {
-            // If character is a newline, advance rows.
-            if(str[i] == '\n') { column = 0; row++; }
-
-            // If character is a backspace, reverse columns.
-            else if(str[i] == '\b') {
-                if(column != 0) column--;
-                drawchar(column, row, 128, 0x000000);
-            }
-
-            // Otherwise, print character to screen.
-            else drawchar(column++, row, str[i], colour);
-
-            // Scrolling code.
-            if(column == info.textwidth) row++;
-            else if(row == info.textheight) {
-                row = info.textheight - 1;
-                scroll(1);
-            }
-
-            if(column == info.textwidth || row == info.textheight) column = 0;
+            writechar(str[i]);
         }
     }
 

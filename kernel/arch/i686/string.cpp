@@ -1,7 +1,8 @@
 #include <string.hpp>
+#include <stdarg.h>
 
-// Static storage for string functions.
-static char internalbuf[256];
+// Static storage for itoa().
+static char internalbuf[32];
 
 static void swap(char *a, char *b) {
     char temp = *a;
@@ -60,4 +61,44 @@ char *itoa(intmax_t num, int base) {
     internalbuf[index] = '\0';
     reverse(internalbuf, index);
     return internalbuf;
+}
+
+void printf(printf_output_t func, char *format, ...) {
+    uintptr_t pointers;
+    int integers;
+    char *chars;
+    va_list ap;
+
+    va_start(ap, format);
+
+    for(char *fs = format; *fs; fs++) {
+        // If *fs isn't the start of a parameter.
+        if(*fs != '%') {
+            func(*fs);
+            continue;
+        }
+
+        // Parameter specified?
+        switch(*++fs) {
+            case 'd':
+                integers = va_arg(ap, int);
+                chars = itoa(integers, 10);
+                for(char *s = chars; *s; s++) func(*s);
+                break;
+            case 'p':
+                pointers = va_arg(ap, uintptr_t);
+                chars = itoa(pointers, 16);
+                for(char *s = chars; *s; s++) func(*s);
+                break;
+            case 's':
+                for(char *s = va_arg(ap, char*); *s; s++) func(*s);
+                break;
+            default:
+                func(*fs);
+                break;
+        }
+    }
+
+    // Cleanup.
+    va_end(ap);
 }

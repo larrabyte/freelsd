@@ -17,11 +17,8 @@ extern "C" {
 
     void isrhandler(idt::regs32_t *regs) {
         // Call interrupt handler or print an error.
-        if(!idt::inthandlers[regs->intnum]) {
-            serial::write("[isr] unhandled interrupt: ");
-            serial::write(itoa(regs->intnum, 10));
-            serial::write("\n");
-        } else idt::inthandlers[regs->intnum](regs);
+        if(!idt::inthandlers[regs->intnum]) printf(&serial::writechar, "[isr] unhandled interrupt: %d\n", regs->intnum);
+        else idt::inthandlers[regs->intnum](regs);
     }
 }
 

@@ -7,10 +7,14 @@ namespace serial {
         return inportb(SERIAL_COM1 + 5) & 0x20;
     }
 
+    void writechar(const char c) {
+        while(transmitempty() == 0);
+        outportb(SERIAL_COM1, c);
+    }
+
     void write(const char *str) {
         for(size_t i = 0; i < strlen(str); i++) {
-            while(transmitempty() == 0);
-            outportb(SERIAL_COM1, str[i]);
+            writechar(str[i]);
         }
     }
 
