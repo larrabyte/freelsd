@@ -9,7 +9,6 @@ static void swap(char *a, char *b) {
     *b = temp;
 }
 
-
 static void reverse(char *str, size_t length) {
     size_t end = length - 1;
     size_t start = 0;
@@ -25,30 +24,40 @@ size_t strlen(const char *str) {
     return (str - start);
 }
 
-char *itoa(int num, int base) {
+char *itoa(intmax_t num, int base) {
     bool negative = false;
     size_t index = 0;
 
-    if(num == 0) {
+    if(num < 0 && base == 10) {
+        negative = true;
+        num = -num;
+    }
+
+    // Check for invalid parameters.
+    if(base < 2 || base > 32 || num == 0) {
         internalbuf[index++] = '0';
         internalbuf[index] = '\0';
         return internalbuf;
-    } else if(num < 0 && base == 10) {
-        negative = true;
-        num = -num;
     }
 
     // Converts the number into ASCII in reverse order.
     while(num) {
         int rem = num % base;
-        internalbuf[index++] = (rem > 9) ? (rem > 10) + 'a' : rem + '0';
+        internalbuf[index++] = (rem >= 10) ? 65 + (rem - 10) : 48 + rem;
         num = num / base;
     }
 
+    // Negative number?
     if(negative) internalbuf[index++] = '-';
-    internalbuf[index] = '\0';
 
-    // Reverse and return.
+    // Hex number?
+    if(base == 16) {
+        internalbuf[index++] = 'x';
+        internalbuf[index++] = '0';
+    }
+
+    // Terminate, reverse and return.
+    internalbuf[index] = '\0';
     reverse(internalbuf, index);
     return internalbuf;
 }

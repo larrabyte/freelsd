@@ -44,7 +44,7 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
 
     // Write VESA video mode information to serial.
     serial::write("[kernel] framebuffer address: ");
-    serial::write(itoa(mbd->framebufferaddr, 10));
+    serial::write(itoa(mbd->framebufferaddr, 16));
     serial::write("\n");
     serial::write("[kernel] resolution: ");
     serial::write(itoa(mbd->framebufferwidth, 10));
@@ -54,5 +54,5 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::write(itoa(mbd->framebufferbpp, 10));
     serial::write("\n");
 
-    // lighthouse(mbd);
+    lighthouse(mbd);
 }
