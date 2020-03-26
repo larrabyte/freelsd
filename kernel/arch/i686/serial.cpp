@@ -1,6 +1,7 @@
 #include <serial.hpp>
 #include <string.hpp>
 #include <hwio.hpp>
+#include <stdarg.h>
 
 namespace serial {
     inline uint8_t transmitempty(void) {
@@ -16,6 +17,13 @@ namespace serial {
         for(size_t i = 0; i < strlen(str); i++) {
             writechar(str[i]);
         }
+    }
+
+    void printf(const char *format, ...) {
+        va_list ap;
+        va_start(ap, format);
+        printk(&writechar, format, ap);
+        va_end(ap);
     }
 
     void initialise(void) {

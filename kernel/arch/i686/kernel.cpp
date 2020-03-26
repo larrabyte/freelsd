@@ -37,12 +37,12 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
         uint64_t mempages = (mbd->lowermem + mbd->uppermem) / 1024;
 
         // Write available memory to screen.
-        printf(&gfx::writechar, "[kernel] available memory: %dMB\n", mempages);
+        gfx::printf("[kernel] available memory: %dMB\n", mempages);
     }
 
     // Write VESA video mode information to serial.
-    printf(&serial::writechar, "[kernel] framebuffer address: %p\n", gfx::info.buffer);
-    printf(&serial::writechar, "[kernel] resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
+    serial::printf("[kernel] framebuffer address: %p\n", gfx::info.buffer);
+    serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
 
     // lighthouse(mbd);
 }

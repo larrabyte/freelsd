@@ -77,6 +77,9 @@ namespace gfx {
     // A wrapper around writechar(). Prints a string.
     void write(const char *str);
 
+    // A wrapper around printf(), uses &gfx::writechar.
+    void printf(const char *format, ...);
+
     // Initialise GFX namespace values.
     void initialise(mb_info_t *mbd);
 }

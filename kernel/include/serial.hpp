@@ -10,6 +10,9 @@ namespace serial {
     // Write a string to the serial port.
     void write(const char *str);
 
+    // A wrapper around printf(), uses &serial::writechar.
+    void printf(const char *format, ...);
+
     // Initialise the serial port.
     void initialise(void);
 }

@@ -3,11 +3,12 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdarg.h>
 
-typedef void (*printf_output_t)(const char);
+typedef void (*printk_output_t)(const char);
 
 // Minimal printf() implementation. Supports integers, pointers and strings.
-void printf(printf_output_t func, char *format, ...);
+void printk(printk_output_t func, const char *format, va_list ap);
 
 // Copies the ASCII representation of num into buffer. Integers passed in with bases other than 10 will be treated as unsigned.
 char *itoa(intmax_t num, int base);

@@ -65,6 +65,13 @@ namespace gfx {
         }
     }
 
+    void printf(const char *format, ...) {
+        va_list ap;
+        va_start(ap, format);
+        printk(&writechar, format, ap);
+        va_end(ap);
+    }
+
     void initialise(mb_info_t *mbd) {
         // Cache resolutions into a video_mode_t.
         info.textheight = mbd->framebufferwidth / VESA_TEXT_HEIGHT;

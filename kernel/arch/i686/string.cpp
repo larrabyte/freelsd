@@ -1,5 +1,4 @@
 #include <string.hpp>
-#include <stdarg.h>
 
 // Static storage for itoa().
 static char internalbuf[32];
@@ -63,15 +62,12 @@ char *itoa(intmax_t num, int base) {
     return internalbuf;
 }
 
-void printf(printf_output_t func, char *format, ...) {
+void printk(printk_output_t func, const char *format, va_list ap) {
     uintptr_t pointers;
     int integers;
     char *chars;
-    va_list ap;
 
-    va_start(ap, format);
-
-    for(char *fs = format; *fs; fs++) {
+    for(const char *fs = format; *fs; fs++) {
         // If *fs isn't the start of a parameter.
         if(*fs != '%') {
             func(*fs);
@@ -98,7 +94,4 @@ void printf(printf_output_t func, char *format, ...) {
                 break;
         }
     }
-
-    // Cleanup.
-    va_end(ap);
 }
