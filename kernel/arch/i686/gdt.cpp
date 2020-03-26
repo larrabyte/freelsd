@@ -28,4 +28,3 @@ namespace gdt {
         gdtflush((uintptr_t) &pointer);
     }
 }
-

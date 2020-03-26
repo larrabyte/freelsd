@@ -44,8 +44,8 @@ namespace idt {
         pointer.base = (uint32_t) &entries;
 
         // Initialise arrays to zero.
-        memory::set(inthandlers, 0, sizeof(handler_t) * IDTSIZE);
-        memory::set(entries, 0, sizeof(entry_t) * IDTSIZE);
+        memset(inthandlers, 0, sizeof(handler_t) * IDTSIZE);
+        memset(entries, 0, sizeof(entry_t) * IDTSIZE);
 
         // Remap the PICs to work with interrupts from 32 onwards.
         outportb(0x20, 0x11);

@@ -30,7 +30,7 @@ namespace gfx {
 
     void scroll(size_t n) {
         // Copies ahead of the buffer back into the base pointer, effectively scrolling.
-        memory::copy(info.buffer, info.buffer + info.pixelwidth * n, info.pixelwidth * info.pixelheight * info.bpp);
+        memcpy(info.buffer, info.buffer + info.pixelwidth * n, info.pixelwidth * info.pixelheight * info.bpp);
     }
 
     void writechar(const char c) {

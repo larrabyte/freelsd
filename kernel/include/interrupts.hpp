@@ -22,8 +22,6 @@
 #define IRQ15    47
 
 extern "C" {
-    void idtflush(uintptr_t pointer);
-
     void isr0();
     void isr1();
     void isr2();
@@ -72,6 +70,7 @@ extern "C" {
     void irq13();
     void irq14();
     void irq15();
+    void idtflush(uintptr_t pointer);
 }
 
 namespace idt {
