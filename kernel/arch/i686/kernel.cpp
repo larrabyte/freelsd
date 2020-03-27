@@ -43,7 +43,5 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::printf("[kernel] Framebuffer address: %p\n", gfx::info.buffer);
     serial::printf("[kernel] Resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
 
-    timer::sleep(1000);
-    panic("what up fools");
     // lighthouse(mbd);
 }

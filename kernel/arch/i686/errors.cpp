@@ -5,6 +5,10 @@
 #include <stdint.h>
 
 __attribute__((noreturn)) void panic(const char *message) {
+    // Disable interrupts.
+    asm volatile("cli");
+
+    // Set the framebuffer to white.
     memset(gfx::info.buffer, 0xFF, gfx::info.pixelwidth * gfx::info.pixelheight * gfx::info.bpp);
 
     // Reset gfx colour and cursor.
@@ -13,8 +17,8 @@ __attribute__((noreturn)) void panic(const char *message) {
     gfx::row = 1;
 
     gfx::printf(errfrog);
-    gfx::printf("[kernel] FreeLSD panic: %s\n", message);
-    gfx::printf("[kernel] Halting execution.\n");
+    gfx::printf("[kernel] freelsd panic: %s\n", message);
+    gfx::printf("[kernel] halting execution.\n");
 
     while(true) asm volatile("hlt");
 }
