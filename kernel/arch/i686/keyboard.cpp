@@ -4,6 +4,7 @@
 #include <gfx/gfx.hpp>
 #include <string.hpp>
 #include <serial.hpp>
+#include <errors.hpp>
 #include <hwio.hpp>
 #include <stdint.h>
 
@@ -43,6 +44,9 @@ namespace kboard {
             case 0xB6: flags ^= 1 << 1; break;
             case 0x9D: flags ^= 1 << 2; break;
             case 0xB8: flags ^= 1 << 3; break;
+
+            // Manually initiate kernel panic with the Escape key.
+            case 0x01: panic("escape pressed, user initiated crash.");
 
             default:
                 if(!checkbit(scancode, 7)) {
