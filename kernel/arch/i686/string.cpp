@@ -1,6 +1,6 @@
 #include <string.hpp>
 
-// Static storage for itoa().
+// Static, internal storage for printk().
 static char internalbuf[32];
 
 static void swap(char *a, char *b) {
@@ -24,7 +24,7 @@ size_t strlen(const char *str) {
     return (str - start);
 }
 
-char *itoa(intmax_t num, int base) {
+char *itoa(intmax_t num, char *buffer, int base) {
     bool negative = false;
     size_t index = 0;
 
@@ -35,31 +35,31 @@ char *itoa(intmax_t num, int base) {
 
     // Check for invalid parameters.
     if(base < 2 || base > 32 || num == 0) {
-        internalbuf[index++] = '0';
-        internalbuf[index] = '\0';
-        return internalbuf;
+        buffer[index++] = '0';
+        buffer[index] = '\0';
+        return buffer;
     }
 
     // Converts the number into ASCII in reverse order.
     while(num) {
         int rem = num % base;
-        internalbuf[index++] = (rem >= 10) ? 65 + (rem - 10) : 48 + rem;
+        buffer[index++] = (rem >= 10) ? 65 + (rem - 10) : 48 + rem;
         num = num / base;
     }
 
     // Negative number?
-    if(negative) internalbuf[index++] = '-';
+    if(negative) buffer[index++] = '-';
 
     // Hex number?
     if(base == 16) {
-        internalbuf[index++] = 'x';
-        internalbuf[index++] = '0';
+        buffer[index++] = 'x';
+        buffer[index++] = '0';
     }
 
     // Terminate, reverse and return.
-    internalbuf[index] = '\0';
-    reverse(internalbuf, index);
-    return internalbuf;
+    buffer[index] = '\0';
+    reverse(buffer, index);
+    return buffer;
 }
 
 void printk(printk_output_t func, const char *format, va_list ap) {
@@ -78,12 +78,12 @@ void printk(printk_output_t func, const char *format, va_list ap) {
         switch(*++fs) {
             case 'd':
                 integers = va_arg(ap, int);
-                chars = itoa(integers, 10);
+                chars = itoa(integers, internalbuf, 10);
                 for(char *s = chars; *s; s++) func(*s);
                 break;
             case 'p':
                 pointers = va_arg(ap, uintptr_t);
-                chars = itoa(pointers, 16);
+                chars = itoa(pointers, internalbuf, 16);
                 for(char *s = chars; *s; s++) func(*s);
                 break;
             case 's':

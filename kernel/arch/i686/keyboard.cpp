@@ -2,35 +2,53 @@
 #include <multiboot.hpp>
 #include <keyboard.hpp>
 #include <gfx/gfx.hpp>
+#include <string.hpp>
 #include <serial.hpp>
 #include <hwio.hpp>
+#include <stdint.h>
 
 namespace kboard {
     static const char uslayout_lower[128] = {
-        0,  27, '1', '2', '3', '4', '5', '6', '7', '8',	'9', '0', '-', '=', '\b',
+        0, 27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', '\b',
         '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', '\n',
-        0 /* 29 - control */, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`',
-        0/* left shift */, '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0 /* Right shift */,
-        '*', 0 /* alt */, ' ' /* spacebar */, 0 /* capslock */, 0 /* 59 - F1 key ... > */, 0, 0, 0, 0, 0, 0, 0, 0,
-        0,	/* < ... F10 */ 0 /* numlock */, 0 /* scrollock */, 0 /* home */, 0 /* up arrow */, 0 /* pageup */,	
-        '-', 0 /* left arrow */, 0, 0 /* right arrow */, '+', 0 /* end */, 0 /* down arrow */, 0 /* pagedown */,
-        0 /* insert */,	0 /* delete */,	0, 0, 0, 0 /* f11 */, 0 /* f12 */, 0, /* All other keys are undefined */
+        0, 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0,
+        '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, '*', 0,
+        ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, 0,
+        '+', 0, 0, 0, 0, 0,	0, 0, 0, 0, 0, 0
     };
 
-    static const char uslayout_upper[] = {
-        0, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 0,
-        0, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', 0,
+    static const char uslayout_upper[128] = {
+        0, 27, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', '\b',
+        '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', '\n',
         0, 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '\"', '~', 0,
-        '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?'
+        '|', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0, '*', 0,
+        ' ', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '-', 0, 0, 0,
+        '+', 0, 0, 0, 0, 0,	0, 0, 0, 0, 0, 0
     };
+
+    uint16_t flags = 0;
 
     void handler(idt::regs32_t *regs) {
         uint8_t scancode = inportb(0x60);
 
-        // Check if bit 7 is set. If not, key has been pressed.
-        if(!checkbit(scancode, 7)) {
-            serial::printf("[kboard] scancode (hex %p, dec %d)\n", scancode, scancode);
-            gfx::writechar(uslayout_lower[scancode]);
+        switch(scancode) {
+            // Regular scancode for flags.
+            case 0x2A: flags |= 1 << 0; break;
+            case 0x36: flags |= 1 << 1; break;
+            case 0x1D: flags |= 1 << 2; break;
+            case 0x38: flags |= 1 << 3; break;
+
+            // Regular scancode + 0x80 for flags.
+            case 0xAA: flags ^= 1 << 0; break;
+            case 0xB6: flags ^= 1 << 1; break;
+            case 0x9D: flags ^= 1 << 2; break;
+            case 0xB8: flags ^= 1 << 3; break;
+
+            default:
+                if(!checkbit(scancode, 7)) {
+                    if(checkbit(flags, 0) || checkbit(flags, 1)) gfx::writechar(uslayout_upper[scancode]);
+                    else gfx::writechar(uslayout_lower[scancode]);
+                }
         }
     }
 
