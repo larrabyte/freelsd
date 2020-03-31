@@ -19,6 +19,8 @@ void lighthouse(mb_info_t *mbd) {
     }
 }
 
+extern "C" void *kernelend;
+
 extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     gdt::initialise();
     idt::initialise();
@@ -48,6 +50,7 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     // Write VESA video mode information to serial.
     serial::printf("[kernel] framebuffer address: %p\n", gfx::info.buffer);
     serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
+    serial::printf("[kernel] end of kernel: %p\n", (char*) &kernelend);
 
     // lighthouse(mbd);
 }
