@@ -9,7 +9,7 @@ __attribute__((noreturn)) void panic(const char *message) {
     asm volatile("cli");
 
     // Set the framebuffer to white.
-    memset(gfx::info.buffer, 0xFF, gfx::info.pixelwidth * gfx::info.pixelheight * gfx::info.bpp);
+    memset(gfx::info.buffer, 0xFF, gfx::info.pixelwidth * gfx::info.pixelheight * (gfx::info.bpp / 8));
 
     // Reset gfx colour and cursor.
     gfx::colour = 0x00000000;
