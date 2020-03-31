@@ -36,6 +36,7 @@ global _start:function (_start.end - _start)
 _start:
     cli                 ; Disable interrupts.
     mov esp, stack_top  ; Move the stackptr into esp.
+    and esp, -16        ; Ensure stack is 16-bit aligned.
     push eax            ; Push pointer to mb_info_t.
     push ebx            ; Push the magic number.
 

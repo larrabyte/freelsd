@@ -31,17 +31,23 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::write(stdfrog);
     gfx::write(stdfrog);
 
+    // Check if bootloader is multiboot-compliant.
+    if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
+        serial::write("[kernel] not booted by a compliant bootloader.\n");
+        panic("not booted by a compliant bootloader.");
+    }
+
     if(checkbit(mbd->flags, 0)) {
         // Read number of memory blocks and divide to retrieve megabytes.
         uint64_t mempages = (mbd->lowermem + mbd->uppermem) / 1024;
 
         // Write available memory to screen.
-        gfx::printf("[kernel] Available memory: %dMB\n", mempages);
+        gfx::printf("[kernel] available memory: %dMB\n", mempages);
     }
 
     // Write VESA video mode information to serial.
-    serial::printf("[kernel] Framebuffer address: %p\n", gfx::info.buffer);
-    serial::printf("[kernel] Resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
+    serial::printf("[kernel] framebuffer address: %p\n", gfx::info.buffer);
+    serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
 
     // lighthouse(mbd);
 }
