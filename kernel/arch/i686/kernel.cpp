@@ -1,7 +1,7 @@
+#include <gfx/renderer.hpp>
 #include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
-#include <gfx/gfx.hpp>
 #include <memory.hpp>
 #include <serial.hpp>
 #include <string.hpp>

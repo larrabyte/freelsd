@@ -33,3 +33,7 @@ cd freelsd
 make
 ```
 Boom! FreeLSD compiled and running on your system.
+
+
+## Showcase (as of commit #78, just after [this](https://github.com/larrabyte/freelsd/commit/6a935549e634e4014af481627598e9fe316f96f8) one.)
+![FreeLSD Graphical Output and Serial Log](showcase.png)

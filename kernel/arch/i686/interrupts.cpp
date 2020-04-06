@@ -1,5 +1,5 @@
+#include <gfx/renderer.hpp>
 #include <interrupts.hpp>
-#include <gfx/gfx.hpp>
 #include <memory.hpp>
 #include <serial.hpp>
 #include <string.hpp>

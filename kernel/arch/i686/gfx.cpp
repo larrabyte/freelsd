@@ -1,5 +1,5 @@
+#include <gfx/renderer.hpp>
 #include <gfx/fonts.hpp>
-#include <gfx/gfx.hpp>
 #include <memory.hpp>
 #include <string.hpp>
 #include <hwio.hpp>
