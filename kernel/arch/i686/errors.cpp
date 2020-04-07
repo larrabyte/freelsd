@@ -1,6 +1,6 @@
 #include <gfx/renderer.hpp>
+#include <mem/libc.hpp>
 #include <errors.hpp>
-#include <memory.hpp>
 #include <serial.hpp>
 #include <stdint.h>
 

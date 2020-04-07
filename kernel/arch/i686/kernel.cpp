@@ -2,7 +2,7 @@
 #include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
-#include <memory.hpp>
+#include <mem/libc.hpp>
 #include <serial.hpp>
 #include <string.hpp>
 #include <errors.hpp>

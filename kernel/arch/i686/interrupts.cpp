@@ -1,6 +1,6 @@
 #include <gfx/renderer.hpp>
 #include <interrupts.hpp>
-#include <memory.hpp>
+#include <mem/libc.hpp>
 #include <serial.hpp>
 #include <string.hpp>
 #include <hwio.hpp>
