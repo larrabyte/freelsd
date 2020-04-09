@@ -28,6 +28,6 @@ extern "C" {
     uintptr_t __stack_chk_guard = 0xDEADBEEF;
 
     __attribute__((noreturn)) void __stack_chk_fail(void) {
-        panic("Stack smashing guard overwritten.");
+        panic("stack smashing guard overwritten.");
     }
 }

@@ -50,12 +50,6 @@ char *itoa(intmax_t num, char *buffer, int base) {
     // Negative number?
     if(negative) buffer[index++] = '-';
 
-    // Hex number?
-    if(base == 16) {
-        buffer[index++] = 'x';
-        buffer[index++] = '0';
-    }
-
     // Terminate, reverse and return.
     buffer[index] = '\0';
     reverse(buffer, index);

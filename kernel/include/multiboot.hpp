@@ -107,7 +107,7 @@ typedef struct multiboot_header_table_elf {
 } mbht_elf_t;
 
 typedef struct multiboot_info {
-    // Multiboot version number.
+    // Multiboot flags.
     uint32_t flags;
 
     // Available memory, fetched from BIOS/UEFI.
@@ -129,11 +129,11 @@ typedef struct multiboot_info {
         mbht_elf_t elf;
     } ex;
 
-    // Memory mapping buffer.
+    // Memory map.
     uint32_t mmaplength;
     uint32_t mmapaddr;
 
-    // Drive info buffer.
+    // Drive info.
     uint32_t drivelength;
     uint32_t driveaddr;
 

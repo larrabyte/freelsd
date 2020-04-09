@@ -3,8 +3,8 @@
 
 void memset(const void *memory, uint8_t value, size_t n) {
     // Stuff 8-bit value into a 64-bit integer using bitshifting.
-    uint32_t manybits = (value << 24) | (value << 16) | (value << 8) | value;
-    uint64_t morebits = ((uint64_t) manybits << 32) | manybits;
+    uint32_t manybits = value << 24 | value << 16 | value << 8 | value;
+    uint64_t morebits = (uint64_t) manybits << 32 | manybits;
     char *memoryptr = (char*) memory;
 
     // Set memory in 8-byte chunks.

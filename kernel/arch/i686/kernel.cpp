@@ -1,3 +1,4 @@
+#include <mem/physalloc.hpp>
 #include <gfx/renderer.hpp>
 #include <interrupts.hpp>
 #include <multiboot.hpp>
@@ -29,28 +30,24 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::initialise();
     kboard::initialise();
 
-    // The FreeLSD frog!
-    serial::write(stdfrog);
-    gfx::write(stdfrog);
-
     // Check if bootloader is multiboot-compliant.
     if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
         serial::write("[kernel] not booted by a compliant bootloader.\n");
         panic("not booted by a compliant bootloader.");
     }
 
-    if(checkbit(mbd->flags, 0)) {
-        // Read number of memory blocks and divide to retrieve megabytes.
-        uint64_t mempages = (mbd->lowermem + mbd->uppermem) / 1024;
-
-        // Write available memory to screen.
-        gfx::printf("[kernel] available memory: %dMB\n", mempages);
-    }
+    // The FreeLSD frog!
+    serial::write(stdfrog);
+    gfx::write(stdfrog);
 
     // Write VESA video mode information to serial.
-    serial::printf("[kernel] framebuffer address: %p\n", gfx::info.buffer);
+    serial::printf("[kernel] framebuffer address: 0x%p\n", gfx::info.buffer);
     serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
-    serial::printf("[kernel] end of kernel: %p\n", (char*) &kernelend);
+    serial::printf("[kernel] end of kernel: 0x%p\n", &kernelend);
+
+    // Initialise PMM.
+    physmem::initialise(mbd);
+    gfx::printf("[kernel] total memory available: %d KB\n\n", physmem::totalsize);
 
     // lighthouse(mbd);
 }

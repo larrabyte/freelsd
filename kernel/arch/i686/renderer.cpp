@@ -2,6 +2,7 @@
 #include <gfx/fonts.hpp>
 #include <mem/libc.hpp>
 #include <string.hpp>
+#include <serial.hpp>
 #include <hwio.hpp>
 
 namespace gfx {
@@ -50,7 +51,7 @@ namespace gfx {
         if(column == info.textwidth) row++;
         else if(row == info.textheight) {
             row = info.textheight - 1;
-            scroll(1);
+            scroll(TEXT_SPACING_H);
         }
 
         if(column == info.textwidth || row == info.textheight) column = 0;
@@ -74,8 +75,8 @@ namespace gfx {
 
     void initialise(mb_info_t *mbd) {
         // Cache resolutions into a video_mode_t.
-        info.textheight = mbd->framebufferwidth / VESA_TEXT_HEIGHT;
-        info.textwidth = mbd->framebufferwidth / VESA_TEXT_WIDTH;
+        info.textheight = mbd->framebufferheight / TEXT_SPACING_H;
+        info.textwidth = mbd->framebufferwidth / TEXT_SPACING_W;
         info.pixelheight = mbd->framebufferheight;
         info.pixelwidth = mbd->framebufferwidth;
 
