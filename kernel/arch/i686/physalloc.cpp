@@ -112,19 +112,9 @@ namespace physmem {
         size_t max = mbd->mmaplength / sizeof(mb_mmap_t);
 
         for(size_t i = 0; i < max; i++) {
-            uint64_t addr = ((uint64_t) mmap[i].highaddr << 32) | mmap[i].lowaddr;
-            uint64_t length = ((uint64_t) mmap[i].highlen << 32) | mmap[i].lowlen;
-
-            gfx::printf("[physmm] memory map, region %d: ", i);
-            gfx::printf("0x%p%p (start), 0x%p (length) --> ", mmap[i].highaddr, mmap[i].lowaddr, length);
-
-            if(mmap[i].type == 1) {
-                gfx::printf("Available\n");
-                gfx::printf("[kernel] addr: 0x%p, len: 0x%p\n\n", addr, length);
-                markregionfree((void*) addr, length);
-            }
-
-            else gfx::printf("Reserved\n");
-        }    
+            gfx::printf("[physmm] memory map, region %d: starts at 0x%p\n", i, mmap[i].lowaddr);
+            gfx::printf("         length of 0x%p, type %d\n\n", mmap[i].lowlen, mmap[i].type);
+            if(mmap[i].type == 1) markregionfree((void*) mmap[i].lowaddr, mmap[i].lowlen);
+        }
     }
 }

@@ -47,7 +47,9 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
 
     // Initialise PMM.
     physmem::initialise(mbd);
-    gfx::printf("[kernel] total memory available: %d KB\n\n", physmem::totalsize);
+    gfx::printf("[kernel] total memory available: %d KB\n", physmem::totalsize);
+    gfx::printf("[kernel] max memory blocks available: %d\n", physmem::maxblocks);
+    gfx::printf("[kernel] currently used memory blocks: %d\n", physmem::usedblocks);
 
     // lighthouse(mbd);
 }
