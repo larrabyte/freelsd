@@ -1,9 +1,9 @@
-#include <mem/physalloc.hpp>
 #include <gfx/renderer.hpp>
 #include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
 #include <mem/libc.hpp>
+#include <mem/phys.hpp>
 #include <serial.hpp>
 #include <string.hpp>
 #include <errors.hpp>
