@@ -15,7 +15,7 @@ typedef void (*printk_output_t)(const char);
 void printk(printk_output_t func, const char *format, va_list ap);
 
 // Copies the ASCII representation of num into buffer. Integers passed in with bases other than 10 will be treated as unsigned.
-char *itoa(intmax_t num, char *buffer, int base);
+char *itoa(intmax_t num, char *buffer, int base, bool ptrpad);
 
 // Return the size of a C-style string minus the terminating NULL character.
 size_t strlen(const char *str);
