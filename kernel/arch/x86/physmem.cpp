@@ -112,5 +112,8 @@ namespace physmem {
             if(mmap->type == 1) markregionfree(mmap->lowaddr, mmap->lowlen);
             mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }
+
+        // Mark the kernel as in use so the PMM doesn't allocate it.
+        markregionused(0x100000, (size_t) &kernelend - 0x100000);
     }
 }
