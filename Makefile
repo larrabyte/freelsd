@@ -1,11 +1,11 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: all i686 clean build/freelsd.iso
+.PHONY: all x86 clean build/freelsd.iso
 
-ARCH := i686
+ARCH := x86
 QEMU := qemu-system-i386
-CPP  := $(ARCH)-elf-g++
+CPP  := i686-elf-g++
 ASM  := nasm
 
 # ----------------------------------
@@ -46,7 +46,7 @@ clean:
 	@rm -f serial.log
 	@printf "[wipe] Deleted serial.log.\n"
 
-i686: build/freelsd.iso
+x86: build/freelsd.iso
 	@printf "[qemu] Now booting FreeLSD.\n"
 	@$(QEMU) $(QFLAGS)
 
