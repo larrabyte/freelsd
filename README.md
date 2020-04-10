@@ -4,11 +4,17 @@ An attempt to make an OS, following the [OSDev Wiki](https://wiki.osdev.org) alo
 
 ## Features
 FreeLSD currently has the following features:
+* **(Upcoming)** Paging and virtual memory management.
 * Interrupt handling (currently implemented in the keyboard/timer).
 * Compatiability with multiboot bootloaders and VESA graphics.
 * Protection against stack smashing (via the SSP).
 * Basic support for writing to serial.
+* Physical memory management.
 * The FreeLSD frog!
+
+
+## Compatiability and Minimum Requirements
+FreeLSD can currently run on an x86 processor with 256KB of RAM, however GRUB cannot boot with such a low amount of memory, so we need at a minimum **4MB** of RAM. As more features are added, the minimum amount of RAM required will increase, so be sure to check this page every once in a while.
 
 
 ## Prerequisites and Compilation
