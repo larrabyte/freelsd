@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 namespace gfx {
-    uint64_t fontmap[129] = {
+    const uint64_t fontmap[129] = {
         0x0200000000000000UL,  // U+000 (nul)
 
         0x0, 0x0, 0x0, 0x0, 0x0, 0x0,

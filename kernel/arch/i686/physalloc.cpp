@@ -1,7 +1,7 @@
 #include <mem/physalloc.hpp>
-#include <gfx/renderer.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
+#include <serial.hpp>
 
 namespace physmem {
     static uint32_t map[PMMGR_BITMAP_ARRAY_SIZE];
@@ -21,20 +21,17 @@ namespace physmem {
         return map[index / 32] & (1 << (index % 32));
     }
 
-    int getfirstfree(size_t n) {
-        if(n <= 0) return -1;
-
+    int findfirstfree(size_t n) {
         // Iterate through 32-bit chunks of the bitmap.
         for(size_t i = 0; i < maxblocks; i++) {
-            // If all bits are set, no free chunks here.
             if(map[i] == 0xFFFFFFFF) continue;
 
             // Iterate through the individual bits.
-            for(size_t j = 0; j < 32; i++) {
+            for(size_t j = 0; j < 32; j++) {
 
                 // We found the first free bit!
                 if(!checkbit(map[i], j)) {
-                    // If one block requested, return free.
+                    // If one block requested, return.
                     if(n == 1) return 32 * i + j;
                     size_t starting = i * 32 + (1 << j);
                     size_t free = 0;
@@ -48,32 +45,28 @@ namespace physmem {
             }
         }
 
-        return -1;
+        return -1;  // No free bits :(
     }
 
     void *allocblocks(size_t n) {
         if(maxblocks - usedblocks < n) return 0;
- 
-        int block = getfirstfree(n);
-        if(block == -1) return 0;
-        for(size_t i = 0; i < n; i++) setbit(block + i);
+        int blocks = findfirstfree(n);
+        if(blocks == -1) return 0;
         usedblocks += n;
 
-        return (void*) (block * PMMGR_BLOCK_SIZE);
+        for(size_t i = 0; i < n; i++) setbit(blocks + i);
+        return (void*) (blocks * PMMGR_BLOCK_SIZE);
     }
 
-    void freeblocks(const void *base, size_t size) {
-        size_t block = (uintptr_t) base / PMMGR_BLOCK_SIZE;
-        for(size_t i = 0; i < size; i++) {
-            unsetbit(block + i);
-        }
-
-        usedblocks -= size;
+    void freeblocks(uintptr_t base, size_t n) {
+        size_t blocks = base / PMMGR_BLOCK_SIZE;
+        for(size_t i = 0; i < n; i++) unsetbit(blocks + i);
+        usedblocks -= n;
     }
 
-    void markregionfree(const void *base, size_t size) {
-        size_t align = (uintptr_t) base / PMMGR_BLOCK_SIZE;
+    void markregionfree(uintptr_t base, size_t size) {
         size_t blocks = size / PMMGR_BLOCK_SIZE;
+        size_t align = base / PMMGR_BLOCK_SIZE;
 
         while(blocks-- > 0) {
             unsetbit(align++);
@@ -85,9 +78,9 @@ namespace physmem {
         setbit(0);
     }
 
-    void markregionused(const void *base, size_t size) {
-        size_t align = (uintptr_t) base / PMMGR_BLOCK_SIZE;
+    void markregionused(uintptr_t base, size_t size) {
         size_t blocks = size / PMMGR_BLOCK_SIZE;
+        size_t align = base / PMMGR_BLOCK_SIZE;
 
         while(blocks-- > 0) {
             setbit(align++);
@@ -100,21 +93,24 @@ namespace physmem {
         if(!checkbit(mbd->flags, 0) || !checkbit(mbd->flags, 6)) panic("grub memory fields invalid!");
 
         // Grab available memory in kilobytes.
-        totalsize = (mbd->lowermem + mbd->uppermem);
+        totalsize = mbd->lowermem + mbd->uppermem;
         maxblocks = totalsize * 1024 / PMMGR_BLOCK_SIZE;
 
         // Set all memory as in use.
-        memset(map, 0xFF, maxblocks / PMMGR_BLOCKS_PER_BYTE);
+        memset(map, 0xFF, PMMGR_BITMAP_ARRAY_SIZE * 4);
         usedblocks = maxblocks;
 
         // Iterate through GRUB's memory map.
-        mb_mmap_t* mmap = (mb_mmap_t*) mbd->mmapaddr;
-        size_t max = mbd->mmaplength / sizeof(mb_mmap_t);
+        mb_mmap_t *mmap = (mb_mmap_t*) mbd->mmapaddr;
+        size_t memregion = 0;
+        serial::printf("\n");
 
-        for(size_t i = 0; i < max; i++) {
-            gfx::printf("[physmm] memory map, region %d: starts at 0x%p\n", i, mmap[i].lowaddr);
-            gfx::printf("         length of 0x%p, type %d\n\n", mmap[i].lowlen, mmap[i].type);
-            if(mmap[i].type == 1) markregionfree((void*) mmap[i].lowaddr, mmap[i].lowlen);
+        while((uintptr_t) mmap < mbd->mmapaddr + mbd->mmaplength) {
+            serial::printf("[physmm] memory map, region %d: 0x%p (start), 0x%p or %dKB (size), type %d\n",
+                           memregion++, mmap->lowaddr, mmap->lowlen, mmap->lowlen / 1024, mmap->type);
+
+            if(mmap->type == 1) markregionfree(mmap->lowaddr, mmap->lowlen);
+            mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }
     }
 }

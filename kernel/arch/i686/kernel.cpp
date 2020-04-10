@@ -40,16 +40,17 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     serial::write(stdfrog);
     gfx::write(stdfrog);
 
-    // Write VESA video mode information to serial.
+    // Write debugging information out to serial.
+    serial::printf("[physmm] memory map address: 0x%p (length of %d bytes)\n", mbd->mmapaddr, mbd->mmaplength);
     serial::printf("[kernel] framebuffer address: 0x%p\n", gfx::info.buffer);
     serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::info.pixelwidth, gfx::info.pixelheight, gfx::info.bpp);
     serial::printf("[kernel] end of kernel: 0x%p\n", &kernelend);
 
     // Initialise PMM.
     physmem::initialise(mbd);
-    gfx::printf("[kernel] total memory available: %d KB\n", physmem::totalsize);
-    gfx::printf("[kernel] max memory blocks available: %d\n", physmem::maxblocks);
-    gfx::printf("[kernel] currently used memory blocks: %d\n", physmem::usedblocks);
+    gfx::printf("[kernel] low memory: %dKB, high memory: %dKB\n", mbd->lowermem, mbd->uppermem);
+    gfx::printf("[kernel] total memory available: %dKB\n", physmem::totalsize);
 
-    // lighthouse(mbd);
+    // At this point, anything below 640K is fair game according to the physical memory manager.
+    // Note for self: move anything useful below 640K out of the way before PMM decides to shit on it.
 }
