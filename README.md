@@ -20,13 +20,14 @@ FreeLSD can currently run on an x86 processor with 256KB of RAM, however GRUB ca
 ## Prerequisites and Compilation
 You'll need `nasm` and `i686-elf-gcc` to compile FreeLSD. I use Arch Linux, so for fellow users, simply type the following in a terminal:
 ```
-sudo pacman -S nasm
-```
-```
-yay -S i686-elf-gcc
+sudo pacman -S nasm && yay -S i686-elf-gcc
 ```
 NOTE: `i686-elf-gcc` cannot be found using `pacman`, it is hosted on the Arch User Repository. I use [yay](https://github.com/Jguer/yay) to manage my installed AUR packages, it won't matter what manager you use as long as you have `i686-elf-gcc` installed.
 
+Then, grab `grub-mkrescue` and the libraries required to create an ISO with:
+```
+sudo pacman -S grub libisoburn
+```
 If you simply want to run FreeLSD in a VM, install `QEMU` via the following command (the Makefile also immediately boots QEMU for you):
 ```
 sudo pacman -S qemu qemu-arch-extra
