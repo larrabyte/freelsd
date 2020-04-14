@@ -50,8 +50,8 @@ namespace virtmem {
     }
 
     void pfhandler(idt::regs32_t *regs) {
-        // Fetch the faulty address from control register 2 (get EIP).
-        uint32_t eip; asm volatile("mov %%cr2, %0" : "=r" (eip));
+        // Fetch the page fault address from control register 2.
+        uint32_t faulty; asm volatile("mov %%cr2, %0" : "=r" (faulty));
 
         panic("page fault exception generated.\n"
               "[kernel] fault address (eip): 0x%p\n"
@@ -59,12 +59,26 @@ namespace virtmem {
               "[kernel] page supervisor bit: %s\n"
               "[kernel] page writable bit: %s\n"
               "[kernel] page reserved bit: %s\n"
-              "[kernel] page present bit: %s", eip,
+              "[kernel] page present bit: %s", faulty,
               (checkbit(regs->errcode, 4)) ? "set" : "unset",
               (checkbit(regs->errcode, 2)) ? "set" : "unset",
               (checkbit(regs->errcode, 1)) ? "set" : "unset",
               (checkbit(regs->errcode, 3)) ? "set" : "unset",
               (checkbit(regs->errcode, 0)) ? "set" : "unset");
+    }
+
+    void udhandler(idt::regs32_t *regs) {
+        uint32_t faulty; asm volatile("mov %%cr2, %0" : "=r" (faulty));
+
+        panic("invalid opcode, %s\n"
+              "[kernel] printing register dump to display and serial.\n\n"
+              "[kernel]  gs: 0x%p,  fs: 0x%p,  es: 0x%p,  ds: 0x%p\n"
+              "[kernel] edi: 0x%p, esi: 0x%p, ebp: 0x%p, esp: 0x%p\n"
+              "[kernel] ebx: 0x%p, edx: 0x%p, ecx: 0x%p, eax: 0x%p\n"
+              "[kernel] eip: 0x%p, cr2: 0x%p,  cs: 0x%p,  ss: 0x%p",
+              (faulty == 0x0) ? "attempted NULL dereference." : "unknown cause.",
+              regs->gs, regs->fs, regs->es, regs->ds, regs->edi, regs->esi, regs->ebp,
+              regs->esp, regs->ebx, regs->edx, regs->ecx, regs->eax, regs->eip, faulty, regs->cs, regs->ss);
     }
 
     pt_entry_t *lookupentry(uint32_t virtaddr) {
@@ -136,6 +150,7 @@ namespace virtmem {
 
         // Register the page fault handler and switch the active page directory.
         idt::registerhandler(14, &pfhandler);
+        idt::registerhandler(6, &udhandler);
         loadpdbr((uint32_t) currentdir);
     }
 }
