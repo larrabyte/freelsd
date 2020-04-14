@@ -1,33 +1,43 @@
-ENTRY(_start)
+OUTPUT_FORMAT(elf32-i386)
+ENTRY(__bootstrapx86)
+
+KERNEL_VIRTUAL_BASE = 0xC0000000;
 
 SECTIONS {
-    /* Begin putting sections at 1 MiB. */
+    /* Begin putting sections at 1 MB physical. */
     . = 1M;
 
-    /* First put the multiboot header,
-       then the .text section. */
-    .text BLOCK(4K) : ALIGN(4K) {
-        *(.multiboot)
+    .multiboot.header : {
+        *(multiboot.header)
+    }
+
+    .multiboot.data : {
+        *(.multiboot.data)
+    }
+
+    .multiboot.text : {
+        *(multiboot.text)
+    }
+
+    /* Place everything else at 3GB onwards. */
+    . += KERNEL_VIRTUAL_BASE;
+
+    /* Code section and read-only data. */
+    .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VIRTUAL_BASE) {
         *(.text)
+        *(.rodata*)
     }
 
-    /* Read-only data. */
-    .rodata BLOCK(4K) : ALIGN(4K) {
-        *(.rodata)
-    }
-
-    /* Read-write data (initialized) */
-    .data BLOCK(4K) : ALIGN(4K) {
+    /* Read-write and read-only data. */
+    .data ALIGN(4K) : AT(ADDR(.data) - KERNEL_VIRTUAL_BASE) {
         *(.data)
     }
 
     /* Read-write data (uninitialized) and the stack. */
-    .bss BLOCK(4K) : ALIGN(4K) {
+    .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VIRTUAL_BASE) {
         *(COMMON)
         *(.bss)
     }
 
-    /* The compiler may produce other sections, by default it will put them in
-       a segment with the same name. Simply add stuff here as needed. */
     kernelend = ALIGN(4K);
 }

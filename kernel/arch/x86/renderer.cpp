@@ -2,19 +2,18 @@
 #include <gfx/fonts.hpp>
 #include <mem/libc.hpp>
 #include <string.hpp>
-#include <serial.hpp>
 #include <hwio.hpp>
 
 namespace gfx {
-    video_info_t *infoptr;
-    video_info_t info;
+    static video_info_t vdata;
+    video_info_t *data;
 
     pixel_t colour;
     size_t column;
     size_t row;
 
     void drawpixel(size_t x, size_t y, pixel_t colours) {
-        info.buffer[y * info.pixelwidth + x] = colours;
+        vdata.buffer[y * vdata.pixelwidth + x] = colours;
     }
 
     void drawchar(size_t x, size_t y, int index, pixel_t colours) {
@@ -31,7 +30,7 @@ namespace gfx {
 
     void scroll(size_t n) {
         // Copies ahead of the buffer back into the base pointer, effectively scrolling.
-        memcpy(info.buffer, info.buffer + info.pixelwidth * n, info.pixelwidth * info.pixelheight * (info.bpp / 8));
+        memcpy(vdata.buffer, vdata.buffer + vdata.pixelwidth * n, vdata.pixelwidth * vdata.pixelheight * (vdata.bpp / 8));
     }
 
     void writechar(const char c) {
@@ -48,17 +47,17 @@ namespace gfx {
         else drawchar(column++, row, c, colour);
 
         // Scrolling code.
-        if(column == info.textwidth) row++;
-        else if(row == info.textheight) {
-            row = info.textheight - 1;
+        if(column == vdata.textwidth) row++;
+        else if(row == vdata.textheight) {
+            row = vdata.textheight - 1;
             scroll(TEXT_SPACING_H);
         }
 
-        if(column == info.textwidth || row == info.textheight) column = 0;
+        if(column == vdata.textwidth || row == vdata.textheight) column = 0;
     }
 
     void write(const char *str) {
-        if(info.buffer == NULL) return;
+        if(vdata.buffer == NULL) return;
 
         // Call writechar() on each character.
         for(size_t i = 0; i < strlen(str); i++) {
@@ -75,18 +74,18 @@ namespace gfx {
 
     void initialise(mb_info_t *mbd) {
         // Cache resolutions into a video_mode_t.
-        info.textheight = mbd->framebufferheight / TEXT_SPACING_H;
-        info.textwidth = mbd->framebufferwidth / TEXT_SPACING_W;
-        info.pixelheight = mbd->framebufferheight;
-        info.pixelwidth = mbd->framebufferwidth;
+        vdata.textheight = mbd->framebufferheight / TEXT_SPACING_H;
+        vdata.textwidth = mbd->framebufferwidth / TEXT_SPACING_W;
+        vdata.pixelheight = mbd->framebufferheight;
+        vdata.pixelwidth = mbd->framebufferwidth;
 
         // Cache address, pitch, bytes per pixel and assign colour.
-        info.buffer = (pixel_t*) mbd->framebufferaddr;
-        info.pitch = mbd->framebufferpitch;
-        info.bpp = mbd->framebufferbpp;
+        vdata.buffer = (pixel_t*) mbd->framebufferaddr;
+        vdata.pitch = mbd->framebufferpitch;
+        vdata.bpp = mbd->framebufferbpp;
         colour = 0xFFFFFFFF;
 
         // Match address to video_mode_t.
-        infoptr = &info;
+        data = &vdata;
     }
 }

@@ -1,7 +1,6 @@
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
-#include <serial.hpp>
 
 namespace physmem {
     static uint32_t map[PMMGR_BITMAP_ARRAY_SIZE];
@@ -102,13 +101,8 @@ namespace physmem {
 
         // Iterate through GRUB's memory map.
         mb_mmap_t *mmap = (mb_mmap_t*) mbd->mmapaddr;
-        size_t memregion = 0;
-        serial::printf("\n");
 
         while((uintptr_t) mmap < mbd->mmapaddr + mbd->mmaplength) {
-            serial::printf("[physmm] memory map, region %d: 0x%p (start), 0x%p or %dKB (size), type %d\n",
-                           memregion++, mmap->lowaddr, mmap->lowlen, mmap->lowlen / 1024, mmap->type);
-
             if(mmap->type == 1) markregionfree(mmap->lowaddr, mmap->lowlen);
             mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }

@@ -4,12 +4,11 @@ An attempt to make an OS, following the [OSDev Wiki](https://wiki.osdev.org) alo
 
 ## Features
 FreeLSD currently has the following features:
-* **(Upcoming)** Paging and virtual memory management.
 * Interrupt handling (currently implemented in the keyboard/timer).
 * Compatiability with multiboot bootloaders and VESA graphics.
 * Protection against stack smashing (via the SSP).
+* Paging, virtual and physical memory management.
 * Basic support for writing to serial.
-* Physical memory management.
 * The FreeLSD frog!
 
 

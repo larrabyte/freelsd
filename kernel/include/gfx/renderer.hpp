@@ -58,8 +58,8 @@ namespace gfx {
         size_t pitch, bpp;
     } video_info_t;
 
-    extern video_info_t *infoptr;
-    extern video_info_t info;
+    // Pointer to the system-wide video_info_t struct.
+    extern video_info_t *data;
 
     extern pixel_t colour;
     extern size_t column;

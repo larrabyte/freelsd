@@ -2,7 +2,6 @@
 #include <interrupts.hpp>
 #include <mem/libc.hpp>
 #include <serial.hpp>
-#include <string.hpp>
 #include <hwio.hpp>
 
 extern "C" {

@@ -2,7 +2,6 @@
 #include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
-#include <string.hpp>
 #include <serial.hpp>
 #include <errors.hpp>
 #include <hwio.hpp>
