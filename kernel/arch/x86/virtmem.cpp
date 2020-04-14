@@ -50,10 +50,21 @@ namespace virtmem {
     }
 
     void pfhandler(idt::regs32_t *regs) {
+        // Fetch the faulty address from control register 2 (get EIP).
         uint32_t eip; asm volatile("mov %%cr2, %0" : "=r" (eip));
 
-        panic("page fault exception generated.\n[kernel] fault address (eip): 0x%p\n[kernel] page no-execute bit: %s\n[kernel] page supervisor bit: %s\n[kernel] page writable bit:   %s\n[kernel] page reserved bit:   %s\n[kernel] page present bit:    %s",
-              eip, (checkbit(regs->errcode, 4)) ? "set" : "unset", (checkbit(regs->errcode, 2)) ? "set" : "unset", (checkbit(regs->errcode, 1)) ? "set" : "unset", (checkbit(regs->errcode, 3)) ? "set" : "unset", (checkbit(regs->errcode, 0)) ? "set" : "unset");
+        panic("page fault exception generated.\n"
+              "[kernel] fault address (eip): 0x%p\n"
+              "[kernel] page no-execute bit: %s\n"
+              "[kernel] page supervisor bit: %s\n"
+              "[kernel] page writable bit: %s\n"
+              "[kernel] page reserved bit: %s\n"
+              "[kernel] page present bit: %s", eip,
+              (checkbit(regs->errcode, 4)) ? "set" : "unset",
+              (checkbit(regs->errcode, 2)) ? "set" : "unset",
+              (checkbit(regs->errcode, 1)) ? "set" : "unset",
+              (checkbit(regs->errcode, 3)) ? "set" : "unset",
+              (checkbit(regs->errcode, 0)) ? "set" : "unset");
     }
 
     pt_entry_t *lookupentry(uint32_t virtaddr) {
@@ -114,8 +125,8 @@ namespace virtmem {
         memset(kernelpd, 0, sizeof(pd_directory_t));
         currentdir = kernelpd;
 
-        // Identity map the first four megabytes of physical memory.
-        for(size_t firstfour = 0x0; firstfour < 0x400000; firstfour += 0x1000) mappage(firstfour, firstfour);
+        // Identity map the first megabyte of physical memory.
+        for(size_t firstone = 0x0; firstone < 0x100000; firstone += 0x1000) mappage(firstone, firstone);
 
         // Map sixteen megabytes from 0x100000 to 0xC0000000 (virtual address of 3GB).
         for(size_t kernelphys = 0x100000; kernelphys < 0x1100000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);

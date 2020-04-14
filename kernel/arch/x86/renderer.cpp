@@ -2,7 +2,7 @@
 #include <gfx/fonts.hpp>
 #include <mem/libc.hpp>
 #include <string.hpp>
-#include <hwio.hpp>
+#include <errors.hpp>
 
 namespace gfx {
     static video_info_t vdata;
@@ -87,5 +87,8 @@ namespace gfx {
 
         // Match address to video_mode_t.
         data = &vdata;
+
+        // Frog test case :)
+        write(stdfrog);
     }
 }

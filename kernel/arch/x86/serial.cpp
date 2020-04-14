@@ -1,5 +1,6 @@
 #include <serial.hpp>
 #include <string.hpp>
+#include <errors.hpp>
 #include <hwio.hpp>
 #include <stdarg.h>
 
@@ -34,5 +35,7 @@ namespace serial {
         outportb(SERIAL_COM1 + 3, 0x03);  // 8 bits, no parity, one stop bit.
         outportb(SERIAL_COM1 + 2, 0xC7);  // Enable FIFO and clear with a 14-byte threshold.
         outportb(SERIAL_COM1 + 4, 0x0B);  // Re-enable serial interrupts.
+
+        write(stdfrog);  // Frog test case :)
     }
 }

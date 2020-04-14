@@ -2,6 +2,7 @@
 #include <mem/libc.hpp>
 #include <string.hpp>
 #include <errors.hpp>
+#include <serial.hpp>
 #include <stdint.h>
 #include <stdarg.h>
 
@@ -28,9 +29,16 @@ extern "C" {
         // Initialise variadic argument list.
         va_list ap; va_start(ap, format);
 
+        // Print error to both serial and screen.
+        serial::write("\n[kernel] freelsd panic: ");
+        printk(&serial::writechar, format, ap);
+        serial::write("\n[kernel] halting execution.\n");
+
         gfx::write(errfrog);
         gfx::write("[kernel] freelsd panic: ");
         printk(&gfx::writechar, format, ap);
+        gfx::write("\n[kernel] halting execution.");
+
         va_end(ap);
 
         // Enter an infinite loop.

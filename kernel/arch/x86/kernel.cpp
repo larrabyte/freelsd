@@ -25,25 +25,18 @@ mb_info_t *extractdata(mb_info_t *mbd) {
     return mbdsafe;
 }
 
-extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {  
+extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
     gdt::initialise();
     idt::initialise();
+    physmem::initialise(mbd);
+    virtmem::initialise();
     gfx::initialise(mbd);
     timer::initpit(1000);
     serial::initialise();
     kboard::initialise();
-    physmem::initialise(mbd);
-    virtmem::initialise();
 
     // Check if bootloader is multiboot-compliant.
-    if(magic != MULTIBOOT_BOOTLOADER_MAGIC) {
-        serial::write("[kernel] not booted by a compliant bootloader.\n");
-        panic("not booted by a compliant bootloader.");
-    }
-
-    // The FreeLSD frog!
-    serial::write(stdfrog);
-    gfx::write(stdfrog);
+    if(magic != MULTIBOOT_BOOTLOADER_MAGIC) panic("not booted by a compliant bootloader.");
 
     // Create copies of mb_info_t and it's associated structs, we're about to wipe them out!
     mb_info_t *mbdsafe = extractdata(mbd);
@@ -67,4 +60,6 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
 
     // At this point, anything below 640K is fair game according to the physical memory manager.
     // Note for self: move anything useful below 640K out of the way before PMM decides to shit on it.
+    // Infinite loop here, we never return.
+    while(true) asm volatile("hlt");
 }
