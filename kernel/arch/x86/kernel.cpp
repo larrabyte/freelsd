@@ -17,8 +17,8 @@ mb_info_t *extractdata(mb_info_t *mbd) {
     memcpy(mbdsafe, mbd, sizeof(mb_info_t));
 
     // Copy the memory map into a safe memory area.
-    // Total memory used here: 120 + 
-    mb_mmap_t *mmapsafe = (mb_mmap_t*) mbdsafe + sizeof(mbdsafe);
+    // Total memory used here: 120 + mbd->mmaplength (estimate ~200 bytes)
+    mb_mmap_t *mmapsafe = (mb_mmap_t*) mbdsafe + sizeof(mb_info_t);
     memcpy(mmapsafe, (void*) mbd->mmapaddr, mbd->mmaplength);
     mbdsafe->mmapaddr = (uint32_t) mmapsafe;
 
@@ -67,6 +67,4 @@ extern "C" void kernelmain(mb_info_t *mbd, uint32_t magic) {
 
     // At this point, anything below 640K is fair game according to the physical memory manager.
     // Note for self: move anything useful below 640K out of the way before PMM decides to shit on it.
-    char *testptr = (char*) 0xB8000000;
-    *testptr = 0xFE;
 }
