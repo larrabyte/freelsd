@@ -1,7 +1,6 @@
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
-#include <serial.hpp>
 #include <errors.hpp>
 
 /*  Paging information, formats and data structures.
@@ -45,8 +44,8 @@ namespace virtmem {
         *entry = (*entry & ~PGE_FRAME_BITS) | physaddr;
     }
 
-    inline uint32_t getframeaddr(uint32_t entry) {
-        return entry & PGE_FRAME_BITS;
+    inline uint32_t getframeaddr(uint32_t *entry) {
+        return *entry & ~0xFFF;
     }
 
     void pfhandler(idt::regs32_t *regs) {
@@ -82,9 +81,9 @@ namespace virtmem {
     }
 
     pt_entry_t *lookupentry(uint32_t virtaddr) {
-        pd_entry_t *dentry = &currentdir->entries[pdeindex(virtaddr)];
-        pt_table_t *tentry = (pt_table_t*) getframeaddr((uint32_t) dentry);
-        return (pt_entry_t*) &tentry->entries[pteindex(virtaddr)];
+        pd_entry_t *directory = &currentdir->entries[pdeindex(virtaddr)];
+        pt_table_t *pagetable = (pt_table_t*) getframeaddr(directory);
+        return (pt_entry_t*) &pagetable->entries[pteindex(virtaddr)];
     }
 
     bool allocpage(pt_entry_t *entry) {
@@ -100,8 +99,8 @@ namespace virtmem {
 
     void freepage(pt_entry_t *entry) {
         // Get physical block address and free if it exists.
-        void *block = (void*) getframeaddr(*entry);
-        if(block) physmem::freeblocks((uint32_t) block, 1);
+        uint32_t block = getframeaddr(entry);
+        if(block) physmem::freeblocks(block, 1);
 
         // Unset the present bit in the page.
         delattribute(entry, PTE_PRESENT_BIT);
@@ -124,7 +123,7 @@ namespace virtmem {
             setframe(pde, (uint32_t) table);
         } else {
             // Yes, fetch the address for the page table.
-            table = (pt_table_t*) getframeaddr(*pde);
+            table = (pt_table_t*) getframeaddr(pde);
         }
 
         // Fetch the address of the page table entry and map it in.
@@ -145,8 +144,8 @@ namespace virtmem {
         // Map sixteen megabytes from 0x100000 to 0xC0000000 (virtual address of 3GB).
         for(size_t kernelphys = 0x100000; kernelphys < 0x1100000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);
 
-        // Identity map the last 64 megabytes (minus 4K) of physical memory for the framebuffer.
-        for(size_t framebuffer = 0xFD000000; framebuffer < 0xFF000000; framebuffer += 0x1000) mappage(framebuffer, framebuffer);
+        // Identity map the last 48 megabytes of physical memory for the framebuffer.
+        for(size_t framebuffer = 0xFD000000; framebuffer < 0xFFFFF000; framebuffer += 0x1000) mappage(framebuffer, framebuffer);
 
         // Register the page fault handler and switch the active page directory.
         idt::registerhandler(14, &pfhandler);

@@ -64,7 +64,7 @@ namespace physmem {
     }
 
     void markregionfree(uintptr_t base, size_t size) {
-        size_t blocks = size / PMMGR_BLOCK_SIZE;
+        size_t blocks = size / PMMGR_BLOCK_SIZE + 1;
         size_t align = base / PMMGR_BLOCK_SIZE;
 
         while(blocks-- > 0) {
@@ -78,7 +78,7 @@ namespace physmem {
     }
 
     void markregionused(uintptr_t base, size_t size) {
-        size_t blocks = size / PMMGR_BLOCK_SIZE;
+        size_t blocks = size / PMMGR_BLOCK_SIZE + 1;
         size_t align = base / PMMGR_BLOCK_SIZE;
 
         while(blocks-- > 0) {
@@ -107,7 +107,8 @@ namespace physmem {
             mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }
 
-        // Mark the kernel as in use so the PMM doesn't allocate it.
-        markregionused(0x100000, (size_t) &kernelend - 0x100000);
+        markregionused(0x100000, (size_t) &kernelend - 0xC0100000);  // Mark the kernel as in use.
+        markregionused((uintptr_t) mbd, sizeof(mb_info_t));          // Mark our multiboot struct as in use.
+        markregionused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);  // Mark the struct's memory map as in use.
     }
 }

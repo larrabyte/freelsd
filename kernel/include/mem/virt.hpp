@@ -4,7 +4,6 @@
 #include <interrupts.hpp>
 #include <stdint.h>
 
-#define frmeaddr(addr) (*addr & ~0xFFF)        // Returns the address of the physical frame.
 #define pdeindex(addr) ((addr >> 22) & 0x3FF)  // Returns the 10 bits for a PDE index.
 #define pteindex(addr) ((addr >> 12) & 0x3FF)  // Returns the 10 bits for a PTE index.
 
