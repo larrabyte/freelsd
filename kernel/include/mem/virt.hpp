@@ -2,6 +2,7 @@
 #define FREELSD_KERNEL_MEMORY_VIRTUAL_HEADER
 
 #include <interrupts.hpp>
+#include <multiboot.hpp>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -88,7 +89,7 @@ namespace virtmem {
     void mappage(uint32_t phys, uint32_t virt);
 
     // Initialise both paging and the virtual memory manager.
-    void initialise(void);
+    void initialise(mb_info_t *mbd);
 }
 
 #endif

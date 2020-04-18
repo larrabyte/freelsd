@@ -14,7 +14,7 @@ extern "C" void kernelmain(mb_info_t *mbd) {
     gdt::initialise();
     idt::initialise();
     physmem::initialise(mbd);
-    virtmem::initialise();
+    virtmem::initialise(mbd);
     gfx::initialise(mbd);
     timer::initpit(1000);
     serial::initialise();

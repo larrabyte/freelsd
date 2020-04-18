@@ -165,22 +165,23 @@ namespace virtmem {
         setframe(page, phys);
     }
 
-    void initialise(void) {
+    void initialise(mb_info_t *mbd) {
         // Allocate a kernel page directory and zero it out.
         kernelpd = (pd_directory_t*) physmem::allocblocks(1);
         memset(kernelpd, 0, sizeof(pd_directory_t));
         currentdir = kernelpd;
 
         // Identity map the first megabyte of physical memory.
-        for(size_t firstone = 0x0; firstone < 0x100000; firstone += 0x1000) mappage(firstone, firstone);
+        for(uint32_t firstone = 0x0; firstone < 0x100000; firstone += 0x1000) mappage(firstone, firstone);
 
-        // Map sixteen megabytes from 0x100000 to 0xC0000000 (virtual address of 3GB).
-        for(size_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);
+        // Map sixteen megabytes from 0x100000 to 0xC0000000 (virtual address of 3072MB).
+        for(uint32_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);
 
-        // Identity map the last 48 megabytes of physical memory for the framebuffer.
-        for(size_t framebuffer = 0xFD000000; framebuffer < 0xFFFFF000; framebuffer += 0x1000) mappage(framebuffer, framebuffer);
+        // Map sixty four megabytes of the framebuffer to 0xFC00000000 (virtual address of 4032MB).
+        for(uint32_t fphys = mbd->framebufferaddr, fvirt = 0xFC000000; fvirt < 0xFFFFF000; fphys += 0x1000, fvirt += 0x1000) mappage(fphys, fvirt);
+        mbd->framebufferaddr = 0xFC000000;
 
-        // Register the page fault handler and switch the active page directory.
+        // Register interrupt handlers and switch the active page directory.
         idt::registerhandler(14, &pfhandler);
         idt::registerhandler(6, &udhandler);
         loadcr3((uint32_t) currentdir);
