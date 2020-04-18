@@ -2,7 +2,6 @@
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
-#include <serial.hpp>
 
 /*  Paging information, formats and data structures.
     ------------------------------------------------
@@ -115,7 +114,6 @@ namespace virtmem {
 
         // Map our free virtual address space to some physical blocks of memory.
         for(uint32_t virtmap = virt; virtmap < vmax; phys += 0x1000, virtmap += 0x1000) {
-            serial::printf("[virtmm] mapping 0x%p to 0x%p\n", virtmap, phys);
             mappage(phys, virtmap);
         }
 
@@ -185,6 +183,6 @@ namespace virtmem {
         // Register the page fault handler and switch the active page directory.
         idt::registerhandler(14, &pfhandler);
         idt::registerhandler(6, &udhandler);
-        loadpdbr((uint32_t) currentdir);
+        loadcr3((uint32_t) currentdir);
     }
 }

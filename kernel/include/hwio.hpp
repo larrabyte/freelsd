@@ -3,10 +3,6 @@
 
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 // Receive one byte from a hardware port.
 uint8_t inportb(uint16_t port);
 
@@ -25,8 +21,4 @@ void outportw(uint16_t port, uint16_t value);
 // Send a four byte hardware signal to port.
 void outportl(uint16_t port, uint32_t value);
 
-#ifdef __cplusplus
-}
 #endif
-
-#endif  // FREELSD_KERNEL_HWIO_HEADER

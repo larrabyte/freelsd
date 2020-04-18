@@ -1,5 +1,5 @@
 OUTPUT_FORMAT(elf32-i386)
-ENTRY(__bootstrapx86)
+ENTRY(bootstrapx86)
 
 KERNEL_VIRTUAL_BASE = 0xC0000000;
 

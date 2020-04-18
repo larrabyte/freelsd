@@ -6,7 +6,8 @@
 #define GDTSIZE 5
 
 extern "C" {
-    void gdtflush(uintptr_t pointer);
+    // Load address as a new GDT.
+    void gdtflush(uintptr_t address);
 }
 
 namespace gdt {
@@ -24,8 +25,8 @@ namespace gdt {
         uint32_t base;
     } __attribute__((packed)) ptr_t;
 
-    extern entry_t entries[GDTSIZE];
-    extern ptr_t pointer;
+    extern entry_t entries[GDTSIZE];  // Array of GDT entries.
+    extern ptr_t pointer;             // GDT pointer.
 
     // Initialise the global descriptor table.
     void initialise(void);

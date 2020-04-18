@@ -22,6 +22,9 @@
 #define IRQ15    47
 
 extern "C" {
+    // Load address as a new IDT.
+    void idtflush(uintptr_t address);
+
     void isr0();
     void isr1();
     void isr2();
@@ -70,7 +73,6 @@ extern "C" {
     void irq13();
     void irq14();
     void irq15();
-    void idtflush(uintptr_t pointer);
 }
 
 namespace idt {
@@ -94,11 +96,11 @@ namespace idt {
         uint32_t base;
     } __attribute__((packed)) ptr_t;
 
-    typedef void (*handler_t)(regs32_t*);
+    typedef void (*handler_t)(regs32_t*);   // Typedef for an interrupt handler.
 
-    extern handler_t inthandlers[IDTSIZE];
-    extern entry_t entries[IDTSIZE];
-    extern ptr_t pointer;
+    extern handler_t inthandlers[IDTSIZE];  // Array of interrupt handlers.
+    extern entry_t entries[IDTSIZE];        // Array of IDT entries.
+    extern ptr_t pointer;                   // IDT pointer.
 
     // Register an interrupt handler for a specified interrupt.
     void registerhandler(int interrupt, handler_t function);

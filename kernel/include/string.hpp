@@ -5,10 +5,7 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+// Typedef for printk output functions.
 typedef void (*printk_output_t)(const char);
 
 // Minimal printf() implementation. Supports integers, pointers and strings.
@@ -20,8 +17,4 @@ char *itoa(intmax_t num, char *buffer, int base, bool ptrpad);
 // Return the size of a C-style string minus the terminating NULL character.
 size_t strlen(const char *str);
 
-#ifdef __cplusplus
-}
 #endif
-
-#endif  // FREELSD_KERNEL_CSTR_HEADER

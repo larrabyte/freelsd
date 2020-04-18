@@ -13,7 +13,7 @@ FreeLSD currently has the following features:
 
 
 ## Compatiability and Minimum Requirements
-FreeLSD can currently run on an x86 processor with 256KB of RAM, however GRUB cannot boot with such a low amount of memory, so we need at a minimum **4MB** of RAM. As more features are added, the minimum amount of RAM required will increase, so be sure to check this page every once in a while.
+FreeLSD can currently run on an **x86 processor with around 4MB of RAM.** As more features are added, the minimum requirements will change, so be sure to check this page every once in a while.
 
 
 ## Prerequisites and Compilation

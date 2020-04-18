@@ -12,22 +12,13 @@
 
 namespace gfx {
     typedef struct pixel {
-        // Converts a pixel_t into an integer.
-        operator int() const { return (red << 24) | (green << 16) | (blue << 8) | alpha; }
-
-        // Converts three 8-bit values into a pixel_t struct.
-        pixel(uint8_t reds, uint8_t greens, uint8_t blues, uint8_t alphas) { red = reds; green = greens; blue = blues; alpha = alphas; }
-
-        // Default constructor.
-        pixel(void) { alpha = 0; red = 0; green = 0; blue = 0; }
-
-        // Converts an integer into pixel_t.
-        pixel(uint32_t colour) {
-            alpha = colour >> 24;
-            red = colour >> 16;
-            green = colour >> 8;
-            blue = colour;
+        pixel(uint32_t colour) {  // Converts an integer into pixel_t.
+            alpha = colour >> 24; red = colour >> 16;
+            green = colour >> 8; blue = colour;
         }
+
+        // Default constructor for a pixel_t.
+        pixel(void) { alpha = 0; red = 0; green = 0; blue = 0; }
 
         uint8_t red, green, blue, alpha;
     } __attribute__((packed)) pixel_t;
@@ -45,28 +36,18 @@ namespace gfx {
     } bitmap_font_t;
 
     typedef struct video_info {
-        // Default constructor.
-        video_info(void) {
-            buffer = NULL; pitch = 0; bpp = 0;
-            pixelheight = 0; pixelwidth = 0;
-            textwidth = 0; textheight = 0;
-        }
-
         pixel_t *buffer;
-        size_t pixelwidth, pixelheight;
-        size_t textwidth, textheight;
+        size_t pwidth, pheight;
+        size_t twidth, theight;
         size_t pitch, bpp;
     } video_info_t;
 
     // Pointer to the system-wide video_info_t struct.
     extern video_info_t *data;
 
-    extern pixel_t colour;
-    extern size_t column;
-    extern size_t row;
-
-    // Draw a pixel at (x, y) with specified colours.
-    void drawpixel(size_t x, size_t y, pixel_t colours);
+    extern pixel_t colour;  // Current renderer colour.
+    extern size_t column;   // Current text column.
+    extern size_t row;      // Current text row.
 
     // Draw a character on screen.
     void drawchar(size_t x, size_t y, int index, pixel_t colours);
@@ -80,7 +61,7 @@ namespace gfx {
     // A wrapper around printf(), uses &gfx::writechar.
     void printf(const char *format, ...);
 
-    // Initialise GFX namespace values.
+    // Initialise the screen renderer.
     void initialise(mb_info_t *mbd);
 }
 

@@ -28,12 +28,14 @@ char *itoa(intmax_t num, char *buffer, int base, bool ptrpad) {
     bool negative = false;
     size_t index = 0;
 
+    // Only interpret negatives if it's base 10.
     if(num < 0 && base == 10) {
         negative = true;
         num = -num;
     }
 
-    else if(num == 0 && base == 16) {
+    // As a quick hack, return 0x00000000 if we want a NULL pointer.
+    else if(num == 0 && base == 16 && ptrpad) {
         return "00000000";
     }
 
@@ -66,11 +68,10 @@ char *itoa(intmax_t num, char *buffer, int base, bool ptrpad) {
 }
 
 void printk(printk_output_t func, const char *format, va_list ap) {
-    unsigned int uints;
-    int ints;
+    // Stack storage for the format string's variables.
+    unsigned int uints; int ints;
+    char *strs; char chars;
     uintptr_t ptrs;
-    char *strs;
-    char chars;
 
     for(const char *fs = format; *fs; fs++) {
         // If *fs isn't the start of a parameter.

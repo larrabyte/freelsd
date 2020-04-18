@@ -32,13 +32,13 @@ namespace kboard {
         uint8_t scancode = inportb(0x60);
 
         switch(scancode) {
-            // Regular scancode for flags.
+            // Set flags for keystate changes, on press.
             case 0x2A: flags |= 1 << 0; break;
             case 0x36: flags |= 1 << 1; break;
             case 0x1D: flags |= 1 << 2; break;
             case 0x38: flags |= 1 << 3; break;
 
-            // Regular scancode + 0x80 for flags.
+            // Unset flags for keystate changes, on release.
             case 0xAA: flags ^= 1 << 0; break;
             case 0xB6: flags ^= 1 << 1; break;
             case 0x9D: flags ^= 1 << 2; break;
@@ -48,6 +48,7 @@ namespace kboard {
             case 0x01: panic("escape pressed, user initiated crash.");
 
             default:
+                // Make sure bit 7 isn't set.
                 if(!checkbit(scancode, 7)) {
                     if(checkbit(flags, 0) || checkbit(flags, 1)) gfx::writechar(uslayout_upper[scancode]);
                     else gfx::writechar(uslayout_lower[scancode]);

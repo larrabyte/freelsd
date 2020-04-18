@@ -12,9 +12,9 @@
 extern "C" void *kernelend;
 
 namespace physmem {
-    extern size_t usedblocks;     // Number of used blocks.
-    extern size_t maxblocks;      // Total number of memory blocks available.
-    extern size_t totalsize;      // Total memory available (in kilobytes).
+    extern size_t usedblocks;  // Number of used blocks.
+    extern size_t maxblocks;   // Total number of memory blocks available.
+    extern size_t totalsize;   // Total memory available (in kilobytes).
 
     // Find the first instance of n contiguous blocks of memory.
     int findfirstfree(size_t n);

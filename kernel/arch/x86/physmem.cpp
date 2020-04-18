@@ -34,25 +34,32 @@ namespace physmem {
     }
 
     void *allocblocks(size_t n) {
+        // If not enough blocks available, return.
         if(maxblocks - usedblocks < n) return 0;
+
+        // Find the first free instance.
         int blocks = findfirstfree(n);
         if(blocks == -1) return 0;
         usedblocks += n;
 
+        // Set the required bits in the bitmap and return.
         for(size_t i = 0; i < n; i++) setbit(blocks + i);
         return (void*) (blocks * PMMGR_BLOCK_SIZE);
     }
 
     void freeblocks(uintptr_t base, size_t n) {
+        // Get the block index for unsetting and flip.
         size_t blocks = base / PMMGR_BLOCK_SIZE;
         for(size_t i = 0; i < n; i++) unsetbit(blocks + i);
         usedblocks -= n;
     }
 
     void markregionfree(uintptr_t base, size_t size) {
+        // Get the block's index and number of blocks.
         size_t blocks = size / PMMGR_BLOCK_SIZE + 1;
         size_t align = base / PMMGR_BLOCK_SIZE;
 
+        // Unset and decrement.
         while(blocks-- > 0) {
             unsetbit(align++);
             usedblocks--;
@@ -60,9 +67,11 @@ namespace physmem {
     }
 
     void markregionused(uintptr_t base, size_t size) {
+        // Get the block's index and number of blocks.
         size_t blocks = size / PMMGR_BLOCK_SIZE + 1;
         size_t align = base / PMMGR_BLOCK_SIZE;
 
+        // Set and increment.
         while(blocks-- > 0) {
             setbit(align++);
             usedblocks++;

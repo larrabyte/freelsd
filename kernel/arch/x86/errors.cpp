@@ -18,13 +18,9 @@ extern "C" {
         // Disable interrupts.
         asm volatile("cli");
 
-        // Set the framebuffer to white.
-        memset(gfx::data->buffer, 0xFF, gfx::data->pixelwidth * gfx::data->pixelheight * (gfx::data->bpp / 8));
-
-        // Reset screen colours and cursor.
-        gfx::colour = 0x00000000;
-        gfx::column = 0;
-        gfx::row = 1;
+        // Setup the renderer for the white death.
+        memset(gfx::data->buffer, 0xFF, gfx::data->pwidth * gfx::data->pheight * gfx::data->bpp);
+        gfx::colour = 0; gfx::column = 0; gfx::row = 1;
 
         // Initialise variadic argument list.
         va_list ap; va_start(ap, format);
@@ -39,6 +35,7 @@ extern "C" {
         printk(&gfx::writechar, format, ap);
         gfx::write("\n[kernel] halting execution.");
 
+        // End argument list.
         va_end(ap);
 
         // Enter an infinite loop.

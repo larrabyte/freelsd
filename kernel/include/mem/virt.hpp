@@ -51,14 +51,8 @@
 #define PDE_LV4_GLOBAL_BIT        0x00000200
 
 extern "C" {
-    // Load the paging directory base register with a value.
-    void loadpdbr(uint32_t value);
-
-    // Fetch the current value of the paging directory base register.
-    uint32_t getpdbr(void);
-
-    // Set bit 31 in the CR0 register, enables paging.
-    void enablepaging(void);
+    // Set control register three to a specified address.
+    void loadcr3(uint32_t address);
 }
 
 namespace virtmem {

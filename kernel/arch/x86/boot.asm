@@ -4,15 +4,37 @@ GFXMODE  equ  1 << 2                       ; Not-text mode.
 FLAGS    equ  MBALIGN | MEMINFO | GFXMODE  ; The multiboot 'flag' field.
 MAGIC    equ  0x1BADB002                   ; The multiboot magic number.
 CHECKSUM equ -(MAGIC + FLAGS)              ; Checksum of above.
+KERNEL_VBASE equ 0xC0000000                ; The kernel's virtual base.
+KERNEL_PDIDX equ (KERNEL_VBASE >> 22)      ; The page directory index for the virtual base.
+KERNEL_PBASE equ 0x00100000                ; The kernel's physical base.
 
-KERNEL_VBASE equ 0xC0000000            ; The kernel's virtual base.
-KERNEL_PDIDX equ (KERNEL_VBASE >> 22)  ; The page directory index for the virtual base.
-KERNEL_PBASE equ 0x00100000            ; The kernel's physical base.
+global bootstrapx86:function
+global gdtflush:function
+global loadcr3:function
 
-global __bootstrapx86:function
 extern kernelmain
 extern kernelend
 extern _init
+
+section .text
+gdtflush:
+    mov eax, [esp+4]    ; Get address of GDT from the stack.
+    lgdt [eax]          ; Load the retrieved address.
+    mov ax, 0x10        ; Move 0x10 into ax.
+    mov ds, ax          ; Update segments to ax's value.
+    mov es, ax          ; Update segments to ax's value.
+    mov fs, ax          ; Update segments to ax's value.
+    mov gs, ax          ; Update segments to ax's value.
+    mov ss, ax          ; Update segments to ax's value.
+    jmp 0x08:.gdtfinal  ; Execute far jump to update cs.
+
+.gdtfinal:
+    ret
+
+loadcr3:
+    mov eax, [esp+4]  ; Get address of page directory from the stack.
+    mov cr3, eax      ; Move its address into control register 3.
+    ret               ; Return.
 
 section .multiboot.header
 align 4
@@ -24,33 +46,31 @@ dd 32
 
 section .multiboot.data
 align 4096
-__kernelpd:
+kernelpd:
     times 4096 db 0
-__kernelpt:
+kernelpt:
     times 4096 db 0
-__kernelptlow:
+kernelptlow:
     times 4096 db 0
 
 section .multiboot.text
-__bootstrapx86:
+bootstrapx86:
     cli                    ; Disable interrupts while we setup paging.
-    mov esp, __stacktop    ; Setup the stack pointer (currently virtual).
+    mov esp, stacktop      ; Setup the stack pointer (currently virtual).
     sub esp, KERNEL_VBASE  ; Adjust to a physical address.
-    call __paginginitx86   ; Initialise paging.
+    call paginginitx86     ; Initialise paging.
     add esp, KERNEL_VBASE  ; Adjust back to a virtual address, now we have paging.
     mov ebp, esp           ; Set the top of the stack frame as a virtual address.
 
-    push ebx         ; Push multiboot info pointer.
-    call _init       ; Call global constructors.
-    call kernelmain  ; Call the kernel and start FreeLSD.
+    push ebx               ; Push multiboot info pointer.
+    call _init             ; Call global constructors.
+    call kernelmain        ; Call the kernel and start FreeLSD.
 
 .endloop:
     hlt           ; Enter an infinite loop, interrupts enabled.
     jmp .endloop  ; Stay in the infinite loop.
 
-__paginginitx86:
-    ; Save these registers, we use them.
-    ; ----------------------------------
+paginginitx86:
     push eax
     push ebx
     push edx
@@ -58,10 +78,10 @@ __paginginitx86:
 
     ; Configure the first PDE (0-4MB of physical memory).
     ; ---------------------------------------------------
-    mov eax, __kernelpd     ; Retrieve address of the kernel's page directory.
-    mov ebx, __kernelptlow  ; Retreive address of the lower page table.
-    or ebx, 1               ; Set the present flag, ebx is now a valid PDE.
-    mov [eax], ebx          ; Set the PDE entry (address in eax) to ebx.
+    mov eax, kernelpd      ; Retrieve address of the kernel's page directory.
+    mov ebx, kernelptlow   ; Retreive address of the lower page table.
+    or ebx, 1              ; Set the present flag, ebx is now a valid PDE.
+    mov [eax], ebx         ; Set the PDE entry (address in eax) to ebx.
 
     ; Configure the higher PDE (3GB virtual kernel base).
     ; ---------------------------------------------------
@@ -75,7 +95,7 @@ __paginginitx86:
 
     push eax               ; Save the address of the page directory.
     add eax, edx           ; Add the byte offset retrieved earlier.
-    mov ebx, __kernelpt    ; Retrieve address of the virtual page table.
+    mov ebx, kernelpt      ; Retrieve address of the virtual page table.
     or ebx, 1              ; Set this page directory entry as present.
     mov [eax], ebx         ; Set the PDE entry (address in eax) to ebx.
 
@@ -85,10 +105,10 @@ __paginginitx86:
     mov ecx, 0x3FF000  ; Set ecx to 4MB, what we want to map.
 
 .firstmbloop:
-    mov edx, ecx       ; Identity map (edx is our physical address we want to map to).
-    call __mappagex86  ; Perform the mapping in a seperate routine.
-    sub ecx, 0x1000    ; Move one page down (4096 bytes).
-    jnz .firstmbloop   ; If not zero, keep going.
+    mov edx, ecx      ; Identity map (edx is our physical address we want to map to).
+    call mappagex86   ; Perform the mapping in a seperate routine.
+    sub ecx, 0x1000   ; Move one page down (4096 bytes).
+    jnz .firstmbloop  ; If not zero, keep going.
 
     ; Map the kernel to the higher half (3GB onwards in virtual memory).
     ; ------------------------------------------------------------------
@@ -97,12 +117,12 @@ __paginginitx86:
     sub eax, KERNEL_VBASE  ; Adjust it to be the physical end.
 
 .higherhalfloop:
-    mov edx, ecx       ; Identity map again.
-    call __mappagex86  ; Perform the mapping in a seperate routine.
+    mov edx, ecx     ; Identity map again.
+    call mappagex86  ; Perform the mapping in a seperate routine.
 
     push ecx               ; Save the value of ecx.
     add ecx, KERNEL_VBASE  ; Map the virtual address to the same physical one.
-    call __mappagex86      ; Perform the mapping in a seperate routine.
+    call mappagex86        ; Perform the mapping in a seperate routine.
     pop ecx                ; Restore ecx.
 
     add ecx, 0x1000      ; Add 4096 bytes for the next page.
@@ -116,27 +136,22 @@ __paginginitx86:
     or eax, 0x80000000  ; Set bit 31 to enable paging.
     mov cr0, eax        ; Move eax back into CR0.
 
-    ; Restore the saved registers from the start and return.
-    ; ------------------------------------------------------
     pop ecx
     pop edx
     pop ebx
     pop eax
     ret
 
-__mappagex86:
+mappagex86:
     ; This function maps a virtual address to a physical address.
     ; ebx: The physical address of the kernel's page directory.
     ; ecx: The virtual address we want to map.
     ; edx: The physical address to redirect the virtual address to.
 
-    ; Save these registers for popping later.
-    ; ---------------------------------------
     push eax
     push ebx
     push ecx
     push edx
-
     push edx  ; Push the physical address.
     push ecx  ; Push the virtual address.
 
@@ -151,10 +166,10 @@ __mappagex86:
 
     ; Check if the PDE is present and proceed accordingly.
     ; ----------------------------------------------------
-    mov ecx, eax               ; Move the PDE into ecx.
-    and ecx, 0x1               ; Store if bit zero is set in ecx.
-    cmp ecx, 0x0               ; Is bit zero set?
-    je __bootstrapx86.endloop  ; Nope, panic!
+    mov ecx, eax             ; Move the PDE into ecx.
+    and ecx, 0x1             ; Store if bit zero is set in ecx.
+    cmp ecx, 0x0             ; Is bit zero set?
+    je bootstrapx86.endloop  ; Nope, panic!
 
     ; We now know the PDE exists. Calculate our PTE address.
     ; ------------------------------------------------------
@@ -176,8 +191,6 @@ __mappagex86:
     or edx, 0x1     ; Set the present bit into our PTE.
     mov [eax], edx  ; Insert page table entry into table (address in eax).
 
-    ; Restore the saved registers and return.
-    ; ---------------------------------------
     pop edx
     pop ecx
     pop ebx
@@ -186,6 +199,6 @@ __mappagex86:
 
 section .bss
 align 16
-__stackbottom:
+stackbottom:
 resb 65536
-__stacktop:
+stacktop:

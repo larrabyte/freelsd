@@ -30,7 +30,7 @@ extern "C" void kernelmain(mb_info_t *mbd) {
     // Write debugging information out to serial.
     serial::printf("\n[kernel] framebuffer address: 0x%p\n", gfx::data->buffer);
     serial::printf("[kernel] kernel end address: 0x%p\n", &kernelend);
-    serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::data->pixelwidth, gfx::data->pixelheight, gfx::data->bpp);
+    serial::printf("[kernel] resolution: %dx%dx%d\n", gfx::data->pwidth, gfx::data->pheight, gfx::data->bpp * 8);
 
     // Write memory information to the screen.
     gfx::printf("[kernel] low memory: %dKB, high memory: %dKB\n", mbd->lowermem, mbd->uppermem);

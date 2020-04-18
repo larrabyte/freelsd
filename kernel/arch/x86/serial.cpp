@@ -6,23 +6,25 @@
 
 namespace serial {
     inline uint8_t transmitempty(void) {
+        // Ask if the data has been received yet.
         return inportb(SERIAL_COM1 + 5) & 0x20;
     }
 
     void writechar(const char c) {
-        while(transmitempty() == 0);
-        outportb(SERIAL_COM1, c);
+        while(transmitempty() == 0);  // Wait until we can transmit.
+        outportb(SERIAL_COM1, c);     // Write character to COM1.
     }
 
     void write(const char *str) {
-        for(size_t i = 0; i < strlen(str); i++) {
-            writechar(str[i]);
-        }
+        // Loop through each character and writechar() it.
+        for(size_t i = 0; i < strlen(str); i++) writechar(str[i]);
     }
 
     void printf(const char *format, ...) {
-        va_list ap;
-        va_start(ap, format);
+        // Initialise variadic argument list.
+        va_list ap; va_start(ap, format);
+
+        // Pass on argument list to printk().
         printk(&writechar, format, ap);
         va_end(ap);
     }
