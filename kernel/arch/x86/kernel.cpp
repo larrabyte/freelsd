@@ -22,10 +22,9 @@ extern "C" void kernelmain(mb_info_t *mbd) {
 
     // Print the memory map to serial.
     mb_mmap_t *m = (mb_mmap_t*) mbd->mmapaddr;
-    while((uintptr_t) m < (uintptr_t) m + mbd->mmaplength) {
+    while((uintptr_t) m < mbd->mmapaddr + mbd->mmaplength) {
         serial::printf("[physmm] memory map, region: 0x%p (start), 0x%p or %dKB (size), type %d\n", m->lowaddr, m->lowlen, m->lowlen / 1024, m->type);
         m = (mb_mmap_t*) ((uintptr_t) m + m->size + sizeof(m->size));
-        if(m->type <= 0 || m->type >= 4) break;
     }
 
     // Write debugging information out to serial.

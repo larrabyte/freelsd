@@ -2,6 +2,7 @@
 #define FREELSD_KERNEL_MEMORY_VIRTUAL_HEADER
 
 #include <interrupts.hpp>
+#include <stddef.h>
 #include <stdint.h>
 
 #define pdeindex(addr) ((addr >> 22) & 0x3FF)  // Returns the 10 bits for a PDE index.
@@ -78,15 +79,19 @@ namespace virtmem {
     // Retrieve the given page table entry with a virtual address.
     pt_entry_t *lookupentry(uint32_t virtaddr);
 
-    // Map a free block of physical memory to a page entry.
-    bool allocpage(pt_entry_t *entry);
+    // Find the first instance of n pages of memory.
+    // Returns 0 if no free pages were found or a value larger than PGE_PAGES_PER_TABLE was passed in.
+    uint32_t findfirstfree(pd_directory_t *directory, uint32_t start, uint32_t end, size_t n);
 
-    // Free the mapped block of physical memory, if any.
-    void freepage(pt_entry_t *entry);
+    // Allocate n pages on the kernel heap.
+    void *allockernelheap(size_t n);
+
+    // Free n pages on the kernel heap, starting from base.
+    void freekernelheap(uint32_t base, size_t n);
 
     // Map a physical address to a virtual one.
     // Both addresses must be page-aligned!
-    void mappage(void *phys, void *virt);
+    void mappage(uint32_t phys, uint32_t virt);
 
     // Initialise both paging and the virtual memory manager.
     void initialise(void);

@@ -40,7 +40,6 @@ __bootstrapx86:
     add esp, KERNEL_VBASE  ; Adjust back to a virtual address, now we have paging.
     mov ebp, esp           ; Set the top of the stack frame as a virtual address.
 
-    push eax         ; Push multiboot magic number.
     push ebx         ; Push multiboot info pointer.
     call _init       ; Call global constructors.
     call kernelmain  ; Call the kernel and start FreeLSD.
@@ -83,7 +82,7 @@ __paginginitx86:
     ; Start mapping pages (first, identity map the first 4MB of memory).
     ; ------------------------------------------------------------------
     pop ebx            ; Pop the address of the kernel's PD from the stack.
-    mov ecx, 0x100000  ; Set ecx to 1MB, what we want to map.
+    mov ecx, 0x3FF000  ; Set ecx to 4MB, what we want to map.
 
 .firstmbloop:
     mov edx, ecx       ; Identity map (edx is our physical address we want to map to).

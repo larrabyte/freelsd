@@ -21,27 +21,13 @@ namespace physmem {
     }
 
     int findfirstfree(size_t n) {
-        // Iterate through 32-bit chunks of the bitmap.
-        for(size_t i = 0; i < maxblocks; i++) {
-            if(map[i] == 0xFFFFFFFF) continue;
-
-            // Iterate through the individual bits.
-            for(size_t j = 0; j < 32; j++) {
-
-                // We found the first free bit!
-                if(!checkbit(map[i], j)) {
-                    // If one block requested, return.
-                    if(n == 1) return 32 * i + j;
-                    size_t starting = i * 32 + (1 << j);
-                    size_t free = 0;
-
-                    // Check if successive bits are also free.
-                    for(size_t k = 0; k < n; k++) {
-                        if(!testbit(starting + k)) free++;
-                        if(free == n) return 32 * i + j;
-                    }
-                }
-            }
+        // Iterate through each individual bit in the array.
+        for(size_t i = 0, j = 0; i < PMMGR_BITMAP_ARRAY_SIZE; i++) {
+            // Is it zero?
+            if(!testbit(i)) {
+                // Return the appropriate index if we have enough blocks.
+                if(++j == n) return (n > 1) ? i - j + 1 : i;
+            } else j = 0;  // Not enough zeros.
         }
 
         return -1;  // No free bits :(
@@ -71,10 +57,6 @@ namespace physmem {
             unsetbit(align++);
             usedblocks--;
         }
-
-        // Always set the first block as in use.
-        // This ensures that allocations can't be zero.
-        setbit(0);
     }
 
     void markregionused(uintptr_t base, size_t size) {
@@ -107,7 +89,8 @@ namespace physmem {
             mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }
 
-        markregionused(0x100000, (size_t) &kernelend - 0xC0100000);  // Mark the kernel as in use.
+        setbit(0);                                                   // Mark the first physical block as in use.
+        markregionused(0x100000, (size_t) &kernelend - 0xC0000000);  // Mark the kernel as in use.
         markregionused((uintptr_t) mbd, sizeof(mb_info_t));          // Mark our multiboot struct as in use.
         markregionused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);  // Mark the struct's memory map as in use.
     }

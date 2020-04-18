@@ -2,6 +2,7 @@
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
+#include <serial.hpp>
 
 /*  Paging information, formats and data structures.
     ------------------------------------------------
@@ -80,30 +81,64 @@ namespace virtmem {
               regs->esp, regs->ebx, regs->edx, regs->ecx, regs->eax, regs->eip, faulty, regs->cs, regs->ss);
     }
 
-    pt_entry_t *lookupentry(uint32_t virtaddr) {
-        pd_entry_t *directory = &currentdir->entries[pdeindex(virtaddr)];
-        pt_table_t *pagetable = (pt_table_t*) getframeaddr(directory);
-        return (pt_entry_t*) &pagetable->entries[pteindex(virtaddr)];
+    uint32_t findfirstfree(pd_directory_t *directory, uint32_t start, uint32_t end, size_t n) {
+        if(n > PGE_PAGES_PER_TABLE || n == 0) return 0;
+        uint32_t retaddr = start;
+        uint32_t freepages = 0;
+
+        for(uint32_t i = pdeindex(start); i < pdeindex(end); i++) {
+            // Return the PDE's index if it's not present.
+            pd_entry_t *pde = &directory->entries[i];
+            if(!checkbit(*pde, 0)) return (i << 22);
+
+            // Otherwise, it's present, get the table's address.
+            pt_table_t *table = (pt_table_t*) getframeaddr(pde);
+
+            // Iterate through each page table entry.
+            for(uint32_t j = 0; j < PGE_PAGES_PER_TABLE; j++) {
+                // If the PTE is present, skip this loop iteration.
+                if(checkbit(table->entries[j], 0)) {
+                    retaddr += 0x1000; continue;
+                } else if(++freepages == n) return retaddr;
+            }
+        }
+
+        return 0;
     }
 
-    bool allocpage(pt_entry_t *entry) {
-        // Allocate a free block of physical memory.
-        void *block = physmem::allocblocks(1);
-        if(!block) return false;
+    void *allockernelheap(size_t n) {
+        // The kernel heap is given 256MB to work with.
+        uint32_t virt = findfirstfree(kernelpd, 0xD0000000, 0xE0000000, n);
+        uint32_t phys = (uint32_t) physmem::allocblocks(n);
+        if(virt == 0 || phys == 0) panic("kernel has run out of heap memory.");
+        uint32_t vmax = virt + (n * PMMGR_BLOCK_SIZE);
 
-        // Map it to the page table entry passed in.
-        addattribute(entry, PTE_PRESENT_BIT);
-        setframe(entry, (uint32_t) block);
-        return true;
+        // Map our free virtual address space to some physical blocks of memory.
+        for(uint32_t virtmap = virt; virtmap < vmax; phys += 0x1000, virtmap += 0x1000) {
+            serial::printf("[virtmm] mapping 0x%p to 0x%p\n", virtmap, phys);
+            mappage(phys, virtmap);
+        }
+
+        return (void*) virt;
     }
 
-    void freepage(pt_entry_t *entry) {
-        // Get physical block address and free if it exists.
-        uint32_t block = getframeaddr(entry);
-        if(block) physmem::freeblocks(block, 1);
+    void freekernelheap(uint32_t base, size_t n) {
+        pd_entry_t *pde = &kernelpd->entries[pdeindex(base)];
+        if(n > PGE_PAGES_PER_TABLE) return;
 
-        // Unset the present bit in the page.
-        delattribute(entry, PTE_PRESENT_BIT);
+        // Iterate through each entry and free each physical block.
+        pt_table_t *table = (pt_table_t*) getframeaddr(pde);
+        for(uint32_t i = pteindex(base); i < pteindex(base) + n; i++) {
+            pt_entry_t *pte = &table->entries[i];
+            physmem::freeblocks(getframeaddr(pte), 1);
+            delattribute(pte, PTE_PRESENT_BIT | PTE_WRITABLE_BIT);
+        }
+
+        // If we want to free the whole table, free the directory entry as well.
+        if(n == PGE_PAGES_PER_TABLE) {
+            physmem::freeblocks((uintptr_t) table, 1);
+            delattribute(pde, PDE_PRESENT_BIT | PDE_WRITABLE_BIT);
+        }
     }
 
     void mappage(uint32_t phys, uint32_t virt) {
@@ -142,7 +177,7 @@ namespace virtmem {
         for(size_t firstone = 0x0; firstone < 0x100000; firstone += 0x1000) mappage(firstone, firstone);
 
         // Map sixteen megabytes from 0x100000 to 0xC0000000 (virtual address of 3GB).
-        for(size_t kernelphys = 0x100000; kernelphys < 0x1100000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);
+        for(size_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);
 
         // Identity map the last 48 megabytes of physical memory for the framebuffer.
         for(size_t framebuffer = 0xFD000000; framebuffer < 0xFFFFF000; framebuffer += 0x1000) mappage(framebuffer, framebuffer);
