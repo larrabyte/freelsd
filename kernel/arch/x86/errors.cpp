@@ -3,6 +3,7 @@
 #include <string.hpp>
 #include <errors.hpp>
 #include <serial.hpp>
+#include <timer.hpp>
 #include <stdint.h>
 #include <stdarg.h>
 
@@ -28,12 +29,12 @@ extern "C" {
         // Print error to both serial and screen.
         serial::write("\n[kernel] freelsd panic: ");
         printk(&serial::writechar, format, ap);
-        serial::write("\n[kernel] halting execution.\n");
+        serial::printf("\n[kernel] halting execution. final system uptime: %dms.\n", timer::sinceboot(TIMER_MILLISECONDS));
 
         gfx::write(errfrog);
         gfx::write("[kernel] freelsd panic: ");
         printk(&gfx::writechar, format, ap);
-        gfx::write("\n[kernel] halting execution.");
+        gfx::printf("\n[kernel] halting execution. final system uptime: %dms.\n", timer::sinceboot(TIMER_MILLISECONDS));
 
         // End argument list.
         va_end(ap);
