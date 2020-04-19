@@ -7,6 +7,7 @@
 #include <serial.hpp>
 #include <string.hpp>
 #include <errors.hpp>
+#include <cpuid.hpp>
 #include <timer.hpp>
 #include <gdt.hpp>
 
@@ -34,7 +35,17 @@ extern "C" void kernelmain(mb_info_t *mbd) {
 
     // Write memory information to the screen.
     gfx::printf("[kernel] low memory: %dKB, high memory: %dKB\n", mbd->lowermem, mbd->uppermem);
-    gfx::printf("[kernel] total memory available: %dKB\n", physmem::totalsize);
+    gfx::printf("[kernel] total memory available: %dKB\n\n", physmem::totalsize);
+
+    // Write CPUID information to the screen.
+    cpuid_info_t cpuinfo = cpu::executecpuid();
+    gfx::printf("[kernel] CPUID | vendor string: %s\n", cpuinfo.vendor);
+    gfx::printf("[kernel] CPUID | SSE1 support: %s\n", (cpuinfo.edx & CPUID_FEATURE_EDX_SSE) ? "yes" : "no");
+    gfx::printf("[kernel] CPUID | SSE2 support: %s\n", (cpuinfo.edx & CPUID_FEATURE_EDX_SSE2) ? "yes" : "no");
+    gfx::printf("[kernel] CPUID | SSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE3) ? "yes" : "no");
+    gfx::printf("[kernel] CPUID | SSSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSSE3) ? "yes" : "no");
+    gfx::printf("[kernel] CPUID | SSE41 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE41) ? "yes" : "no");
+    gfx::printf("[kernel] CPUID | SSE42 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE42) ? "yes" : "no");
 
     // Infinite loop here, we never return.
     while(true) asm volatile("hlt");
