@@ -11,7 +11,8 @@ namespace kboard {
     // Bit 1: Right shift pressed.
     // Bit 2: L/R control pressed.
     // Bit 3: L/R alt pressed.
-    // Bits 4-15: Reserved.
+    // Bit 4: Caps Lock pressed. 
+    // Bits 5-15: Reserved.
     extern uint16_t flags;
 
     // Keyboard interrupt handler.

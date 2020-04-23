@@ -32,17 +32,17 @@ namespace kboard {
         uint8_t scancode = inportb(0x60);
 
         switch(scancode) {
-            // Set flags for keystate changes, on press.
-            case 0x2A: flags |= 1 << 0; break;
-            case 0x36: flags |= 1 << 1; break;
-            case 0x1D: flags |= 1 << 2; break;
-            case 0x38: flags |= 1 << 3; break;
-
-            // Unset flags for keystate changes, on release.
+            case 0x2A:  // Left shift state change.
             case 0xAA: flags ^= 1 << 0; break;
+            case 0x36:  // Right shift state change.
             case 0xB6: flags ^= 1 << 1; break;
+            case 0x1D:  // L/R control state change.
             case 0x9D: flags ^= 1 << 2; break;
+            case 0x38:  // L/R alt state change.
             case 0xB8: flags ^= 1 << 3; break;
+
+            // Caps Lock state change (only on press).
+            case 0x3A: flags ^= 1 << 4; break;
 
             // Manually initiate kernel panic with the Escape key.
             case 0x01: panic("escape pressed, user initiated crash.");
@@ -50,7 +50,10 @@ namespace kboard {
             default:
                 // Make sure bit 7 isn't set.
                 if(!checkbit(scancode, 7)) {
-                    if(checkbit(flags, 0) || checkbit(flags, 1)) gfx::writechar(uslayout_upper[scancode]);
+                    // Write from the upper layout if any relevant key states are active (both shifts or caps lock).
+                    if((checkbit(flags, 0) || checkbit(flags, 1)) || (checkbit(flags, 4) && scancode > 14)) gfx::writechar(uslayout_upper[scancode]);
+
+                    // Write from the lower layout otherwise.
                     else gfx::writechar(uslayout_lower[scancode]);
                 }
         }
