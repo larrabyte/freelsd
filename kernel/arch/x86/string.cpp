@@ -24,7 +24,7 @@ size_t strlen(const char *str) {
     return (str - start);
 }
 
-char *itoa(intmax_t num, char *buffer, int base, bool ptrpad) {
+char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
     bool negative = false;
     size_t index = 0;
 
@@ -35,8 +35,8 @@ char *itoa(intmax_t num, char *buffer, int base, bool ptrpad) {
     }
 
     // As a quick hack, return 0x00000000 if we want a NULL pointer.
-    else if(num == 0 && base == 16 && ptrpad) {
-        return "00000000";
+    else if(num == 0 && base == 16 && pointer) {
+        return "0x00000000";
     }
 
     // Check for invalid parameters.
@@ -57,8 +57,10 @@ char *itoa(intmax_t num, char *buffer, int base, bool ptrpad) {
     if(negative) buffer[index++] = '-';
 
     // Is it a pointer?
-    if(ptrpad && index < 8) {
-        while(index < 8) buffer[index++] = '0';
+    if(pointer) {
+        if(index < 8) while(index < 8) buffer[index++] = '0';
+        buffer[index++] = 'x';
+        buffer[index++] = '0';
     }
 
     // Terminate, reverse and return.

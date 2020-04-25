@@ -53,7 +53,7 @@ namespace virtmem {
         uint32_t faulty; asm volatile("mov %%cr2, %0" : "=r" (faulty));
 
         panic("page fault exception generated.\n"
-              "[kernel] fault address (eip): 0x%p\n"
+              "[kernel] fault address (eip): %p\n"
               "[kernel] page no-execute bit: %s\n"
               "[kernel] page supervisor bit: %s\n"
               "[kernel] page writable bit: %s\n"
@@ -71,10 +71,10 @@ namespace virtmem {
 
         panic("invalid opcode, %s\n"
               "[kernel] printing register dump to display and serial.\n\n"
-              "[kernel]  gs: 0x%p,  fs: 0x%p,  es: 0x%p,  ds: 0x%p\n"
-              "[kernel] edi: 0x%p, esi: 0x%p, ebp: 0x%p, esp: 0x%p\n"
-              "[kernel] ebx: 0x%p, edx: 0x%p, ecx: 0x%p, eax: 0x%p\n"
-              "[kernel] eip: 0x%p, cr2: 0x%p,  cs: 0x%p,  ss: 0x%p",
+              "[kernel]  gs: %p,  fs: %p,  es: %p,  ds: %p\n"
+              "[kernel] edi: %p, esi: %p, ebp: %p, esp: %p\n"
+              "[kernel] ebx: %p, edx: %p, ecx: %p, eax: %p\n"
+              "[kernel] eip: %p, cr2: %p,  cs: %p,  ss: %p",
               (faulty == 0x0) ? "attempted NULL dereference." : "unknown cause.",
               regs->gs, regs->fs, regs->es, regs->ds, regs->edi, regs->esi, regs->ebp,
               regs->esp, regs->ebx, regs->edx, regs->ecx, regs->eax, regs->eip, faulty, regs->cs, regs->ss);
