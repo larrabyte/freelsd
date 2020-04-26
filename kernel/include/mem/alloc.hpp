@@ -32,7 +32,7 @@ extern uint64_t liballoc_errorcnt;  // The number of liballoc errors generated.
 extern uint64_t liballoc_poverrun;  // The number of potential liballoc overruns.
 
 // Kernel malloc. Allocates memory on the kernel heap.
-void *kmalloc(size_t req_size);
+void *kmalloc(size_t reqsize);
 
 // Kernel realloc. Allocates memory on the kernel heap.
 void *krealloc(void *pointer, size_t size);

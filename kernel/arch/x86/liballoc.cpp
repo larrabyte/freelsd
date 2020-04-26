@@ -105,9 +105,9 @@ static liballoc_major_t *allocnewpage(size_t size) {
     return maj;
 }
 
-void *kmalloc(size_t req_size) {
+void *kmalloc(size_t reqsize) {
     uint64_t startedbet = 0, bestsize = 0;
-    size_t size = req_size;
+    size_t size = reqsize;
     uintptr_t diff;
     void *p = NULL;
 
@@ -193,7 +193,7 @@ void *kmalloc(size_t req_size) {
 
             maj->usage += size + sizeof(liballoc_minor_t);
             maj->first->magic = LIBALLOC_MAGIC;
-            maj->first->reqsize = req_size;
+            maj->first->reqsize = reqsize;
             maj->first->prev = NULL;
             maj->first->next = NULL;
             maj->first->block = maj;
@@ -225,7 +225,7 @@ void *kmalloc(size_t req_size) {
             maj->first->prev = NULL;
             maj->first->block = maj;
             maj->first->size = size;
-            maj->first->reqsize = req_size;
+            maj->first->reqsize = reqsize;
             maj->usage += size + sizeof(liballoc_minor_t);
 
             inuse += size;
@@ -260,7 +260,7 @@ void *kmalloc(size_t req_size) {
                     min->magic = LIBALLOC_MAGIC;
                     min->block = maj;
                     min->size = size;
-                    min->reqsize = req_size;
+                    min->reqsize = reqsize;
                     maj->usage += size + sizeof(liballoc_minor_t);
 
                     inuse += size;
@@ -287,7 +287,7 @@ void *kmalloc(size_t req_size) {
                     newmin->next = min->next;
                     newmin->prev = min;
                     newmin->size = size;
-                    newmin->reqsize = req_size;
+                    newmin->reqsize = reqsize;
                     newmin->block = maj;
                     min->next->prev = newmin;
                     min->next = newmin;

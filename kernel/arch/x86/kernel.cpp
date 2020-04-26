@@ -1,11 +1,9 @@
 #include <gfx/renderer.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
-#include <mem/libc.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <serial.hpp>
-#include <string.hpp>
 #include <errors.hpp>
 #include <cpuid.hpp>
 #include <timer.hpp>
