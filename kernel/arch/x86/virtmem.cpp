@@ -181,6 +181,15 @@ namespace virtmem {
         for(uint32_t fphys = mbd->framebufferaddr, fvirt = 0xFC000000; fvirt < 0xFFFFF000; fphys += 0x1000, fvirt += 0x1000) mappage(fphys, fvirt);
         mbd->framebufferaddr = 0xFC000000;
 
+        // Cache the module list pointer and the virtual module load address.
+        mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
+        uint32_t mloadaddr = 0xD0000000;
+
+        // Map the initrd to the beginning of the kernel heap.
+        for(uint32_t mphys = mods->modstart; mphys < mods->modend; mphys += 0x1000, mloadaddr += 0x1000) mappage(mphys, mloadaddr);
+        mods->modend = 0xD0000000 + (mods->modend - mods->modstart);
+        mods->modstart = 0xD0000000;
+
         // Register interrupt handlers and switch the active page directory.
         idt::registerhandler(14, &pfhandler);
         idt::registerhandler(6, &udhandler);

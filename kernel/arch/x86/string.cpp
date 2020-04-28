@@ -24,6 +24,20 @@ size_t strlen(const char *str) {
     return (str - start);
 }
 
+int strcmp(const char *x, const char *y) {
+    while(*x && (*x == *y)) {
+        x++; y++;
+    }
+
+    return *(const unsigned char*) x - *(const unsigned char*) y;
+}
+
+char *strcpy(char *dest, char *source) {
+    char *temp = dest;
+    while((*dest++ = *source++) != '\0');
+    return temp;
+}
+
 char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
     bool negative = false;
     size_t index = 0;

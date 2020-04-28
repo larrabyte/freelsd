@@ -5,6 +5,7 @@
 #include <mem/phys.hpp>
 #include <serial.hpp>
 #include <errors.hpp>
+#include <initrd.hpp>
 #include <cpuid.hpp>
 #include <timer.hpp>
 #include <gdt.hpp>
@@ -20,10 +21,10 @@ extern "C" void kernelmain(mb_info_t *mbd) {
     kboard::initialise();
 
     // Print the memory map to serial.
-    mb_mmap_t *m = (mb_mmap_t*) mbd->mmapaddr;
-    while((uintptr_t) m < mbd->mmapaddr + mbd->mmaplength) {
-        serial::printf("[physmm] memory map, region: %p (start), %p or %dKB (size), type %d\n", m->lowaddr, m->lowlen, m->lowlen / 1024, m->type);
-        m = (mb_mmap_t*) ((uintptr_t) m + m->size + sizeof(m->size));
+    mb_mmap_t *mmap = (mb_mmap_t*) mbd->mmapaddr;
+    while((uintptr_t) mmap < mbd->mmapaddr + mbd->mmaplength) {
+        serial::printf("[physmm] memory map, region: %p (start), %p or %dKB (size), type %d\n", mmap->lowaddr, mmap->lowlen, mmap->lowlen / 1024, mmap->type);
+        mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
     }
 
     // Write debugging information out to serial.
@@ -43,7 +44,29 @@ extern "C" void kernelmain(mb_info_t *mbd) {
     gfx::printf("[kernel] CPUID | SSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE3) ? "yes" : "no");
     gfx::printf("[kernel] CPUID | SSSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSSE3) ? "yes" : "no");
     gfx::printf("[kernel] CPUID | SSE41 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE41) ? "yes" : "no");
-    gfx::printf("[kernel] CPUID | SSE42 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE42) ? "yes" : "no");
+    gfx::printf("[kernel] CPUID | SSE42 support: %s\n\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE42) ? "yes" : "no");
+
+    // Initialise the initial ramdisk and read the file table.
+    mb_modlist_t *rdinfo = (mb_modlist_t*) mbd->modaddr;
+    initrd::initialise(rdinfo->modstart);
+
+    // File buffer, dirent struct and iterator.
+    gfx::printf("[initrd] initrd contents, built on %s:\n", initrd::rootheader->builddate);
+    uint8_t filebuf[256];
+    vfs::dirent_t *ent;
+    uint32_t i = 0;
+
+    // Use vfs::readdir() to get name of the node in ent.
+    while((ent = vfs::readdir(initrd::root, i++)) != 0) {
+        // Use vfs::finddir() to find the actual file node.
+        vfs::node_t *node = vfs::finddir(initrd::root, ent->name);
+
+        // Print the appropriate data.
+        if((node->flags & 0x07) != VFS_DIRECTORY) {
+            vfs::read(node, 0, node->length, filebuf);
+            gfx::printf("[initrd] file %s: %s", node->name, filebuf);
+        } else gfx::printf("[initrd] directory %s/\n", node->name);
+    }
 
     // Infinite loop here, we never return.
     while(true) asm volatile("hlt");

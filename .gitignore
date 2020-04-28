@@ -1,5 +1,9 @@
-# ISO files
+# More executables
+tools/initrdgen/initrdgen
+
+# Image files
 *.iso
+*.img
 
 # Unwanted folders
 .vscode/

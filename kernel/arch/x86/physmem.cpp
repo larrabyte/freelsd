@@ -98,9 +98,17 @@ namespace physmem {
             mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }
 
-        setbit(0);                                                   // Mark the first physical block as in use.
-        markregionused(0x100000, (size_t) &kernelend - 0xC0000000);  // Mark the kernel as in use.
-        markregionused((uintptr_t) mbd, sizeof(mb_info_t));          // Mark our multiboot struct as in use.
-        markregionused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);  // Mark the struct's memory map as in use.
+        // Set the first block as in use so we can use NULL as a bad pointer.
+        setbit(0);
+
+        // Mark the kernel and related multiboot structs as in use.
+        markregionused(0x100000, (size_t) &kernelend - 0xC0000000);
+        markregionused((uintptr_t) mbd, sizeof(mb_info_t));
+        markregionused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);
+        markregionused((uintptr_t) mbd->modaddr, mbd->modcount * sizeof(mb_modlist_t));
+
+        // Mark loaded GRUB modules as in use.
+        mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
+        for(uint32_t i = 0; i < mbd->modcount; i++) markregionused(mods[i].modstart, mods[i].modend - mods[i].modstart);
     }
 }

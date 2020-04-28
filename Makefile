@@ -1,7 +1,7 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: all x86 clean build/freelsd.iso
+.PHONY: all x86 tools clean build/freelsd.iso
 
 ARCH := x86
 QEMU := qemu-system-i386
@@ -43,20 +43,23 @@ clean:
 	@printf "[wipe] Deleted isoroot/kernel.bin.\n"
 	@rm -f build/freelsd.iso
 	@printf "[wipe] Deleted build/freelsd.iso.\n"
-	@rm -f serial.log
-	@printf "[wipe] Deleted serial.log.\n"
+	@cd tools/initrdgen && $(MAKE) --no-print-directory clean
+
+tools:
+	@cd tools/initrdgen && $(MAKE) --no-print-directory
 
 x86: build/freelsd.iso
 	@printf "[qemu] Now booting FreeLSD.\n"
 	@$(QEMU) $(QFLAGS)
 
 build/freelsd.iso: $(OBJFILES)
-	@printf "[link] Linking object files and creating ISO.\n"
+	@printf "[linker] Linking object files and creating ISO.\n"
 	@$(CPP) -T $(KERNELSRC)/linker.ld $(CFLAGS) $(CRTBEGIN) $(sort $(OBJFILES)) $(CRTFINAL) -o isoroot/kernel.bin -lgcc
+	@./tools/initrdgen/initrdgen
 	@grub-mkrescue -o build/freelsd.iso isoroot &> /dev/null
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.cpp
-	@printf "[g+++] $< compiled.\n"
+	@printf "[g++] $< compiled.\n"
 	@$(CPP) $(CFLAGS) -I $(KERNELINC) -c $< -o $@
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.asm
