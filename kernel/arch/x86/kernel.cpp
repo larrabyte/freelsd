@@ -57,8 +57,8 @@ extern "C" void kernelmain(mb_info_t *mbd) {
     for(int i = 0; i < initrd::nodecount; i++) {
         // Iterate through each file in the directory.
         if((ent = vfs::readdir(initrd::root, i)) != 0) {
-            // Check if it's name is equal to "logo.bmp".
-            if(strcmp(ent->name, "logo.bmp") == 0) {
+            // Check if it's name is equal to "lts128px.bmp".
+            if(strcmp(ent->name, "lts128px.bmp") == 0) {
                 // If so, find the node associated with it and copy it into memory.
                 vfs::node_t *node = vfs::finddir(initrd::root, ent->name);
                 uint8_t *fbuf = (uint8_t*) kmalloc(node->length);
