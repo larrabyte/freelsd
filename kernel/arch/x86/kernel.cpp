@@ -1,13 +1,16 @@
 #include <gfx/renderer.hpp>
 #include <multiboot.hpp>
+#include <mem/alloc.hpp>
 #include <keyboard.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <serial.hpp>
 #include <errors.hpp>
 #include <initrd.hpp>
+#include <string.hpp>
 #include <cpuid.hpp>
 #include <timer.hpp>
+#include <vfs.hpp>
 #include <gdt.hpp>
 
 extern "C" void kernelmain(mb_info_t *mbd) {
@@ -19,6 +22,10 @@ extern "C" void kernelmain(mb_info_t *mbd) {
     timer::initpit(1000);
     serial::initialise();
     kboard::initialise();
+
+    // Initialise the initial ramdisk.
+    mb_modlist_t *rdinfo = (mb_modlist_t*) mbd->modaddr;
+    initrd::initialise(rdinfo->modstart);
 
     // Print the memory map to serial.
     mb_mmap_t *mmap = (mb_mmap_t*) mbd->mmapaddr;
@@ -38,34 +45,30 @@ extern "C" void kernelmain(mb_info_t *mbd) {
 
     // Write CPUID information to the screen.
     cpuid_info_t cpuinfo = cpu::executecpuid();
-    gfx::printf("[kernel] CPUID | vendor string: %s\n", cpuinfo.vendor);
-    gfx::printf("[kernel] CPUID | SSE1 support: %s\n", (cpuinfo.edx & CPUID_FEATURE_EDX_SSE) ? "yes" : "no");
-    gfx::printf("[kernel] CPUID | SSE2 support: %s\n", (cpuinfo.edx & CPUID_FEATURE_EDX_SSE2) ? "yes" : "no");
-    gfx::printf("[kernel] CPUID | SSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE3) ? "yes" : "no");
-    gfx::printf("[kernel] CPUID | SSSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSSE3) ? "yes" : "no");
-    gfx::printf("[kernel] CPUID | SSE41 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE41) ? "yes" : "no");
-    gfx::printf("[kernel] CPUID | SSE42 support: %s\n\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE42) ? "yes" : "no");
+    gfx::printf("[kernel] CPU vendor string: %s\n", cpuinfo.vendor);
+    gfx::printf("[kernel] CPU SSE1 support: %s\n", (cpuinfo.edx & CPUID_FEATURE_EDX_SSE) ? "yes" : "no");
+    gfx::printf("[kernel] CPU SSE2 support: %s\n", (cpuinfo.edx & CPUID_FEATURE_EDX_SSE2) ? "yes" : "no");
+    gfx::printf("[kernel] CPU SSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE3) ? "yes" : "no");
+    gfx::printf("[kernel] CPU SSSE3 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSSE3) ? "yes" : "no");
+    gfx::printf("[kernel] CPU SSE41 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE41) ? "yes" : "no");
+    gfx::printf("[kernel] CPU SSE42 support: %s\n", (cpuinfo.ecx & CPUID_FEATURE_ECX_SSE42) ? "yes" : "no");
 
-    // Initialise the initial ramdisk and read the file table.
-    mb_modlist_t *rdinfo = (mb_modlist_t*) mbd->modaddr;
-    initrd::initialise(rdinfo->modstart);
-
-    // File buffer, dirent struct and iterator.
-    gfx::printf("[initrd] initrd contents, built on %s:\n", initrd::rootheader->builddate);
-    uint8_t filebuf[256];
     vfs::dirent_t *ent;
-    uint32_t i = 0;
+    for(int i = 0; i < initrd::nodecount; i++) {
+        // Iterate through each file in the directory.
+        if((ent = vfs::readdir(initrd::root, i)) != 0) {
+            // Check if it's name is equal to "logo.bmp".
+            if(strcmp(ent->name, "logo.bmp") == 0) {
+                // If so, find the node associated with it and copy it into memory.
+                vfs::node_t *node = vfs::finddir(initrd::root, ent->name);
+                uint8_t *fbuf = (uint8_t*) kmalloc(node->length);
+                vfs::read(node, 0, node->length, fbuf);
 
-    // Use vfs::readdir() to get name of the node in ent.
-    while((ent = vfs::readdir(initrd::root, i++)) != 0) {
-        // Use vfs::finddir() to find the actual file node.
-        vfs::node_t *node = vfs::finddir(initrd::root, ent->name);
-
-        // Print the appropriate data.
-        if((node->flags & 0x07) != VFS_DIRECTORY) {
-            vfs::read(node, 0, node->length, filebuf);
-            gfx::printf("[initrd] file %s: %s", node->name, filebuf);
-        } else gfx::printf("[initrd] directory %s/\n", node->name);
+                // Draw the bitmap and then free the buffer.
+                gfx::drawbmp(fbuf, gfx::data->pwidth * 0.6, gfx::data->pheight * 0.05);
+                kfree(fbuf);
+            }
+        }
     }
 
     // Infinite loop here, we never return.

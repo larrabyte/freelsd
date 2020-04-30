@@ -1,4 +1,5 @@
 #include <gfx/renderer.hpp>
+#include <gfx/bitmap.hpp>
 #include <gfx/fonts.hpp>
 #include <mem/libc.hpp>
 #include <string.hpp>
@@ -16,8 +17,35 @@ namespace gfx {
         vdata.buffer[y * vdata.pwidth + x] = colours;
     }
 
+    inline void scroll(size_t n) {
+        // Copies ahead of the buffer back into the base pointer, effectively scrolling.
+        memcpy(vdata.buffer, vdata.buffer + vdata.pwidth * n, vdata.pwidth * vdata.pheight * vdata.bpp);
+    }
+
+    void drawbmp(const void *address, size_t x, size_t y) {
+        // Cast the address into a bitmap header pointer.
+        bmp_header_t *head = (bmp_header_t*) address;
+        bmp_pixel24_t *bitmap = (bmp_pixel24_t*) ((char*) head + head->offset);
+        pixel_t converter;
+
+        // Just support Win32 bitmap headers for now.
+        if(head->dibsize != 40) return;
+
+        // Convert the bitmap's 24-bits into a 32-bit pixel_t for drawing.
+        for(int32_t i = 0, j = 0; i < head->dibs.win32.width; i++, j = 0) {
+            for(int32_t k = head->dibs.win32.height; k > 0; k--) {
+                converter.red = bitmap[k * head->dibs.win32.width + i].red;
+                converter.green = bitmap[k * head->dibs.win32.width + i].green;
+                converter.blue = bitmap[k * head->dibs.win32.width + i].blue;
+                converter.alpha = 0;
+
+                drawpixel(x + i, y + j++, converter);
+            }
+        }
+    }
+
     void drawchar(size_t x, size_t y, int index, pixel_t colours) {
-        bitmap_font_t c = fontmap[index];
+        raster_font_t c = fontmap[index];
 
         // Iterates across the bitmap font data.
         for(size_t i = 0; i < VESA_TEXT_HEIGHT; i++) {
@@ -26,11 +54,6 @@ namespace gfx {
                 if(checkbit(c.rows[i], j)) drawpixel(j + (x * TEXT_SPACING_W), i + (y * TEXT_SPACING_H), colours);
             }
         }
-    }
-
-    void scroll(size_t n) {
-        // Copies ahead of the buffer back into the base pointer, effectively scrolling.
-        memcpy(vdata.buffer, vdata.buffer + vdata.pwidth * n, vdata.pwidth * vdata.pheight * vdata.bpp);
     }
 
     void writechar(const char c) {

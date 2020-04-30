@@ -76,13 +76,13 @@ static inline void *unalign(void *pointer) {
 
 static liballoc_major_t *allocnewpage(size_t size) {
     liballoc_major_t *maj;
-    size_t st;
+    size_t st, reqbytes;
 
     // This is how much space is required.
-    st = size + sizeof(liballoc_major_t) + sizeof(liballoc_minor_t);
+    reqbytes = size + sizeof(liballoc_major_t) + sizeof(liballoc_minor_t);
 
-    if((st % pagesize) == 0) st /= pagesize;  // Perfect amount of space?
-    else st /= pagesize + 1;                  // No, add the buffer.
+    st = reqbytes / pagesize;
+    if(reqbytes % pagesize != 0) st++;
 
     // Make sure it's >= the minimum size.
     if(st < pagecount) st = pagecount;

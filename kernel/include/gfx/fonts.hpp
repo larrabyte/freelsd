@@ -108,7 +108,7 @@ namespace gfx {
         0x1818180018181800UL,  // U+007C (|)
         0x070C0C380C0C0700UL,  // U+007D (})
         0x6E3B000000000000UL,  // U+007E (~)
-        0x0000000000000000UL,  // U+007F
+        0x0000000000000000UL,  // U+007F (nul)
         0xFFFFFFFFFFFFFFFFUL,  // U+0080 (backspace character for now.)
     };
 }

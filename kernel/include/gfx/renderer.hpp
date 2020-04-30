@@ -23,9 +23,9 @@ namespace gfx {
         uint8_t red, green, blue, alpha;
     } __attribute__((packed)) pixel_t;
 
-    typedef struct bitmap_font {
+    typedef struct raster_font {
         // Converts a 64-bit integer into a bitmap_font_t.
-        bitmap_font(uint64_t bitmap) {
+        raster_font(uint64_t bitmap) {
             rows[0] = bitmap >> 56; rows[1] = bitmap >> 48;
             rows[2] = bitmap >> 40; rows[3] = bitmap >> 32;
             rows[4] = bitmap >> 24; rows[5] = bitmap >> 16;
@@ -33,7 +33,7 @@ namespace gfx {
         }
 
         uint8_t rows[8];
-    } bitmap_font_t;
+    } raster_font_t;
 
     typedef struct video_info {
         pixel_t *buffer;
@@ -48,6 +48,9 @@ namespace gfx {
     extern pixel_t colour;  // Current renderer colour.
     extern size_t column;   // Current text column.
     extern size_t row;      // Current text row.
+
+    // Draw a bitmap image on screen at (x, y).
+    void drawbmp(const void *address, size_t x, size_t y);
 
     // Draw a character on screen.
     void drawchar(size_t x, size_t y, int index, pixel_t colours);

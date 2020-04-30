@@ -77,7 +77,7 @@ namespace initrd {
 
         // Start allocating files from the ramdisk.
         rootnodes = (vfs::node_t*) kmalloc(sizeof(vfs::node_t) * rootheader->filecount);
-        nodecount = rootheader->filecount;
+        nodecount = rootheader->filecount + 1;
 
         for(int i = 0; i < nodecount; i++) {
             // Adjust the offset to the beginning of the ramdisk IN memory.
