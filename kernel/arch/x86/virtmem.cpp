@@ -183,14 +183,19 @@ namespace virtmem {
         for(uintptr_t framephys = mbd->framebufferaddr, framevirt = 0xFC000000; framevirt < 0xFFFFF000; framephys += 0x1000, framevirt += 0x1000) mappage(framevirt, framephys);
         mbd->framebufferaddr = 0xFC000000;
 
-        // Cache the module list pointer and the virtual module load address.
-        mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
-        uintptr_t modulevirt = 0xD0000000;
+        // Check whether there are any GRUB modules loaded.
+        if(checkbit(mbd->flags, 3) && mbd->modcount > 0) {
+            // If so, start mapping them into the kernel heap.
+            mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
+            uintptr_t modulevirt = 0xD0000000;
 
-        // Map the initrd to the beginning of the kernel heap.
-        for(uintptr_t modulephys = mods->modstart; modulephys < mods->modend; modulephys += 0x1000, modulevirt += 0x1000) mappage(modulevirt, modulephys);
-        mods->modend = 0xD0000000 + (mods->modend - mods->modstart);
-        mods->modstart = 0xD0000000;
+            for(uint32_t i = 0; i < mbd->modcount; i++) {
+                uintptr_t virtstart = (i == 0) ? 0xD0000000 : modulevirt - (mods[i].modend - mods[i].modstart);
+                for(uintptr_t modulephys = mods[i].modstart; modulephys < mods[i].modend; modulephys += 0x1000, modulevirt += 0x1000) mappage(modulevirt, modulephys);
+                mods[i].modstart = virtstart;
+                mods[i].modend = modulevirt;
+            }
+        }
 
         // Register interrupt handlers and switch the active page directory.
         idt::registerhandler(14, &pfhandler);

@@ -107,8 +107,10 @@ namespace physmem {
         markregionused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);
         markregionused((uintptr_t) mbd->modaddr, mbd->modcount * sizeof(mb_modlist_t));
 
-        // Mark loaded GRUB modules as in use.
+        // Mark any loaded GRUB modules as in use.
         mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
-        for(uint32_t i = 0; i < mbd->modcount; i++) markregionused(mods[i].modstart, mods[i].modend - mods[i].modstart);
+        if(checkbit(mbd->flags, 3) && mbd->modcount > 0) {
+            for(uint32_t i = 0; i < mbd->modcount; i++) markregionused(mods[i].modstart, mods[i].modend - mods[i].modstart);
+        }
     }
 }

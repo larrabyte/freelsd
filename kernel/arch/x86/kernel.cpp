@@ -25,7 +25,7 @@ extern "C" void kernelmain(mb_info_t *mbd) {
 
     // Initialise the initial ramdisk.
     mb_modlist_t *rdinfo = (mb_modlist_t*) mbd->modaddr;
-    initrd::initialise(rdinfo->modstart);
+    if(rdinfo != 0) initrd::initialise(rdinfo->modstart);
 
     // Print the memory map to serial.
     mb_mmap_t *mmap = (mb_mmap_t*) mbd->mmapaddr;
