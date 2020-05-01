@@ -80,10 +80,10 @@ namespace virtmem {
               regs->esp, regs->ebx, regs->edx, regs->ecx, regs->eax, regs->eip, faulty, regs->cs, regs->ss);
     }
 
-    uint32_t findfirstfree(pd_directory_t *directory, uint32_t start, uint32_t end, size_t n) {
+    uintptr_t findfirstfree(pd_directory_t *directory, uintptr_t start, uintptr_t end, size_t n) {
         if(n > PGE_PAGES_PER_TABLE || n == 0) return 0;
-        uint32_t retaddr = start;
-        uint32_t freepages = 0;
+        uintptr_t retaddr = start;
+        uintmax_t freepages = 0;
 
         for(uint32_t i = pdeindex(start); i < pdeindex(end); i++) {
             // Return the PDE's index if it's not present.
@@ -94,7 +94,7 @@ namespace virtmem {
             pt_table_t *table = (pt_table_t*) getframeaddr(pde);
 
             // Iterate through each page table entry.
-            for(uint32_t j = 0; j < PGE_PAGES_PER_TABLE; j++) {
+            for(int j = 0; j < PGE_PAGES_PER_TABLE; j++) {
                 // If the PTE is present, skip this loop iteration.
                 if(checkbit(table->entries[j], 0)) {
                     retaddr += 0x1000; continue;
@@ -107,22 +107,24 @@ namespace virtmem {
 
     void *allockernelheap(size_t n) {
         // The kernel heap is given 256MB to work with.
-        uint32_t virt = findfirstfree(kernelpd, 0xD0000000, 0xE0000000, n);
-        uint32_t phys = (uint32_t) physmem::allocblocks(n);
-        if(virt == 0 || phys == 0) panic("kernel has run out of heap memory.");
-        uint32_t vmax = virt + (n * PMMGR_BLOCK_SIZE);
+        uintptr_t virt = findfirstfree(kernelpd, 0xD0000000, 0xE0000000, n);
+        uintptr_t phys = (uintptr_t) physmem::allocblocks(n);
+        uintptr_t max = virt + (n * PMMGR_BLOCK_SIZE);
+
+        if(virt == 0) panic("kernel has run out of virtual heap memory.");
+        else if(phys == 0) panic("system has run out of physical memory.");
 
         // Map our free virtual address space to some physical blocks of memory.
-        for(uint32_t virtmap = virt; virtmap < vmax; phys += 0x1000, virtmap += 0x1000) {
-            mappage(phys, virtmap);
+        for(uintptr_t virtaddr = virt; virtaddr < max; phys += 0x1000, virtaddr += 0x1000) {
+            mappage(virtaddr, phys);
         }
 
         return (void*) virt;
     }
 
-    void freekernelheap(uint32_t base, size_t n) {
+    void freekernelheap(uintptr_t base, size_t n) {
         pd_entry_t *pde = &kernelpd->entries[pdeindex(base)];
-        if(n > PGE_PAGES_PER_TABLE) return;
+        if(n > PGE_PAGES_PER_TABLE || n == 0) return;
 
         // Iterate through each entry and free each physical block.
         pt_table_t *table = (pt_table_t*) getframeaddr(pde);
@@ -139,7 +141,7 @@ namespace virtmem {
         }
     }
 
-    void mappage(uint32_t phys, uint32_t virt) {
+    void mappage(uintptr_t virt, uintptr_t phys) {
         // Get the page directory entry associated with the virtual address.
         pd_entry_t *pde = &currentdir->entries[pdeindex(virt)];
         pt_table_t *table;
@@ -172,21 +174,21 @@ namespace virtmem {
         currentdir = kernelpd;
 
         // Identity map the first megabyte of physical memory.
-        for(uint32_t firstone = 0x0; firstone < 0x100000; firstone += 0x1000) mappage(firstone, firstone);
+        for(uintptr_t firstmb = 0x0; firstmb < 0x100000; firstmb += 0x1000) mappage(firstmb, firstmb);
 
         // Map sixteen megabytes from 0x100000 to 0xC0000000 (virtual address of 3072MB).
-        for(uint32_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kernelphys, kernelphys + 0xC0000000);
+        for(uintptr_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kernelphys + 0xC0000000, kernelphys);
 
         // Map sixty four megabytes of the framebuffer to 0xFC00000000 (virtual address of 4032MB).
-        for(uint32_t fphys = mbd->framebufferaddr, fvirt = 0xFC000000; fvirt < 0xFFFFF000; fphys += 0x1000, fvirt += 0x1000) mappage(fphys, fvirt);
+        for(uintptr_t framephys = mbd->framebufferaddr, framevirt = 0xFC000000; framevirt < 0xFFFFF000; framephys += 0x1000, framevirt += 0x1000) mappage(framevirt, framephys);
         mbd->framebufferaddr = 0xFC000000;
 
         // Cache the module list pointer and the virtual module load address.
         mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
-        uint32_t mloadaddr = 0xD0000000;
+        uintptr_t modulevirt = 0xD0000000;
 
         // Map the initrd to the beginning of the kernel heap.
-        for(uint32_t mphys = mods->modstart; mphys < mods->modend; mphys += 0x1000, mloadaddr += 0x1000) mappage(mphys, mloadaddr);
+        for(uintptr_t modulephys = mods->modstart; modulephys < mods->modend; modulephys += 0x1000, modulevirt += 0x1000) mappage(modulevirt, modulephys);
         mods->modend = 0xD0000000 + (mods->modend - mods->modstart);
         mods->modstart = 0xD0000000;
 

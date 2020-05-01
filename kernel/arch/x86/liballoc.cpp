@@ -45,8 +45,8 @@ static void *allocate(size_t n) {
     return virtmem::allockernelheap(n);
 }
 
-static int free(void *pointer, size_t n) {
-    virtmem::freekernelheap((uint32_t) pointer, n); return 0;
+static int release(void *pointer, size_t n) {
+    virtmem::freekernelheap((uintptr_t) pointer, n); return 0;
 }
 
 static inline void *align(void *pointer) {
@@ -382,7 +382,7 @@ void kfree(void *pointer) {
         if(maj->next != NULL) maj->next->prev = maj->prev;
         allocated -= maj->size;
 
-        free(maj, maj->pages);
+        release(maj, maj->pages);
     } else {
         if(bestbet != NULL) {
             unsigned int bestsize = bestbet->size - bestbet->usage;

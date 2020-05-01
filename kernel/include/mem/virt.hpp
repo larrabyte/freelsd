@@ -71,22 +71,22 @@ namespace virtmem {
     // Page fault exception handler.
     void pfhandler(idt::regs32_t *regs);
 
-    // Retrieve the given page table entry with a virtual address.
-    pt_entry_t *lookupentry(uint32_t virtaddr);
+    // Undefined exception handler.
+    void udhandler(idt::regs32_t *regs);
 
     // Find the first instance of n pages of memory.
     // Returns 0 if no free pages were found or a value larger than PGE_PAGES_PER_TABLE was passed in.
-    uint32_t findfirstfree(pd_directory_t *directory, uint32_t start, uint32_t end, size_t n);
+    uintptr_t findfirstfree(pd_directory_t *directory, uintptr_t start, uintptr_t end, size_t n);
 
     // Allocate n pages on the kernel heap.
     void *allockernelheap(size_t n);
 
     // Free n pages on the kernel heap, starting from base.
-    void freekernelheap(uint32_t base, size_t n);
+    void freekernelheap(uintptr_t base, size_t n);
 
     // Map a physical address to a virtual one.
     // Both addresses must be page-aligned!
-    void mappage(uint32_t phys, uint32_t virt);
+    void mappage(uintptr_t virt, uintptr_t phys);
 
     // Initialise both paging and the virtual memory manager.
     void initialise(mb_info_t *mbd);
