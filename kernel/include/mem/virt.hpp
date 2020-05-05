@@ -69,7 +69,8 @@ namespace mem {
     } pd_directory_t;
 
     // The kernel's page directory.
-    extern pd_directory_t *kpdptr;
+    extern pd_directory_t *kpdvirt;
+    extern pd_directory_t *kpdphys;
 
     // The current page directory in use.
     extern pd_directory_t *currentdir;

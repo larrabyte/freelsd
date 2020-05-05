@@ -4,8 +4,9 @@ GFXMODE  equ  1 << 2                       ; Not-text mode.
 FLAGS    equ  MBALIGN | MEMINFO | GFXMODE  ; The multiboot 'flag' field.
 MAGIC    equ  0x1BADB002                   ; The multiboot magic number.
 CHECKSUM equ -(MAGIC + FLAGS)              ; Checksum of above.
+
+KERNEL_PDOFF equ (0xC0000000 >> 22) * 4    ; The byte offset required for the kernel's page directory entries.
 KERNEL_VBASE equ 0xC0000000                ; The kernel's virtual base.
-KERNEL_PDIDX equ (KERNEL_VBASE >> 22)      ; The page directory index for the virtual base.
 KERNEL_PBASE equ 0x00100000                ; The kernel's physical base.
 
 global bootstrapx86:function
@@ -93,8 +94,7 @@ paginginitx86:
 
     ; Configure the higher PDEs (3072MB - 3080MB).
     ; --------------------------------------------
-    mov edx, (KERNEL_PDIDX * 4)
-
+    mov edx, KERNEL_PDOFF  ; Move the byte offset into edx.
     push eax               ; Save the address of the page directory.
     add eax, edx           ; Add the byte offset retrieved earlier.
     mov ebx, virtpt1       ; Retrieve address of the first virtual page table.

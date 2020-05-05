@@ -7,7 +7,10 @@
 namespace mem {
     static pt_table_t kernelpt[PGE_TABLES_PER_DIRECTORY] __attribute__((aligned(4096)));
     static pd_directory_t kernelpd __attribute__((aligned(4096)));
-    pd_directory_t *kpdptr = &kernelpd, *currentdir;
+
+    pd_directory_t *kpdphys = (pd_directory_t*) ((char*) &kernelpd - 0xC0000000);
+    pd_directory_t *kpdvirt = &kernelpd;
+    pd_directory_t *currentdir;
 
     static inline void addattribute(uint32_t *entry, uint32_t attribute) {
         *entry |= attribute;
@@ -176,24 +179,24 @@ namespace mem {
     void initialisevirt(mb_info_t *mbd) {
         // Zero out the kernel page tables and the page directory.
         memset(kernelpt, 0, sizeof(pt_table_t) * PGE_TABLES_PER_DIRECTORY);
-        memset(&kernelpd, 0, sizeof(pd_directory_t));
-        currentdir = &kernelpd;
+        memset(kpdvirt, 0, sizeof(pd_directory_t));
+        currentdir = kpdvirt;
 
         // Link the kernel page tables into the page directory.
         for(uint32_t i = 0; i < PGE_TABLES_PER_DIRECTORY; i++) {
-            addattribute(&kernelpd.entries[i], PDE_PRESENT_BIT | PDE_WRITABLE_BIT);
-            setframe(&kernelpd.entries[i], (uint32_t) &kernelpt[i] - 0xC0000000);
+            addattribute(&kpdvirt->entries[i], PDE_PRESENT_BIT | PDE_WRITABLE_BIT);
+            setframe(&kpdvirt->entries[i], (uint32_t) &kernelpt[i] - 0xC0000000);
         }
 
         // Identity map eight megabytes of physical memory, the kernel's page directory is somewhere in here.
-        for(uintptr_t idmap = 0x0; idmap < 0x800000; idmap += 0x1000) mappage(&kernelpd, idmap, idmap);
+        for(uintptr_t idmap = 0x0; idmap < 0x800000; idmap += 0x1000) mappage(kpdvirt, idmap, idmap);
 
         // Map sixteen megabytes to the kernel's virtual base of 0xC0000000.
-        for(uintptr_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(&kernelpd, kernelphys + 0xC0000000, kernelphys);
+        for(uintptr_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kpdvirt, kernelphys + 0xC0000000, kernelphys);
 
         // Calculate the size of the framebuffer, then map it to 0xFC000000.
         uintptr_t bufferend = mbd->framebufferaddr + (mbd->framebufferheight * mbd->framebufferwidth * (mbd->framebufferbpp / 8));
-        for(uintptr_t framephys = mbd->framebufferaddr, framevirt = 0xFC000000; framephys < bufferend; framephys += 0x1000, framevirt += 0x1000) mappage(&kernelpd, framevirt, framephys);
+        for(uintptr_t framephys = mbd->framebufferaddr, framevirt = 0xFC000000; framephys < bufferend; framephys += 0x1000, framevirt += 0x1000) mappage(kpdvirt, framevirt, framephys);
         mbd->framebufferaddr = 0xFC000000;
 
         // Check whether there are any GRUB modules loaded.
@@ -204,7 +207,7 @@ namespace mem {
             // If so, map them into the kernel heap.
             for(uint32_t i = 0; i < mbd->modcount; i++) {
                 uintptr_t virtstart = (i == 0) ? 0xD0000000 : modulevirt - (mods[i].modend - mods[i].modstart);
-                for(uintptr_t modulephys = mods[i].modstart; modulephys < mods[i].modend; modulephys += 0x1000, modulevirt += 0x1000) mappage(&kernelpd, modulevirt, modulephys);
+                for(uintptr_t modulephys = mods[i].modstart; modulephys < mods[i].modend; modulephys += 0x1000, modulevirt += 0x1000) mappage(kpdvirt, modulevirt, modulephys);
                 mods[i].modstart = virtstart;
                 mods[i].modend = modulevirt;
             }
@@ -215,6 +218,6 @@ namespace mem {
         idt::registerhandler(6, &udhandler);
 
         // Load the physical address of the page directory into CR3.
-        loadcr3((uint32_t) &kernelpd - 0xC0000000);
+        loadcr3((uint32_t) kpdphys);
     }
 }

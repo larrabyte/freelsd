@@ -42,11 +42,11 @@ static int unlock(void) {
 }
 
 static void *allocate(size_t n) {
-    return mem::allocatevirt(mem::kpdptr, 0xD0000000, 0xE0000000, n);
+    return mem::allocatevirt(mem::kpdvirt, 0xD0000000, 0xE0000000, n);
 }
 
 static int release(void *pointer, size_t n) {
-    mem::freevirt(mem::kpdptr, (uintptr_t) pointer, n); return 0;
+    mem::freevirt(mem::kpdvirt, (uintptr_t) pointer, n); return 0;
 }
 
 static inline void *align(void *pointer) {
