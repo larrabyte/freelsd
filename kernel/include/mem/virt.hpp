@@ -56,17 +56,23 @@ extern "C" {
     void loadcr3(uint32_t address);
 }
 
-namespace virtmem {
+namespace mem {
     typedef uint32_t pt_entry_t;  // A page table entry.
     typedef uint32_t pd_entry_t;  // A page directory entry.
 
-    typedef struct ptable {
+    typedef struct table {
         pt_entry_t entries[PGE_PAGES_PER_TABLE];
     } pt_table_t;
 
-    typedef struct pdirectory {
+    typedef struct directory {
         pd_entry_t entries[PGE_TABLES_PER_DIRECTORY];
     } pd_directory_t;
+
+    // The kernel's page directory.
+    extern pd_directory_t *kpdptr;
+
+    // The current page directory in use.
+    extern pd_directory_t *currentdir;
 
     // Page fault exception handler.
     void pfhandler(idt::regs32_t *regs);
@@ -74,22 +80,20 @@ namespace virtmem {
     // Undefined exception handler.
     void udhandler(idt::regs32_t *regs);
 
-    // Find the first instance of n pages of memory.
-    // Returns 0 if no free pages were found or a value larger than PGE_PAGES_PER_TABLE was passed in.
-    uintptr_t findfirstfree(pd_directory_t *directory, uintptr_t start, uintptr_t end, size_t n);
+    // Find the first instance of n pages of memory in a given page directory.
+    uintptr_t findfirstfree(pd_directory_t *dir, uintptr_t start, uintptr_t end, size_t n);
 
-    // Allocate n pages on the kernel heap.
-    void *allockernelheap(size_t n);
+    // Map a page-aligned virtual address to a page-aligned physical address.
+    void mappage(pd_directory_t *dir, uintptr_t virt, uintptr_t phys);
 
-    // Free n pages on the kernel heap, starting from base.
-    void freekernelheap(uintptr_t base, size_t n);
+    // Allocates n virtual pages in a page directory.
+    void *allocatevirt(pd_directory_t *dir, uintptr_t start, uintptr_t end, size_t n);
 
-    // Map a physical address to a virtual one.
-    // Both addresses must be page-aligned!
-    void mappage(uintptr_t virt, uintptr_t phys);
+    // Frees n virtual pages (and their physical counterparts) in a page directory.
+    void freevirt(pd_directory_t *dir, uintptr_t base, size_t n);
 
-    // Initialise both paging and the virtual memory manager.
-    void initialise(mb_info_t *mbd);
+    // Initialise the virtual memory manager.
+    void initialisevirt(mb_info_t *mbd);
 }
 
 #endif

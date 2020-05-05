@@ -16,8 +16,8 @@
 extern "C" void kernelmain(mb_info_t *mbd) {
     gdt::initialise();
     idt::initialise();
-    physmem::initialise(mbd);
-    virtmem::initialise(mbd);
+    mem::initialisephys(mbd);
+    mem::initialisevirt(mbd);
     gfx::initialise(mbd);
     timer::initpit(1000);
     serial::initialise();
@@ -41,7 +41,7 @@ extern "C" void kernelmain(mb_info_t *mbd) {
 
     // Write memory information to the screen.
     gfx::printf("[kernel] low memory: %dKB, high memory: %dKB\n", mbd->lowermem, mbd->uppermem);
-    gfx::printf("[kernel] total memory available: %dKB\n\n", physmem::totalsize);
+    gfx::printf("[kernel] total memory available: %dKB\n\n", mem::totalsize);
 
     // Write CPUID information to the screen.
     cpuid_info_t cpuinfo = cpu::executecpuid();

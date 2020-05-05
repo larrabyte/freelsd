@@ -42,11 +42,11 @@ static int unlock(void) {
 }
 
 static void *allocate(size_t n) {
-    return virtmem::allockernelheap(n);
+    return mem::allocatevirt(mem::kpdptr, 0xD0000000, 0xE0000000, n);
 }
 
 static int release(void *pointer, size_t n) {
-    virtmem::freekernelheap((uintptr_t) pointer, n); return 0;
+    mem::freevirt(mem::kpdptr, (uintptr_t) pointer, n); return 0;
 }
 
 static inline void *align(void *pointer) {

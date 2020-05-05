@@ -2,22 +2,22 @@
 #include <mem/libc.hpp>
 #include <errors.hpp>
 
-namespace physmem {
-    static uint32_t map[PMMGR_BITMAP_ARRAY_SIZE];
+namespace mem {
+    static uint32_t physmap[PMMGR_BITMAP_ARRAY_SIZE];
     size_t usedblocks;
     size_t maxblocks;
     size_t totalsize;
 
     inline void setbit(size_t index) {
-        map[index / 32] |= (1 << (index % 32));
+        physmap[index / 32] |= (1 << (index % 32));
     }
 
     inline void unsetbit(size_t index) {
-        map[index / 32] &= ~(1 << (index % 32));
+        physmap[index / 32] &= ~(1 << (index % 32));
     }
 
     inline bool testbit(size_t index) {
-        return map[index / 32] & (1 << (index % 32));
+        return physmap[index / 32] & (1 << (index % 32));
     }
 
     int findfirstfree(size_t n) {
@@ -33,7 +33,7 @@ namespace physmem {
         return -1;  // No free bits :(
     }
 
-    void *allocblocks(size_t n) {
+    void *allocatephys(size_t n) {
         // If not enough blocks available, return.
         if(maxblocks - usedblocks < n) return 0;
 
@@ -47,14 +47,14 @@ namespace physmem {
         return (void*) (blocks * PMMGR_BLOCK_SIZE);
     }
 
-    void freeblocks(uintptr_t base, size_t n) {
+    void freephys(uintptr_t base, size_t n) {
         // Get the block index for unsetting and flip.
         size_t blocks = base / PMMGR_BLOCK_SIZE;
         for(size_t i = 0; i < n; i++) unsetbit(blocks + i);
         usedblocks -= n;
     }
 
-    void markregionfree(uintptr_t base, size_t size) {
+    void markphysfree(uintptr_t base, size_t size) {
         // Get the block's index and number of blocks.
         size_t blocks = size / PMMGR_BLOCK_SIZE + 1;
         size_t align = base / PMMGR_BLOCK_SIZE;
@@ -66,7 +66,7 @@ namespace physmem {
         }
     }
 
-    void markregionused(uintptr_t base, size_t size) {
+    void markphysused(uintptr_t base, size_t size) {
         // Get the block's index and number of blocks.
         size_t blocks = size / PMMGR_BLOCK_SIZE + 1;
         size_t align = base / PMMGR_BLOCK_SIZE;
@@ -78,7 +78,7 @@ namespace physmem {
         }
     }
 
-    void initialise(mb_info_t *mbd) {
+    void initialisephys(mb_info_t *mbd) {
         // Panic if bit 0 of multiboot info isn't set.
         if(!checkbit(mbd->flags, 0) || !checkbit(mbd->flags, 6)) panic("grub memory fields invalid!");
 
@@ -87,14 +87,14 @@ namespace physmem {
         maxblocks = totalsize * 1024 / PMMGR_BLOCK_SIZE;
 
         // Set all memory as in use.
-        memset(map, 0xFF, PMMGR_BITMAP_ARRAY_SIZE * 4);
+        memset(physmap, 0xFF, PMMGR_BITMAP_ARRAY_SIZE * 4);
         usedblocks = maxblocks;
 
         // Iterate through GRUB's memory map.
         mb_mmap_t *mmap = (mb_mmap_t*) mbd->mmapaddr;
 
         while((uintptr_t) mmap < mbd->mmapaddr + mbd->mmaplength) {
-            if(mmap->type == 1) markregionfree(mmap->lowaddr, mmap->lowlen);
+            if(mmap->type == 1) markphysfree(mmap->lowaddr, mmap->lowlen);
             mmap = (mb_mmap_t*) ((uintptr_t) mmap + mmap->size + sizeof(mmap->size));
         }
 
@@ -102,15 +102,15 @@ namespace physmem {
         setbit(0);
 
         // Mark the kernel and related multiboot structs as in use.
-        markregionused(0x100000, (size_t) &kernelend - 0xC0000000);
-        markregionused((uintptr_t) mbd, sizeof(mb_info_t));
-        markregionused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);
-        markregionused((uintptr_t) mbd->modaddr, mbd->modcount * sizeof(mb_modlist_t));
+        markphysused(0x100000, (size_t) &kernelend - 0xC0000000);
+        markphysused((uintptr_t) mbd, sizeof(mb_info_t));
+        markphysused((uintptr_t) mbd->mmapaddr, mbd->mmaplength);
+        markphysused((uintptr_t) mbd->modaddr, mbd->modcount * sizeof(mb_modlist_t));
 
         // Mark any loaded GRUB modules as in use.
         mb_modlist_t *mods = (mb_modlist_t*) mbd->modaddr;
         if(checkbit(mbd->flags, 3) && mbd->modcount > 0) {
-            for(uint32_t i = 0; i < mbd->modcount; i++) markregionused(mods[i].modstart, mods[i].modend - mods[i].modstart);
+            for(uint32_t i = 0; i < mbd->modcount; i++) markphysused(mods[i].modstart, mods[i].modend - mods[i].modstart);
         }
     }
 }
