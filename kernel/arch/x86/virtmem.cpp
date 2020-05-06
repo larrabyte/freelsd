@@ -3,6 +3,7 @@
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
+#include <serial.hpp>
 
 namespace mem {
     static pt_table_t kernelpt[PGE_TABLES_PER_DIRECTORY] __attribute__((aligned(4096)));
@@ -194,8 +195,8 @@ namespace mem {
         // Map sixteen megabytes to the kernel's virtual base of 0xC0000000.
         for(uintptr_t kernelphys = 0x100000; kernelphys < 0x1000000; kernelphys += 0x1000) mappage(kpdvirt, kernelphys + 0xC0000000, kernelphys);
 
-        // Calculate the size of the framebuffer, then map it to 0xFC000000.
-        uintptr_t bufferend = mbd->framebufferaddr + (mbd->framebufferheight * mbd->framebufferwidth * (mbd->framebufferbpp / 8));
+        // Calculate the size of the framebuffer and map the required amount of pages to 0xFC000000.
+        uintptr_t bufferend = mbd->framebufferaddr + (mbd->framebufferpitch * mbd->framebufferheight);
         for(uintptr_t framephys = mbd->framebufferaddr, framevirt = 0xFC000000; framephys < bufferend; framephys += 0x1000, framevirt += 0x1000) mappage(kpdvirt, framevirt, framephys);
         mbd->framebufferaddr = 0xFC000000;
 

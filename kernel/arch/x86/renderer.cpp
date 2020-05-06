@@ -18,8 +18,9 @@ namespace gfx {
     }
 
     inline void scroll(size_t n) {
-        // Copies ahead of the buffer back into the base pointer, effectively scrolling.
-        memcpy(vdata.buffer, vdata.buffer + vdata.pwidth * n, vdata.pwidth * vdata.pheight * vdata.bpp);
+        // Copy ahead of the buffer back into the base framebuffer, this scrolls the screen up one line. Then simply memset() the final line.
+        memcpy(vdata.buffer, &vdata.buffer[n * vdata.pwidth], vdata.pitch * (vdata.pheight - TEXT_SPACING_H));
+        memset(&vdata.buffer[vdata.pwidth * (vdata.pheight - TEXT_SPACING_H)], 0, vdata.pitch * TEXT_SPACING_H);
     }
 
     void drawbmp(const void *address, size_t x, size_t y) {
