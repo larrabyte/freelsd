@@ -4,21 +4,14 @@
 #include <serial.hpp>
 #include <hwio.hpp>
 
-extern "C" {
-    void irqhandler(idt::regs32_t *regs) {
-        // If there is an interrupt handler, call it.
-        if(idt::inthandlers[regs->intnum]) idt::inthandlers[regs->intnum](regs);
+extern "C" void isrhandler(idt::regs32_t *regs) {
+    // Call interrupt handler or print an error.
+    if(idt::inthandlers[regs->intnum]) idt::inthandlers[regs->intnum](regs);
+    else serial::printf("[isr] unhandled interrupt: %d\n", regs->intnum);
 
-        // Acknowledge the interrupt, if required send to both slave and master PICs.
-        if(regs->intnum >= 40) outportb(0xA0, 0x20);
-        outportb(0x20, 0x20);
-    }
-
-    void isrhandler(idt::regs32_t *regs) {
-        // Call interrupt handler or print an error.
-        if(!idt::inthandlers[regs->intnum]) serial::printf("[isr] unhandled interrupt: %d\n", regs->intnum);
-        else idt::inthandlers[regs->intnum](regs);
-    }
+    // Acknowledge the interrupt, if required send to both slave and master PICs.
+    if(regs->intnum >= 40) outportb(0xA0, 0x20);
+    outportb(0x20, 0x20);
 }
 
 namespace idt {

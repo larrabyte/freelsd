@@ -18,7 +18,7 @@ namespace gdt {
         uint8_t access;
         uint8_t granularity;
         uint8_t basehigh;
-    } __attribute__((packed)) entry_t;
+    } entry_t;
 
     typedef struct ptr {
         uint16_t limit;

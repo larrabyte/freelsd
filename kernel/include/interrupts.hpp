@@ -89,7 +89,7 @@ namespace idt {
         uint8_t zero;
         uint8_t flags;
         uint16_t basehigh;
-    } __attribute__((packed)) entry_t;
+    } entry_t;
 
     typedef struct ptr {
         uint16_t limit;
