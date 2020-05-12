@@ -257,6 +257,7 @@ void *kmalloc(size_t reqsize) {
                     min->next = (liballoc_minor_t*) ((uintptr_t) min + sizeof(liballoc_minor_t) + min->size);
                     min->next->prev = min;
                     min = min->next;
+                    min->next = NULL;
                     min->magic = LIBALLOC_MAGIC;
                     min->block = maj;
                     min->size = size;
@@ -367,7 +368,7 @@ void kfree(void *pointer) {
     maj = min->block;
     inuse -= min->size;
 
-    maj->usage = (min->size + sizeof(liballoc_minor_t));
+    maj->usage -= (min->size + sizeof(liballoc_minor_t));
     min->magic = LIBALLOC_DEAD; // No mojo.
 
     if(min->next != NULL) min->next->prev = min->prev;
