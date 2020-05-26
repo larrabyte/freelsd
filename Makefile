@@ -1,7 +1,7 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: all x86 tools clean build/freelsd.iso
+.PHONY: default tools clean cleanall
 
 ARCH := x86
 QEMU := qemu-system-i386
@@ -22,7 +22,7 @@ AFLAGS := -felf32
 # Required directories & files.
 # -----------------------------
 KERNELSRC := kernel/arch/$(ARCH)
-KERNELINC := kernel/include
+KERNELINC := kernel/include/$(ARCH)
 KERNELOBJ := kernel/obj
 
 CPPFILES := $(wildcard $(KERNELSRC)/*.cpp)
@@ -34,23 +34,23 @@ OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELS
 # --------
 # Targets.
 # --------
-all: $(ARCH)
+default: build/freelsd.iso
+	@printf "[qemu] Now booting FreeLSD.\n"
+	@$(QEMU) $(QFLAGS)
+
+tools:
+	@cd tools/initrdgen && $(MAKE) --no-print-directory
 
 clean:
 	@rm -f $(KERNELOBJ)/*.o
 	@printf "[wipe] Deleted object files from kernel/obj.\n"
+
+cleanall: clean
 	@rm -f isoroot/kernel.bin
 	@printf "[wipe] Deleted isoroot/kernel.bin.\n"
 	@rm -f build/freelsd.iso
 	@printf "[wipe] Deleted build/freelsd.iso.\n"
 	@cd tools/initrdgen && $(MAKE) --no-print-directory clean
-
-tools:
-	@cd tools/initrdgen && $(MAKE) --no-print-directory
-
-x86: build/freelsd.iso
-	@printf "[qemu] Now booting FreeLSD.\n"
-	@$(QEMU) $(QFLAGS)
 
 build/freelsd.iso: $(OBJFILES)
 	@printf "[linker] Linking object files and creating ISO.\n"
