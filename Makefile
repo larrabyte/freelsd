@@ -3,20 +3,20 @@
 # ----------------------------------------------------
 .PHONY: default tools clean cleanall
 
-ARCH := x86
-QEMU := qemu-system-i386
-CPP  := i686-elf-g++
+ARCH := x86_64
+QEMU := qemu-system-x86_64
+CPP  := /usr/x86_64-elf/bin/x86_64-elf-g++
 ASM  := nasm
 
 # ----------------------------------
 # Assember, compiler and QEMU flags.
 # ----------------------------------
 WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-write-strings
-CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector \
-			-fno-exceptions -fno-rtti -O3 -nostdlib
+CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions \
+            -fno-rtti -O3 -nostdlib -zmax-page-size=0x1000
 
-QFLAGS := -no-reboot -no-shutdown -serial stdio -display sdl -M q35 -cdrom build/freelsd.iso
-AFLAGS := -felf32
+QFLAGS := -no-reboot -no-shutdown -monitor stdio -display sdl -M q35 -cdrom build/freelsd.iso
+AFLAGS := -felf64
 
 # -----------------------------
 # Required directories & files.
