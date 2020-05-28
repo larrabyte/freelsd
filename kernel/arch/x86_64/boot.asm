@@ -53,8 +53,8 @@ bootstrap:
     or eax, 1 << 0           ; Enable the protected mode bit.
     mov cr0, eax             ; Write eax back into cr0.
 
-    pop ebx
-    pop eax
+    pop ebx                  ; Restore the multiboot struct address.
+    pop eax                  ; Restore the multiboot magic number.
     lgdt [gdt64.pointer]     ; Load the GDTR with our 64-bit GDT.
     jmp gdt64.code:longmode  ; Far jump to load our GDT and switch to long mode.
 
