@@ -1,26 +1,21 @@
-BITS 32 ; 32-bit bootstrap code to jump to 64-bits.
-
-MAGIC    equ 0xE85250D6                ; The Multiboot 2 magic number.
-ARCH     equ 0                         ; Boot into 32-bit protected mode.
-LENGTH   equ hdrend - hdrstart         ; The size of the Multiboot 2 header.
-CHECKSUM equ -(MAGIC + ARCH + LENGTH)  ; Checksum + magic + arch = 0.
+MAGIC    equ 0xE85250D6
+ARCH     equ 0
+LENGTH   equ hdrend - hdrstart
+CHECKSUM equ -(MAGIC + ARCH + LENGTH)
 
 global bootstrap
-
-section .multiboot
-align 8
-hdrstart:
-dd MAGIC
-dd ARCH
-dd LENGTH
-dd CHECKSUM
-dd 0
-dd 8
-hdrend:
+extern gdt64.pointer
+extern gdt64.code
+extern gdt64.data
 
 section .text
+[BITS 32]
 bootstrap:
-    cli
+    cli                      ; Disable interrupts.
+    mov esp, stacktop        ; Set esp to our new stacktop.
+    push eax                 ; Store the multiboot magic number.
+    push ebx                 ; Store the multiboot struct.
+
     mov edi, 0x1000          ; Move the PML4's address into edi.
     mov cr3, edi             ; Move the PML4's address into cr3.
     mov eax, 0               ; Zero out the eax register.
@@ -58,6 +53,35 @@ bootstrap:
     or eax, 1 << 0           ; Enable the protected mode bit.
     mov cr0, eax             ; Write eax back into cr0.
 
-.loop:
+    pop ebx
+    pop eax
+    lgdt [gdt64.pointer]     ; Load the GDTR with our 64-bit GDT.
+    jmp gdt64.code:longmode  ; Far jump to load our GDT and switch to long mode.
+
+[BITS 64]
+longmode:
+    mov cx, gdt64.data       ; Move the data descriptor into cx.
+    mov ss, cx               ; Set the stack segment to cx.
+    mov ds, cx               ; Set the data segment to cx.
+    mov es, cx               ; Set the extra segment to cx.
+    mov fs, cx               ; Set the F segment to cx.
+    mov gs, cx               ; Set the G segment to cx.
+
+    mov rdx, 0x0123456789ABCDEF
     hlt
-    jmp .loop
+
+section .mbheader
+align 8
+hdrstart:
+dd MAGIC
+dd ARCH
+dd LENGTH
+dd CHECKSUM
+dd 0
+dd 8
+hdrend:
+
+section .bss
+align 16
+resb 4096
+stacktop:

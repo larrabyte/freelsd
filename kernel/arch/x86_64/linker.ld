@@ -5,7 +5,7 @@ SECTIONS {
     /* Begin putting sections at 1 MB physical. */
     . = 1M;
 
-    .mbheader : {
+    .mbheader : ALIGN(4K) {
         *(.mbheader)
     }
 
