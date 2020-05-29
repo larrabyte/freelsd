@@ -15,7 +15,7 @@ WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-write-strings
 CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions \
             -fno-rtti -O3 -nostdlib -zmax-page-size=0x1000
 
-QFLAGS := -no-reboot -no-shutdown -monitor stdio -display sdl -M q35 -cdrom build/freelsd.iso
+QFLAGS := -no-reboot -no-shutdown -serial stdio -display sdl -M q35 -cdrom build/freelsd.iso
 AFLAGS := -felf64
 
 # -----------------------------

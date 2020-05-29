@@ -6,12 +6,12 @@ section .data
 align 8
 gdt64:
     .null: equ $ - gdt64
-    dw 0xFFFF  ; Segment limit: bits 0-15.
-    dw 0x0000  ; Base address: bits 0-15.
-    db 0x00    ; Base address: bits 16-23.
-    db 0x00    ; Access byte: bits 0-8.
-    db 0x01    ; Flags byte: bits 0-8.
-    db 0x00    ; Base address: bits 24-31.
+    dw 0xFFFF
+    dw 0x0000
+    db 0x00
+    db 0x00
+    db 0x01
+    db 0x00
 
     .code: equ $ - gdt64
     dw 0x0000

@@ -11,7 +11,9 @@ SECTIONS {
 
     /* Code section and read-only data. */
     .text : ALIGN(4K) {
+        *(.init)
         *(.text)
+        *(.fini)
         *(.rodata*)
     }
 

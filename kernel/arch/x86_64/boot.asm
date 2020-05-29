@@ -4,6 +4,9 @@ LENGTH   equ hdrend - hdrstart
 CHECKSUM equ -(MAGIC + ARCH + LENGTH)
 
 global bootstrap
+extern kernelmain
+extern initf
+extern finif
 extern gdt64.pointer
 extern gdt64.code
 extern gdt64.data
@@ -67,8 +70,10 @@ longmode:
     mov fs, cx               ; Set the F segment to cx.
     mov gs, cx               ; Set the G segment to cx.
 
-    mov rdx, 0x0123456789ABCDEF
-    hlt
+    call initf               ; Initialise global constructors.
+    call kernelmain          ; Start FreeLSD.
+    call finif               ; Kernel return? OK.
+    hlt                      ; Halt the processor.
 
 section .mbheader
 align 8
