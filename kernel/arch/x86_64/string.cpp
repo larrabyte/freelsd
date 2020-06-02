@@ -52,7 +52,7 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
 
     // As a quick hack, return 0x00000000 if we want a NULL pointer.
     else if(num == 0 && base == 16 && pointer) {
-        return "0x00000000";
+        return "0x0000000000000000";
     }
 
     // Check for invalid parameters.
@@ -74,7 +74,7 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
 
     // Is it a pointer?
     if(pointer) {
-        if(index < 8) while(index < 8) buffer[index++] = '0';
+        if(index < 16) while(index < 16) buffer[index++] = '0';
         buffer[index++] = 'x';
         buffer[index++] = '0';
     }
@@ -87,9 +87,8 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
 
 void printk(printk_output_t func, const char *format, va_list ap) {
     // Stack storage for the format string's variables.
-    unsigned int uints; int ints;
-    char *strs; char chars;
-    uintptr_t ptrs;
+    uintmax_t stackdata;
+    char *output;
 
     for(const char *fs = format; *fs; fs++) {
         // If *fs isn't the start of a parameter.
@@ -101,37 +100,34 @@ void printk(printk_output_t func, const char *format, va_list ap) {
         // Parameter specified?
         switch(*++fs) {
             case 'c':
-                chars = (char) va_arg(ap, int);
-                func(chars);
+                stackdata = (char) va_arg(ap, int);
+                func((char) stackdata);
                 break;
             case 'd':
             case 'i':
-                ints = va_arg(ap, int);
-                strs = itoa(ints, internalbuf, 10, false);
-                for(char *s = strs; *s; s++) func(*s);
-                break;
             case 'u':
-                uints = va_arg(ap, unsigned int);
-                strs = itoa(uints, internalbuf, 10, false);
-                for(char *s = strs; *s; s++) func(*s);
+                stackdata = va_arg(ap, int);
+                output = itoa(stackdata, internalbuf, 10, false);
+                for(char *s = output; *s; s++) func(*s);
                 break;
             case 'o':
-                uints = va_arg(ap, unsigned int);
-                strs = itoa(uints, internalbuf, 8, false);
-                for(char *s = strs; *s; s++) func(*s);
+                stackdata = va_arg(ap, int);
+                output = itoa(stackdata, internalbuf, 8, false);
+                for(char *s = output; *s; s++) func(*s);
                 break;
             case 'x':
-                ptrs = va_arg(ap, unsigned int);
-                strs = itoa(ptrs, internalbuf, 16, false);
-                for(char *s = strs; *s; s++) func(*s);
+                stackdata = va_arg(ap, int);
+                output = itoa(stackdata, internalbuf, 16, false);
+                for(char *s = output; *s; s++) func(*s);
                 break;
             case 'p':
-                ptrs = va_arg(ap, uintptr_t);
-                strs = itoa(ptrs, internalbuf, 16, true);
-                for(char *s = strs; *s; s++) func(*s);
+                stackdata = va_arg(ap, uintptr_t);
+                output = itoa(stackdata, internalbuf, 16, true);
+                for(char *s = output; *s; s++) func(*s);
                 break;
             case 's':
-                for(char *s = va_arg(ap, char*); *s; s++) func(*s);
+                stackdata = va_arg(ap, uintptr_t);
+                for(char *s = (char*) stackdata; *s; s++) func(*s);
                 break;
             default:
                 func(*fs);
