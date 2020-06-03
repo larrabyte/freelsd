@@ -1,4 +1,4 @@
-#include <serial.h>
+#include <serial.hpp>
 #include <stdint.h>
 
 extern "C" void kernelmain(void) {

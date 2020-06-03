@@ -1,10 +1,10 @@
-#include <serial.h>
-#include <string.h>
+#include <serial.hpp>
+#include <string.hpp>
+#include <frogs.hpp>
+#include <hwio.hpp>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <error.h>
-#include <hwio.h>
 
 namespace serial {
     inline uint8_t transmitempty(void) {

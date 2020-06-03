@@ -1,4 +1,4 @@
-#include <hwio.h>
+#include <hwio.hpp>
 
 uint8_t inportb(uint16_t port) {
     uint8_t value;

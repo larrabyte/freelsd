@@ -1,7 +1,10 @@
-#ifndef FREELSD_KERNEL_ERROR_HEADER
-#define FREELSD_KERNEL_ERROR_HEADER
+#ifndef FREELSD_KERNEL_FROGS_HEADER
+#define FREELSD_KERNEL_FROGS_HEADER
 
+// ASCII frog, printed in case of a kernel panic. Taken from https://www.asciiart.eu/animals/frogs.
 const char errfrog[] = "                             .-----.\n                            /7  .  (\n                           /   .-.  \\\n                          /   /   \\  \\\n                         / `  )   (   )\n                        / `   )   ).  \\\n                      .\'  _.   \\_/  . |\n     .--.           .\' _.\' )`.        |\n    (    `---...._.\'   `---.\'_)    ..  \\\n     \\            `----....___    `. \\  |\n      `.           _ ----- _   `._  )/  |\n        `.       /\"  \\   /\"  \\`.  `._   |\n          `.    ((O)` ) ((O)` ) `.   `._\\\n            `-- \'`---\'   `---\' )  `.    `-.\n               /                  ` \\      `-.\n             .\'                      `.       `.\n            /                     `  ` `.       `-.\n     .--.   \\ ===._____.======. `    `   `. .___.--`     .\'\'\'\'.\n    \' .` `-. `.                )`. `   ` ` \\          .\' . \'  8)\n   (8  .  ` `-.`.               ( .  ` `  .`\\      .\'  \'    \' /\n    \\  `. `    `-.               ) ` .   ` ` \\  .\'   \' .  \'  /\n     \\ ` `.  ` . \\`.    .--.     |  ` ) `   .``/   \'  // .  /\n      `.  ``. .   \\ \\   .-- `.  (  ` /_   ` . / \' .  \'/   .\'\n        `. ` \\  `  \\ \\  \'-.   `-\'  .\'  `-.  `   .  .\'/  .\'\n          \\ `.`.  ` \\ \\    ) /`._.`       `.  ` .  .\'  /\n           |  `.`. . \\ \\  (.\'               `.   .\'  .\'\n        __/  .. \\ \\ ` ) \\                     \\.\' .. \\__\n .-._.-\'     \'\"  ) .-\'   `.                   (  \'\"     `-._.--.\n(_________.-====\' / .\' /\\_)`--..__________..-- `====-. _________)\n\n";
+
+// ASCII frog, printed after serial and graphical initialisation. Taken from https://www.asciiart.eu/animals/frogs.
 const char stdfrog[] = "\n  ()-()\n.-(___)-. freelsd development kernel\n _<   >_  kermit says guten tag\n \\/   \\/\n\n";
 
 #endif
