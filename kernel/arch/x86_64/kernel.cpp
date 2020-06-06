@@ -9,5 +9,5 @@ extern "C" void kernelmain(void) {
     idt::initialise();
 
     serial::printf("[kernel] hello from long mode!\n");
-    serial::printf("[kernel] kernel end address: %p\n", &kernelend);
+    serial::printf("[kernel] kernel end address: 0x%lx\n", &kernelend);
 }

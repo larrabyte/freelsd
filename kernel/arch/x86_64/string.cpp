@@ -85,9 +85,20 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
     return buffer;
 }
 
+void pkargfinder(va_list ap, uintmax_t *stackdata, uint8_t bits) {
+    switch(bits) {
+        case 8: *stackdata = (char) va_arg(ap, int); break;
+        case 16: *stackdata = (short) va_arg(ap, int); break;
+        case 32: *stackdata = va_arg(ap, int); break;
+        case 64: *stackdata = va_arg(ap, long); break;
+        default: *stackdata = 0; break;
+    }
+}
+
 void printk(printk_output_t func, const char *format, va_list ap) {
     // Stack storage for the format string's variables.
     uintmax_t stackdata;
+    uint8_t bits = 32;
     char *output;
 
     for(const char *fs = format; *fs; fs++) {
@@ -97,36 +108,46 @@ void printk(printk_output_t func, const char *format, va_list ap) {
             continue;
         }
 
-        // Parameter specified?
-        switch(*++fs) {
-            case 'c':
-                stackdata = (char) va_arg(ap, int);
-                func((char) stackdata);
-                break;
-            case 'd':
-            case 'i':
-            case 'u':
-                stackdata = va_arg(ap, int);
+        swloop: switch(*++fs) {
+            case 'l':  // Any length modifiers are dealt with here. Possible
+            case 'z':  // data sizes as of now are 8, 16, 32 and 64 bits.
+            case 'j':  // Case 'j' deals with intmax_t, which is a long.
+            case 't':  // Case 't' deals with ptrdiff_t, which is also a long.
+                bits = 64;
+                goto swloop;
+            case 'h':
+                if(bits == 16) bits = 8;
+                else bits = 16;
+                goto swloop;
+
+            case 'u':  // Here is where the data is retrieved from the list and
+            case 'i':  // interpreted in itoa(), with appropriate arguments.
+            case 'd':  // Specifiers with set bit length are at the bottom.
+                pkargfinder(ap, &stackdata, bits);
                 output = itoa(stackdata, internalbuf, 10, false);
                 for(char *s = output; *s; s++) func(*s);
                 break;
             case 'o':
-                stackdata = va_arg(ap, int);
+                pkargfinder(ap, &stackdata, bits);
                 output = itoa(stackdata, internalbuf, 8, false);
                 for(char *s = output; *s; s++) func(*s);
                 break;
             case 'x':
-                stackdata = va_arg(ap, int);
+                pkargfinder(ap, &stackdata, bits);
                 output = itoa(stackdata, internalbuf, 16, false);
                 for(char *s = output; *s; s++) func(*s);
                 break;
+            case 'c':
+                pkargfinder(ap, &stackdata, 8);
+                func((char) stackdata);
+                break;
             case 'p':
-                stackdata = va_arg(ap, uintptr_t);
+                pkargfinder(ap, &stackdata, 64);
                 output = itoa(stackdata, internalbuf, 16, true);
                 for(char *s = output; *s; s++) func(*s);
                 break;
             case 's':
-                stackdata = va_arg(ap, uintptr_t);
+                pkargfinder(ap, &stackdata, 64);
                 for(char *s = (char*) stackdata; *s; s++) func(*s);
                 break;
             default:
