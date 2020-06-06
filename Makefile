@@ -13,7 +13,7 @@ ASM  := nasm
 # ----------------------------------
 WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-write-strings
 CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions \
-            -fno-rtti -O3 -nostdlib -zmax-page-size=0x1000
+            -fno-rtti -O2 -nostdlib -zmax-page-size=0x1000
 
 QFLAGS := -no-reboot -no-shutdown -serial stdio -display sdl -M q35 -cdrom build/freelsd.iso
 AFLAGS := -felf64
@@ -35,7 +35,7 @@ OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELS
 # Targets.
 # --------
 default: build/freelsd.iso
-	@printf "[qemu] Now booting FreeLSD.\n"
+	@printf "[qmu] Now booting FreeLSD.\n"
 	@$(QEMU) $(QFLAGS)
 
 tools:
@@ -43,17 +43,17 @@ tools:
 
 clean:
 	@rm -f $(KERNELOBJ)/*.o
-	@printf "[wipe] Deleted object files from kernel/obj.\n"
+	@printf "[del] Deleted object files from kernel/obj.\n"
 
 cleanall: clean
 	@rm -f isoroot/kernel.bin
-	@printf "[wipe] Deleted isoroot/kernel.bin.\n"
+	@printf "[del] Deleted isoroot/kernel.bin.\n"
 	@rm -f build/freelsd.iso
-	@printf "[wipe] Deleted build/freelsd.iso.\n"
+	@printf "[del] Deleted build/freelsd.iso.\n"
 	@cd tools/initrdgen && $(MAKE) --no-print-directory clean
 
 build/freelsd.iso: $(OBJFILES)
-	@printf "[linker] Linking object files and creating ISO.\n"
+	@printf "[g++] Linking object files and creating ISO.\n"
 	@$(CPP) -T $(KERNELSRC)/linker.ld $(CFLAGS) $(CRTBEGIN) $(sort $(OBJFILES)) $(CRTFINAL) -o isoroot/kernel.bin -lgcc
 	@./tools/initrdgen/initrdgen
 	@grub-mkrescue -o build/freelsd.iso isoroot &> /dev/null
@@ -63,5 +63,5 @@ $(KERNELOBJ)/%.o: $(KERNELSRC)/%.cpp
 	@$(CPP) $(CFLAGS) -I $(KERNELINC) -c $< -o $@
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.asm
-	@printf "[nasm] $< assembled.\n"
+	@printf "[asm] $< assembled.\n"
 	@$(ASM) $(AFLAGS) $< -o $@

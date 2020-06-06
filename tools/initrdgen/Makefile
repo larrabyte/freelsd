@@ -21,6 +21,6 @@ src/utils.o: src/utils.c src/utils.h
 
 clean:
 	@rm -f $(EXECNAME)
-	@printf "[wipe] Deleted $(EXECNAME) executable.\n"
+	@printf "[del] Deleted $(EXECNAME) executable.\n"
 	@rm -f src/*.o
-	@printf "[wipe] Deleted object files.\n"
+	@printf "[del] Deleted object files.\n"

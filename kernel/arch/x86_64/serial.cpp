@@ -7,7 +7,7 @@
 #include <stdarg.h>
 
 namespace serial {
-    inline uint8_t transmitempty(void) {
+    static inline uint8_t transmitempty(void) {
         // Ask if the data has been received yet.
         return inportb(SERIAL_COM1 + 5) & 0x20;
     }

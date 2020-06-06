@@ -21,14 +21,14 @@ int main(void) {
     DIR *rootdir = opendir(root);
     struct dirent *ent;
     if(rootdir == NULL) {
-        printf("[initrd] cannot open %s!\n", root);
+        printf("[ram] cannot open %s!\n", root);
         return -1;
     }
 
     // Create a new initrd image file.
     FILE *initrd = fopen("./isoroot/initrd.img", "wb");
     if(initrd == NULL) {
-        printf("[initrd] cannot create new initrd image!\n");
+        printf("[ram] cannot create new initrd image!\n");
         return -1;
     }
 
@@ -51,7 +51,7 @@ int main(void) {
             // Open the file, error checking is always good :)
             FILE *fstream = fopen(fpath, "rb");
             if(fstream == NULL) {
-                printf("[initrd] main(): cannot open %s!\n", fpath);
+                printf("[ram] main(): cannot open %s!\n", fpath);
                 return -1;
             }
 
@@ -79,6 +79,6 @@ int main(void) {
     fwrite(&fileheads, sizeof(file_header_t), maxfiles, initrd);
     fclose(initrd);
 
-    printf("[initrd] Image generated with %d/%d files.\n", imghead.filecount, maxfiles);
+    printf("[ram] Image generated with %d/%d files.\n", imghead.filecount, maxfiles);
     return 0;
 }

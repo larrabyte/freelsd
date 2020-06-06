@@ -1,12 +1,12 @@
-global initf
-global finif
+global _init
+global _fini
 
 section .init
-initf:
+_init:
     push rbp
     mov rbp, rsp
 
 section .fini
-finif:
+_fini:
     push rbp
     mov rbp, rsp

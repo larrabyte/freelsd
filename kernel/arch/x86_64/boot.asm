@@ -5,11 +5,11 @@ CHECKSUM equ -(MAGIC + ARCH + LENGTH)
 
 global bootstrap
 extern kernelmain
-extern initf
-extern finif
 extern gdt64.pointer
 extern gdt64.code
 extern gdt64.data
+extern _init
+extern _fini
 
 section .text
 [BITS 32]
@@ -70,9 +70,9 @@ longmode:
     mov fs, cx               ; Set the F segment to cx.
     mov gs, cx               ; Set the G segment to cx.
 
-    call initf               ; Initialise global constructors.
+    call _init               ; Initialise global constructors.
     call kernelmain          ; Start FreeLSD.
-    call finif               ; Kernel return? OK.
+    call _fini               ; Kernel return? OK.
     hlt                      ; Halt the processor.
 
 section .mbheader
