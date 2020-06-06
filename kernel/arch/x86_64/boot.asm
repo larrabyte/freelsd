@@ -70,8 +70,14 @@ longmode:
     mov fs, cx               ; Set the F segment to cx.
     mov gs, cx               ; Set the G segment to cx.
 
+    mov r12, rax             ; Move the magic number into a preserved register.
+    mov r13, rbx             ; Move the struct address into a preserved register.
     call _init               ; Initialise global constructors.
+
+    mov rdi, r12             ; rdi is the first argument in the x86_64 System V ABI.
+    mov rsi, r13             ; rsi is the second argument in the x86_64 System V ABI.
     call kernelmain          ; Start FreeLSD.
+
     call _fini               ; Kernel return? OK.
     hlt                      ; Halt the processor.
 
