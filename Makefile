@@ -11,7 +11,7 @@ ASM  := nasm
 # ----------------------------------
 # Assember, compiler and QEMU flags.
 # ----------------------------------
-WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-write-strings
+WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter
 CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions \
             -fno-rtti -mno-red-zone -zmax-page-size=0x1000 -O2 -nostdlib
 

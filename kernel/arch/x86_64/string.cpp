@@ -51,9 +51,7 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
     }
 
     // As a quick hack, return 0x00000000 if we want a NULL pointer.
-    else if(num == 0 && base == 16 && pointer) {
-        return "0x0000000000000000";
-    }
+    else if(num == 0 && base == 16 && pointer) goto ptrpad;
 
     // Check for invalid parameters.
     else if(num == 0 || base < 2 || base > 32) {
@@ -72,8 +70,8 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
     // Negative number?
     if(negative) buffer[index++] = '-';
 
-    // Is it a pointer?
     if(pointer) {
+        ptrpad: // Is it a pointer?
         if(index < 16) while(index < 16) buffer[index++] = '0';
         buffer[index++] = 'x';
         buffer[index++] = '0';
