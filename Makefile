@@ -13,7 +13,7 @@ ASM  := nasm
 # ----------------------------------
 WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-write-strings
 CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions \
-            -fno-rtti -O2 -nostdlib -zmax-page-size=0x1000
+            -fno-rtti -mno-red-zone -zmax-page-size=0x1000 -O2 -nostdlib
 
 QFLAGS := -no-reboot -no-shutdown -serial stdio -display sdl -M q35 -cdrom build/freelsd.iso
 AFLAGS := -felf64

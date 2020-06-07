@@ -9,7 +9,7 @@ extern "C" {
 
     // The ISR dispatcher, calls appropriate interrupt handlers.
     void isrdispatcher(idt::regs64_t *regs) {
-        serial::printf("[kernel] interrupt %p raised!\n", regs->isr);
+        serial::printf("[kernel] interrupt 0x%lx raised!\n", regs->isr);
     }
 }
 

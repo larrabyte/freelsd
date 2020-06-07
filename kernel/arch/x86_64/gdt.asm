@@ -2,7 +2,7 @@ global gdt64.pointer
 global gdt64.data
 global gdt64.code
 
-section .data
+section .rodata
 align 8
 gdt64:
     .null: equ $ - gdt64
