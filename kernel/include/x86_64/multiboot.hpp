@@ -94,7 +94,7 @@ typedef struct multiboot_header_tag_info_request {
     uint16_t type;
     uint16_t flags;
     uint32_t size;
-    uint32_t *requests;
+    uint32_t requests[1];
 } mb_hdrtag_inforequest_t;
 
 typedef struct multiboot_header_tag_address {
@@ -157,7 +157,7 @@ typedef struct multiboot_tag {
 typedef struct multiboot_tag_string {
     uint32_t type;
     uint32_t size;
-    char *string;
+    char string[1];
 } mb_tag_string_t;
 
 typedef struct multiboot_tag_module {
@@ -165,7 +165,7 @@ typedef struct multiboot_tag_module {
     uint32_t size;
     uint32_t start;
     uint32_t end;
-    char *cmdline;
+    char cmdline[1];
 } mb_tag_module_t;
 
 typedef struct multiboot_tag_basic_meminfo {
@@ -188,7 +188,7 @@ typedef struct multiboot_tag_mmap {
     uint32_t size;
     uint32_t entrysize;
     uint32_t entryversion;
-    mb_mmap_entry_t *entries;
+    mb_mmap_entry_t entries[1];
 } mb_tag_mmap_t;
 
 typedef struct multiboot_vbe_info_block {
@@ -219,28 +219,28 @@ typedef struct multiboot_tag_framebuffer_common {
     uint32_t width;
     uint32_t height;
     uint8_t bpp;
-    uint8_t type;
+    uint8_t fbtype;
     uint16_t reserved;
 } mb_tag_framebuffer_common_t;
 
 typedef struct multiboot_tag_framebuffer {
     mb_tag_framebuffer_common_t common;
 
-    union colours {
-        struct one {
+    union ucolour {
+        struct spalette {
             uint16_t palettecolour;
-            mb_colour_t *palette;
-        };
+            mb_colour_t palette[1];
+        } palette;
 
-        struct two {
+        struct sfieldmask {
             uint8_t rfieldpos;
             uint8_t rmasksize;
             uint8_t gfieldpos;
             uint8_t gmasksize;
             uint8_t bfieldpos;
             uint8_t bmasksize;
-        };
-    };
+        } fieldmasks;
+    } colours;
 } mb_tag_framebuffer_t;
 
 typedef struct multiboot_tag_elf_sections {
@@ -249,7 +249,7 @@ typedef struct multiboot_tag_elf_sections {
     uint32_t num;
     uint32_t entsize;
     uint32_t shndx;
-    char *sections;
+    char sections[1];
 } mb_tag_elf_t;
 
 typedef struct multiboot_tag_apm {
@@ -284,19 +284,19 @@ typedef struct multiboot_tag_smbios {
     uint8_t major;
     uint8_t minor;
     uint8_t reserved[6];
-    uint8_t *tables;
+    uint8_t tables[1];
 } mb_tag_smbios_t;
 
 typedef struct multiboot_tag_acpi {
     uint32_t type;
     uint32_t size;
-    uint8_t *rsdp;
+    uint8_t rsdp[1];
 } mb_tag_acpi_t;
 
 typedef struct multiboot_tag_network {
     uint32_t type;
     uint32_t size;
-    uint8_t *dhcpack;
+    uint8_t dhcpack[1];
 } mb_tag_network_t;
 
 typedef struct multiboot_tag_efi_mmap {
@@ -304,7 +304,7 @@ typedef struct multiboot_tag_efi_mmap {
     uint32_t size;
     uint32_t descsize;
     uint32_t descvers;
-    uint8_t *efimmap;
+    uint8_t efimmap[1];
 } mb_tag_efimmap_t;
 
 typedef struct multiboot_tag_load_baseaddr {
@@ -312,5 +312,10 @@ typedef struct multiboot_tag_load_baseaddr {
     uint32_t size;
     uint32_t baseaddr;
 } mb_tag_baseaddr_t;
+
+namespace mboot {
+    // Fetch data from multiboot information structures.
+    void initialise(uintptr_t mbaddr);
+}
 
 #endif
