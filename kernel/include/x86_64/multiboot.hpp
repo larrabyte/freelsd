@@ -313,7 +313,22 @@ typedef struct multiboot_tag_load_baseaddr {
     uint32_t baseaddr;
 } mb_tag_baseaddr_t;
 
+// --------------------------------------
+// FreeLSD-specific multiboot structures.
+// --------------------------------------
+
+typedef struct multiboot_information {
+    char *cmdline, *bootloader;
+    mb_tag_framebuffer_t *fbinfo;
+    mb_tag_basicmem_t *meminfo;
+    mb_tag_bootdev_t *bootdev;
+    mb_tag_mmap_t *mmap;
+} mb_info_t;
+
 namespace mboot {
+    // Multiboot information, stored in a neat little struct.
+    extern mb_info_t info;
+
     // Fetch data from multiboot information structures.
     void initialise(uintptr_t mbaddr);
 }

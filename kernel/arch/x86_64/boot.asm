@@ -1,3 +1,5 @@
+%include "kernel/arch/x86_64/macros.asm"
+
 MAGIC    equ 0xE85250D6
 ARCH     equ 0
 LENGTH   equ hdrend - hdrstart
@@ -16,6 +18,8 @@ section .text
 bootstrap:
     cli                      ; Disable interrupts.
     mov esp, stacktop        ; Set esp to our new stacktop.
+    push 0                   ; Push a 4-byte wide zero.
+    popf                     ; Pop the zero into EFLAGS.
     push eax                 ; Store the multiboot magic number.
     push ebx                 ; Store the multiboot struct.
 
@@ -88,7 +92,20 @@ dd MAGIC
 dd ARCH
 dd LENGTH
 dd CHECKSUM
+
+align 8
+fbtag.start:
+dw MULTIBOOT2_HEADERTAG_FRAMEBUFFER
+dw 0
+dd fbtag.end - fbtag.start
 dd 0
+dd 0
+dd 0
+fbtag.end:
+
+align 8
+dw MULTIBOOT2_HEADERTAG_END
+dw 0
 dd 8
 hdrend:
 
