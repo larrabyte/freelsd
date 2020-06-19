@@ -1,3 +1,4 @@
+#include <gfx/renderer.hpp>
 #include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <serial.hpp>
@@ -9,6 +10,7 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     serial::initialise();
     mboot::initialise(mbaddr);
     idt::initialise();
+    gfx::initialise();
 
     // Check if bootloader is Multiboot2-compliant.
     if(magic != MULTIBOOT2_BOOTLOADER_MAGIC || mbaddr & 0x07) {
@@ -18,5 +20,6 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
 
     // Write some debugging information to serial.
     serial::printf("[kernel] hello from long mode!\n");
+    serial::printf("[kernel] framebuffer address: 0x%lx\n", gfx::mdata.buffer);
     serial::printf("[kernel] end-of-kernel address: 0x%lx\n", &kernelend);
 }
