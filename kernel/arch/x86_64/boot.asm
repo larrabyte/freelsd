@@ -28,7 +28,7 @@ PDPT_VOFFSET equ ((KERNEL_VBASE >> 30) & 0x1FF) * 8
 PML4         equ 0x0000000000000000
 PDPTPHYS     equ 0x0000000000001000
 PDPTVIRT     equ 0x0000000000002000
-PGESIZE      equ PML4 - PDPTVIRT
+PGESIZE      equ PDPTVIRT - PML4
 
 section .text
 [BITS 32]
@@ -129,9 +129,12 @@ dd 8
 hdrend:
 
 section .data
-pge64s: dq PML4
-pge64e: dq PDPTVIRT
-pge64l: dq PGESIZE
+pge64s:
+dq PML4
+pge64e:
+dq PDPTVIRT
+pge64l:
+dq PGESIZE
 
 section .bss
 align 16
