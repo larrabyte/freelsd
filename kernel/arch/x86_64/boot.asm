@@ -1,17 +1,34 @@
 %include "kernel/arch/x86_64/macros.asm"
 
-MAGIC    equ 0xE85250D6
-ARCH     equ 0
-LENGTH   equ hdrend - hdrstart
-CHECKSUM equ -(MAGIC + ARCH + LENGTH)
-
 global bootstrap
+global pge64s
+global pge64e
+global pge64l
 extern kernelmain
 extern gdt64.pointer
 extern gdt64.code
 extern gdt64.data
 extern _init
 extern _fini
+
+; Multiboot 2 header definitions.
+; See section .mbheader for tags.
+MAGIC    equ 0xE85250D6
+ARCH     equ 0x00000000
+LENGTH   equ hdrend - hdrstart
+CHECKSUM equ -(MAGIC + ARCH + LENGTH)
+
+; Bootstrap paging information and data structures.
+; Should allow for an initial 1GB of address space.
+KERNEL_VBASE equ 0xFFFFFFFF80000000
+KERNEL_PBASE equ 0x0000000000100000
+PML4_VOFFSET equ ((KERNEL_VBASE >> 39) & 0x1FF) * 8
+PDPT_VOFFSET equ ((KERNEL_VBASE >> 30) & 0x1FF) * 8
+
+PML4         equ 0x0000000000000000
+PDPTPHYS     equ 0x0000000000001000
+PDPTVIRT     equ 0x0000000000002000
+PGESIZE      equ PML4 - PDPTVIRT
 
 section .text
 [BITS 32]
@@ -23,28 +40,30 @@ bootstrap:
     push eax                 ; Store the multiboot magic number.
     push ebx                 ; Store the multiboot struct.
 
-    mov edi, 0x1000          ; Move the PML4's address into edi.
+    mov edi, PML4            ; Move the base paging structure's address into edi.
     mov cr3, edi             ; Move the PML4's address into cr3.
-    mov eax, 0               ; Zero out the eax register.
-    mov ecx, 1024            ; How many bytes to repeat for.
-    rep stosd                ; memset(&pml4, 0, 4096);
-    mov edi, cr3             ; Reset edi to the PML4's address.
+    xor eax, eax             ; Zero out the eax register.
+    mov ecx, 3072            ; Repeat memset() for ecx dwords.
+    rep stosd                ; Repeatedly zero memory.
 
-    mov dword [edi], 0x2003  ; Point the first PML4 entry to the first PDPT.
-    add edi, 0x1000          ; Set edi to the address of the first PDPT.
-    mov dword [edi], 0x3003  ; Point the first PDPT to the first PDT.
-    add edi, 0x1000          ; Set edi to the address of the first PDT.
-    mov dword [edi], 0x4003  ; Point the first PDT to the first PT.
-    add edi, 0x1000          ; Set edi to the address of the first PT.
+    mov edi, PML4            ; Move the base address of the PML4 into edi.
+    mov eax, PDPTPHYS        ; Move the address of the lower PDPT into eax.
+    or eax, 1 << 0           ; Enable the present flag for the PML4 entry.
+    or eax, 1 << 1           ; Enable the read/write flag for the PML4 entry.
+    mov dword [edi], eax     ; Point the first entry of the PML4 to the lower PDPT.
 
-    mov ebx, 0x3             ; Set ebx to a template page table entry.
-    mov ecx, 512             ; How many page table entries to set.
+    add edi, PML4_VOFFSET    ; Add the virtual PDPT's offset in the PML4 to edi.
+    mov eax, PDPTVIRT        ; Move the address of the higher PDPT into eax.
+    or eax, 1 << 0           ; Enable the present flag for the PML4 entry.
+    or eax, 1 << 1           ; Enable the read/write flag for the PML4 entry.
+    mov dword [edi], eax     ; Point the higher entry of the PML4 to the higher PDPT.
 
-.ptentry:
-    mov dword [edi], ebx     ; Move our entries into the address in edi.
-    add ebx, 0x1000          ; Add 0x1000 to our page table entry.
-    add edi, 8               ; Move along eight bytes.
-    loop .ptentry            ; Repeat until ecx is zero.
+    mov edi, PDPTPHYS        ; Set edi to the lower PDPT's address.
+    mov dword [edi], 0x83    ; Set the first entry as a 1GB page, present and read/write.
+
+    mov edi, PDPTVIRT        ; Set edi to the higher PDPT's address.
+    add edi, PDPT_VOFFSET    ; Add the higher offset onto edi.
+    mov dword [edi], 0x83    ; Set the entry as a 1GB page, present and read/write.
 
     mov eax, cr4             ; Copy contents of cr4 into eax.
     or eax, 1 << 5           ; Enable the PAE bit.
@@ -108,6 +127,11 @@ dw MULTIBOOT2_HEADERTAG_END
 dw 0
 dd 8
 hdrend:
+
+section .data
+pge64s: dq PML4
+pge64e: dq PDPTVIRT
+pge64l: dq PGESIZE
 
 section .bss
 align 16
