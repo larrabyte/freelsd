@@ -1,7 +1,6 @@
 #include <multiboot.hpp>
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
-#include <serial.hpp>
 
 namespace mem {
     static uint64_t physmap[PMMGR_BITMAP_ARRAY_SIZE];
@@ -104,7 +103,7 @@ namespace mem {
         usedblocks = 0;
 
         // Mark the kernel and any additional data structures as in use.
-        markphysused(0x100000, (size_t) &kernelend - 0x100000);
+        markphysused(0x100000, (size_t) &kernelend - 0xFFFFFFFF80000000);
         markphysused(pge64s, pge64l);
     }
 }

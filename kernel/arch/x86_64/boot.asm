@@ -4,10 +4,16 @@ global bootstrap
 global pge64s
 global pge64e
 global pge64l
-extern kernelmain
+
+extern gdt64.pointer64
 extern gdt64.pointer
 extern gdt64.code
 extern gdt64.data
+extern kernelmain
+extern startcrtbss
+extern endcrtbss
+extern startbss
+extern endbss
 extern _init
 extern _fini
 
@@ -20,8 +26,6 @@ CHECKSUM equ -(MAGIC + ARCH + LENGTH)
 
 ; Bootstrap paging information and data structures.
 ; Should allow for an initial 1GB of address space.
-KERNEL_VBASE equ 0xFFFFFFFF80000000
-KERNEL_PBASE equ 0x0000000000100000
 PML4_VOFFSET equ ((KERNEL_VBASE >> 39) & 0x1FF) * 8
 PDPT_VOFFSET equ ((KERNEL_VBASE >> 30) & 0x1FF) * 8
 
@@ -30,21 +34,27 @@ PDPTPHYS     equ 0x0000000000001000
 PDPTVIRT     equ 0x0000000000002000
 PGESIZE      equ PDPTVIRT - PML4
 
-section .text
+section .mbtext
 [BITS 32]
 bootstrap:
     cli                      ; Disable interrupts.
-    mov esp, stacktop        ; Set esp to our new stacktop.
-    push 0                   ; Push a 4-byte wide zero.
-    popf                     ; Pop the zero into EFLAGS.
-    push eax                 ; Store the multiboot magic number.
-    push ebx                 ; Store the multiboot struct.
+    mov esi, eax             ; Store the multiboot magic into esi.
+    xor eax, eax             ; Zero out the eax register.
+
+    mov edi, startcrtbss     ; Set edi to crtbegin.o's BSS section.
+    mov ecx, endcrtbss       ; Set ecx to the end of the BSS section.
+    sub ecx, edi             ; Calculate the size of the BSS and store in ecx.
+    rep stosb                ; Zero out memory in 1-byte chunks.
+
+    mov edi, startbss        ; Set edi to the kernel's BSS section.
+    mov ecx, endbss          ; Set ecx to the end of the BSS section.
+    sub ecx, edi             ; Calculate the size of the BSS and store in ecx.
+    rep stosb                ; Repeatedly zero memory in 1-byte chunks.
 
     mov edi, PML4            ; Move the base paging structure's address into edi.
     mov cr3, edi             ; Move the PML4's address into cr3.
-    xor eax, eax             ; Zero out the eax register.
-    mov ecx, 3072            ; Repeat memset() for ecx dwords.
-    rep stosd                ; Repeatedly zero memory.
+    mov ecx, 3072            ; Set ecx to the size of the PML4 and both PDPTs.
+    rep stosd                ; Repeatedly zero memory in 4-byte chunks.
 
     mov edi, PML4            ; Move the base address of the PML4 into edi.
     mov eax, PDPTPHYS        ; Move the address of the lower PDPT into eax.
@@ -78,14 +88,15 @@ bootstrap:
     or eax, 1 << 31          ; Enable the paging bit.
     or eax, 1 << 0           ; Enable the protected mode bit.
     mov cr0, eax             ; Write eax back into cr0.
+    lgdt [gdt64.pointer]     ; Load the GDTR with the "real" address of the GDT.
 
-    pop ebx                  ; Restore the multiboot struct address.
-    pop eax                  ; Restore the multiboot magic number.
-    lgdt [gdt64.pointer]     ; Load the GDTR with our 64-bit GDT.
-    jmp gdt64.code:longmode  ; Far jump to load our GDT and switch to long mode.
+    ; Far jump to load our GDT and switch to long mode.
+    jmp gdt64.code:longmode - KERNEL_VBASE
 
+section .text
 [BITS 64]
 longmode:
+    lgdt [gdt64.pointer64]   ; Reload the GDTR with the virtual address of the GDT.
     mov cx, gdt64.data       ; Move the data descriptor into cx.
     mov ss, cx               ; Set the stack segment to cx.
     mov ds, cx               ; Set the data segment to cx.
@@ -93,12 +104,16 @@ longmode:
     mov fs, cx               ; Set the F segment to cx.
     mov gs, cx               ; Set the G segment to cx.
 
-    mov r12, rax             ; Move the magic number into a preserved register.
-    mov r13, rbx             ; Move the struct address into a preserved register.
+    mov rsp, stacktop        ; Setup the stack pointer now that paging is done.
+    push 0                   ; Push a zero 64-bit integer.
+    popf                     ; Zero out RFLAGS.
+
+    push rsi                 ; Push the multiboot magic number to the stack.
+    push rbx                 ; Push the multiboot struct address onto the stack.
     call _init               ; Initialise global constructors.
 
-    mov rdi, r12             ; rdi is the first argument in the x86_64 System V ABI.
-    mov rsi, r13             ; rsi is the second argument in the x86_64 System V ABI.
+    pop rsi                  ; rsi is the second argument in the x86_64 System V ABI.
+    pop rdi                  ; rdi is the first argument in the x86_64 System V ABI.
     call kernelmain          ; Start FreeLSD.
 
     call _fini               ; Kernel return? OK.
@@ -138,5 +153,5 @@ dq PGESIZE
 
 section .bss
 align 16
-resb 4096
+resb 16384
 stacktop:

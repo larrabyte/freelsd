@@ -40,18 +40,11 @@ char *strcpy(char *dest, char *source) {
     return temp;
 }
 
-char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
-    bool negative = false;
+char *itoa(uintmax_t num, char *buffer, int base, bool pointer) {
     size_t index = 0;
 
-    // Only interpret negatives if it's base 10.
-    if(num < 0 && base == 10) {
-        negative = true;
-        num = -num;
-    }
-
-    // As a quick hack, return 0x00000000 if we want a NULL pointer.
-    else if(num == 0 && base == 16 && pointer) goto ptrpad;
+    // As a quick hack, use goto when we're returning a 0x0 pointer.
+    if(num == 0 && base == 16 && pointer) goto ptrpad;
 
     // Check for invalid parameters.
     else if(num == 0 || base < 2 || base > 32) {
@@ -66,9 +59,6 @@ char *itoa(intmax_t num, char *buffer, int base, bool pointer) {
         buffer[index++] = (rem >= 10) ? 65 + (rem - 10) : 48 + rem;
         num = num / base;
     }
-
-    // Negative number?
-    if(negative) buffer[index++] = '-';
 
     if(pointer) {
         ptrpad: // Is it a pointer?

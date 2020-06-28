@@ -1,8 +1,11 @@
+%include "kernel/arch/x86_64/macros.asm"
+
+global gdt64.pointer64
 global gdt64.pointer
 global gdt64.data
 global gdt64.code
 
-section .rodata
+section .mbdata
 align 8
 gdt64:
     .null: equ $ - gdt64
@@ -32,3 +35,7 @@ gdt64:
     .pointer:
     dw $ - gdt64 - 1
     dq gdt64
+
+    .pointer64:
+    dw $ - gdt64 - 1
+    dq gdt64 + KERNEL_VBASE

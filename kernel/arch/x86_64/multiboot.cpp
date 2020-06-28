@@ -1,5 +1,4 @@
 #include <multiboot.hpp>
-#include <serial.hpp>
 #include <stddef.h>
 #include <stdint.h>
 

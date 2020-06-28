@@ -27,6 +27,6 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
 
     // Write some debugging information to serial.
     serial::printf("[kernel] hello from long mode!\n");
-    serial::printf("[kernel] framebuffer address: 0x%lx\n", gfx::mdata.buffer);
-    serial::printf("[kernel] end-of-kernel address: 0x%lx\n", &kernelend);
+    serial::printf("[kernel] framebuffer address: %p\n", gfx::mdata.buffer);
+    serial::printf("[kernel] end-of-kernel address: %p\n", &kernelend);
 }
