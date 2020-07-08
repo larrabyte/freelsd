@@ -9,11 +9,13 @@ extern gdt64.pointer64
 extern gdt64.pointer
 extern gdt64.code
 extern gdt64.data
-extern kernelmain
+
 extern startcrtbss
 extern endcrtbss
 extern startbss
 extern endbss
+
+extern kernelmain
 extern _init
 extern _fini
 
@@ -32,7 +34,7 @@ PDPT_VOFFSET equ ((KERNEL_VBASE >> 30) & 0x1FF) * 8
 PML4         equ 0x0000000000000000
 PDPTPHYS     equ 0x0000000000001000
 PDPTVIRT     equ 0x0000000000002000
-PGESIZE      equ PDPTVIRT - PML4
+PGESIZE      equ PDPTVIRT - PML4 + 0x1000
 
 section .mbtext
 [BITS 32]

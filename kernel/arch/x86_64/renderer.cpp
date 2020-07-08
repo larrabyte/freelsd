@@ -22,14 +22,12 @@ namespace gfx {
         memset(&mdata.buffer[mdata.width * (mdata.height - TEXT_SPACING_H)], 0, mdata.pitch * TEXT_SPACING_H);
     }
 
-    void drawchar(size_t x, size_t y, const void *font, pixel_t colours) {
-        raster_font_t c = *(raster_font_t*) font;
-
+    void drawchar(size_t x, size_t y, raster_font_t font, pixel_t colours) {
         // Iterates across the bitmap font data.
         for(size_t i = 0; i < VESA_TEXT_HEIGHT; i++) {
             for(size_t j = 0; j < VESA_TEXT_WIDTH; j++) {
                 // If the bit at (x, y) is set, draw the pixel.
-                if(checkbit(c.rows[i], j)) drawpixel(j + (x * TEXT_SPACING_W), i + (y * TEXT_SPACING_H), colours);
+                if(checkbit(font.rows[i], j)) drawpixel(j + (x * TEXT_SPACING_W), i + (y * TEXT_SPACING_H), colours);
             }
         }
     }
@@ -41,11 +39,11 @@ namespace gfx {
         // If character is a backspace, reverse columns.
         else if(c == '\b') {
             if(column != 0) column--;
-            drawchar(column, row, &blankcanvas, 0x00000000);
+            drawchar(column, row, blankcanvas, 0x00000000);
         }
 
         // Otherwise, print character to screen.
-        else drawchar(column++, row, &fontmap[(uint8_t) c], colour);
+        else drawchar(column++, row, fontmap[(uint8_t) c], colour);
 
         // Scrolling code.
         if(column == mdata.width) row++;

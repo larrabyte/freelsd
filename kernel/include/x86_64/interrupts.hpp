@@ -81,7 +81,8 @@ namespace idt {
         uint64_t addr;  // The linear address of the IDT.
     } __attribute__((packed)) ptr_t;
 
-    typedef void (*handler_t)(regs64_t*);  // Function definition for an interrupt handler.
+    // Function definition for an interrupt handler.
+    typedef void (*handler_t)(regs64_t*);
 
     // Initialise the interrupt descriptor table.
     void initialise(void);

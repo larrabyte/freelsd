@@ -1,5 +1,6 @@
 #include <multiboot.hpp>
 #include <mem/phys.hpp>
+#include <mem/virt.hpp>
 #include <mem/libc.hpp>
 
 namespace mem {
@@ -22,7 +23,7 @@ namespace mem {
 
     int findfirstfree(size_t n) {
         // Iterate through each individual bit in the array.
-        for(size_t i = 0, j = 0; i < PMMGR_BITMAP_ARRAY_SIZE; i++) {
+        for(size_t i = 0, j = 0; i < PMMGR_BITMAP_ARRAY_SIZE * 64; i++) {
             // Is it zero?
             if(!testbit(i)) {
                 // Return the appropriate index if we have enough blocks.
@@ -103,7 +104,7 @@ namespace mem {
         usedblocks = 0;
 
         // Mark the kernel and any additional data structures as in use.
-        markphysused(0x100000, (size_t) &kernelend - 0xFFFFFFFF80000000);
+        markphysused(0x100000, (size_t) &kernelend - PGE_KERNEL_VBASE);
         markphysused(pge64s, pge64l);
     }
 }

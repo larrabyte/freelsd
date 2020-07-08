@@ -1,16 +1,19 @@
 #include <gfx/renderer.hpp>
 #include <interrupts.hpp>
 #include <multiboot.hpp>
+#include <mem/virt.hpp>
 #include <mem/phys.hpp>
+#include <mem/libc.hpp>
 #include <serial.hpp>
 #include <stdint.h>
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
-    serial::initialise();
     idt::initialise();
+    serial::initialise();
     mboot::initialise(mbaddr);
     mem::initialisephys();
-    // gfx::initialise();
+    mem::initialisevirt();
+    gfx::initialise();
 
     // Check if bootloader is Multiboot2-compliant.
     if(magic != MULTIBOOT2_BOOTLOADER_MAGIC || mbaddr & 0x07) {
