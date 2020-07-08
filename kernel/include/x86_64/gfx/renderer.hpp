@@ -43,6 +43,18 @@ namespace gfx {
 
     extern modeinfo_t mdata;
 
+    // Draw a character on screen at (x, y) using the specified bitmap and colours.
+    void drawchar(size_t x, size_t y, raster_font_t font, pixel_t colours);
+
+    // Write a character to the framebuffer. Wrapper around drawchar().
+    void writechar(const char c);
+
+    // Write a string to the framebuffer. Wrapper around writechar().
+    void write(const char *str);
+
+    // A wrapper for printk(), uses gfx::writechar to print.
+    void printf(const char *format, ...);
+
     // Initialise the namespace and renderer.
     void initialise(void);
 }

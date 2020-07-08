@@ -114,9 +114,6 @@ namespace mem {
     // The current PML4 table in use.
     extern pml4_table_t *currentpml4;
 
-    // Page fault exception handler.
-    void pfhandler(idt::regs64_t *regs);
-
     // Find the first instance of n pages of memory in a given PML4 table.
     uintptr_t findfirstfree(pml4_table_t *dir, uintptr_t start, uintptr_t end, size_t n);
 
@@ -125,9 +122,6 @@ namespace mem {
 
     // Allocates n virtual pages in a PML4 table.
     void *allocatevirt(pml4_table_t *pml4, uintptr_t start, uintptr_t end, size_t n);
-
-    // Frees n virtual pages (and their physical counterparts) in a PML4 table.
-    void freevirt(pml4_table_t *pml4, uintptr_t base, size_t n);
 
     // Initialise the virtual memory manager.
     void initialisevirt(void);

@@ -18,6 +18,9 @@ namespace mem {
     extern size_t maxblocks;   // Total number of physical blocks available.
     extern size_t totalsize;   // Total physical memory available in bytes.
 
+    // Find the first free instance of n contiguous physical blocks.
+    int findfirstfree(size_t n);
+
     // Allocate n physical blocks.
     void *allocatephys(size_t n);
 

@@ -20,6 +20,16 @@ static void reverse(char *str, size_t length) {
     }
 }
 
+static void pkargfinder(va_list ap, uintmax_t *stackdata, uint8_t bits) {
+    switch(bits) {
+        case 8: *stackdata = (char) va_arg(ap, int); break;
+        case 16: *stackdata = (short) va_arg(ap, int); break;
+        case 32: *stackdata = va_arg(ap, int); break;
+        case 64: *stackdata = va_arg(ap, long); break;
+        default: *stackdata = 0; break;
+    }
+}
+
 size_t strlen(const char *str) {
     const char *start = str;
     while(*str) str++;
@@ -71,16 +81,6 @@ char *itoa(uintmax_t num, char *buffer, int base, bool pointer) {
     buffer[index] = '\0';
     reverse(buffer, index);
     return buffer;
-}
-
-void pkargfinder(va_list ap, uintmax_t *stackdata, uint8_t bits) {
-    switch(bits) {
-        case 8: *stackdata = (char) va_arg(ap, int); break;
-        case 16: *stackdata = (short) va_arg(ap, int); break;
-        case 32: *stackdata = va_arg(ap, int); break;
-        case 64: *stackdata = va_arg(ap, long); break;
-        default: *stackdata = 0; break;
-    }
 }
 
 void printk(printk_output_t func, const char *format, va_list ap) {
