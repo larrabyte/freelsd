@@ -2,6 +2,7 @@
 #include <mem/phys.hpp>
 #include <mem/virt.hpp>
 #include <mem/libc.hpp>
+#include <errors.hpp>
 
 namespace mem {
     static uint64_t physmap[PMMGR_BITMAP_ARRAY_SIZE];
@@ -35,12 +36,9 @@ namespace mem {
     }
 
     void *allocatephys(size_t n) {
-        // If not enough blocks available, return.
-        if(maxblocks - usedblocks < n) return 0;
-
         // Find the first free instance.
         int blocks = findfirstfree(n);
-        if(blocks == -1) return 0;
+        if(blocks == -1) panic("system tried to allocate %zd physical blocks, %zd remaining.", n, maxblocks - usedblocks);
         usedblocks += n;
 
         // Set the required bits in the bitmap and return.

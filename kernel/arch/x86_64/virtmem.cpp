@@ -1,6 +1,7 @@
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
+#include <errors.hpp>
 #include <serial.hpp>
 #include <stdint.h>
 
@@ -223,8 +224,7 @@ namespace mem {
         uintptr_t phys = (uintptr_t) mem::allocatephys(n);
         uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
 
-        if(virt == 0) serial::printf("[virtmm] system has run out of virtual memory.\n");
-        if(phys == 0) serial::printf("[virtmm] system has run out of physical memory.\n");
+        if(virt == 0) panic("kernel has run out of virtual memory.");
 
         // Map our free virtual address space to some physical blocks of memory.
         for(uintptr_t virtaddr = virt; virtaddr < vmax; phys += 0x1000, virtaddr += 0x1000) mappage(pml4, PGE_REGULAR_PAGE, virtaddr, phys);
@@ -285,7 +285,7 @@ namespace mem {
         kernelpml4 = currentpml4 = 0x0000000000000000;
 
         // Map the framebuffer into the address space.
-        uintptr_t fbpend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width);
+        uintptr_t fbpend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width * (mboot::info.fbinfo->common.bpp / 8));
         for(uintptr_t fbp = mboot::info.fbinfo->common.framebuffer, fbv = 0x00007FFFFEFFF000; fbp < fbpend; fbp += 0x1000, fbv += 0x1000) {
             mappage(kernelpml4, PGE_REGULAR_PAGE, fbv, fbp);
         }

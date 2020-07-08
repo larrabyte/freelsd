@@ -42,6 +42,8 @@ namespace gfx {
     } modeinfo_t;
 
     extern modeinfo_t mdata;
+    extern size_t column, row;
+    extern pixel_t colour;
 
     // Draw a character on screen at (x, y) using the specified bitmap and colours.
     void drawchar(size_t x, size_t y, raster_font_t font, pixel_t colours);

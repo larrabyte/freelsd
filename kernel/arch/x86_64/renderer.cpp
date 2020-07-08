@@ -5,8 +5,6 @@
 #include <string.hpp>
 #include <frogs.hpp>
 
-#include <serial.hpp>
-
 namespace gfx {
     modeinfo_t mdata;
     size_t column, row;

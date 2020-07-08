@@ -5,6 +5,7 @@
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <serial.hpp>
+#include <errors.hpp>
 #include <stdint.h>
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
@@ -16,10 +17,7 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     gfx::initialise();
 
     // Check if bootloader is Multiboot2-compliant.
-    if(magic != MULTIBOOT2_BOOTLOADER_MAGIC || mbaddr & 0x07) {
-        serial::printf("[kernel] bootloader is not multiboot2 compliant!\n");
-        serial::printf("[kernel] magic/mbi: 0x%lx/0x%lx\n", magic, mbaddr);
-    }
+    if(magic != MULTIBOOT2_BOOTLOADER_MAGIC || mbaddr & 0x07) panic("bootloader is not multiboot2 compliant!");
 
     // Print the memory map out to serial.
     mb_mmap_entry_t *mmapcur = mboot::info.mmap->entries;
