@@ -224,61 +224,79 @@ namespace mem {
         uintptr_t phys = (uintptr_t) mem::allocatephys(n);
         uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
 
-        if(virt == 0) panic("kernel has run out of virtual memory.");
+        // Return NULL if there is no free virtual address space left.
+        if(virt == 0) return NULL;
 
         // Map our free virtual address space to some physical blocks of memory.
         for(uintptr_t virtaddr = virt; virtaddr < vmax; phys += 0x1000, virtaddr += 0x1000) mappage(pml4, PGE_REGULAR_PAGE, virtaddr, phys);
         return (void*) virt;
     }
 
-    /* void freevirt(pml4_table_t *pml4, uintptr_t base, size_t n) {
+    void freevirt(pml4_table_t *pml4, uintptr_t base, size_t n) {
         uintptr_t addrspace = n * PGE_PTE_ADDRSPACE;
         uintptr_t bmax = base + addrspace;
-        size_t curidx = pdpeindex(base);
         size_t cleared = 0;
 
+        // Set table indexes to their initial values.
+        size_t pdpeidx = pdpeindex(base);
+        size_t pdeidx = pdeindex(base);
+        size_t pteidx = pteindex(base);
+
+        // Iterate through every PML4E in range.
         for(size_t i = pml4index(base); i < pml4index(bmax) + 1; i++) {
             pml4_entry_t *pml4e = &pml4->entries[i];
             pdp_table_t *pdpt = (pdp_table_t*) getframeaddr(pml4e);
             if(addrspace > PGE_PML4E_ADDRSPACE) delattribute(pml4e, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
 
-            for(size_t j = pdpeindex(base); j < PGE_ENTRIES_PER_STRUCTURE; j++) {
-                pdp_entry_t *pdpe = &pdpt->entries[j];
+            // Iterate through every PDPE inside the PDPT.
+            while(pdpeidx < PGE_ENTRIES_PER_STRUCTURE) {
+                pdp_entry_t *pdpe = &pdpt->entries[pdpeidx++];
                 pd_directory_t *pdt = (pd_directory_t*) getframeaddr(pdpe);
                 if(addrspace > PGE_PDPE_ADDRSPACE) delattribute(pdpe, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
 
+                // If it's a huge PDPE, free it and skip any PDTs and PTs.
                 if(testattribute(pdpe, PGE_HUGEPAGE_BIT)) {
                     mem::freephys(getframeaddr(pdpe), PGE_PDPE_ADDRSPACE / PMMGR_BLOCK_SIZE);
+                    cleared += PGE_PDPE_ADDRSPACE / PMMGR_BLOCK_SIZE;
                     addrspace -= PGE_PDPE_ADDRSPACE;
                     continue;
                 }
 
-                for(size_t k = pdeindex(base); k < PGE_ENTRIES_PER_STRUCTURE; k++) {
-                    pd_entry_t *pde = &pdt->entries[k];
+                // Iterate through every PDE inside the PDT.
+                while(pdeidx < PGE_ENTRIES_PER_STRUCTURE) {
+                    pd_entry_t *pde = &pdt->entries[pdeidx++];
                     pt_table_t *ptt = (pt_table_t*) getframeaddr(pde);
                     if(addrspace > PGE_PDE_ADDRSPACE) delattribute(pde, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
 
+                    // If it's a huge PDE, free it and skip any PTs.
                     if(testattribute(pde, PGE_HUGEPAGE_BIT)) {
                         mem::freephys(getframeaddr(pde), PGE_PDE_ADDRSPACE / PMMGR_BLOCK_SIZE);
+                        cleared += PGE_PDE_ADDRSPACE / PMMGR_BLOCK_SIZE;
                         addrspace -= PGE_PDE_ADDRSPACE;
                         continue;
                     }
 
-                    size_t l = pteindex(base);
-
-                    while(l < PGE_ENTRIES_PER_STRUCTURE) {
-                        pt_entry_t *pte = &ptt->entries[l];
+                    // Iterate through every page table entry.
+                    while(pteidx < PGE_ENTRIES_PER_STRUCTURE) {
+                        pt_entry_t *pte = &ptt->entries[pteidx++];
                         mem::freephys(getframeaddr(pte), 1);
                         delattribute(pte, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
                         addrspace -= PGE_PTE_ADDRSPACE;
+                        cleared++;
                     }
 
-                    if(addrspace == 0) return;
-                    l = 0;
+                    if(cleared >= n) return;
+                    pteidx = 0;
                 }
+
+                if(cleared >= n) return;
+                pdeidx = 0;
             }
+
+            if(cleared >= n) return;
+            pdpeidx = 0;
         }
-    } */
+    }
 
     void initialisevirt(void) {
         // Set the address of the kernel's PML4 to the bootstrap PML4.
