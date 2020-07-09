@@ -23,20 +23,19 @@ extern "C" {
         gfx::row = 1;
 
         // Initialise variadic argument list.
-        va_list ap; va_start(ap, format);
+        va_list apg, aps;
+        va_start(apg, format);
+        va_start(aps, format);
 
-        // Print error to both serial and screen.
-        serial::write("\n[kernel] freelsd panic: ");
-        printk(&serial::writechar, format, ap);
-        serial::write("\n[kernel] halting execution. final system uptime: NANms.\n");
-
+        // Write panic message to both the framebuffer and serial.
         gfx::write(errfrog);
-        gfx::write("[kernel] freelsd panic: ");
-        printk(&gfx::writechar, format, ap);
-        gfx::write("\n[kernel] halting execution. final system uptime: NANms.\n");
+        klog("\n[kernel] freelsd panic: ");
+        klog(format, apg, aps);
+        klog("\n[kernel] halting execution. final system uptime: NANms.\n");
 
         // End argument list.
-        va_end(ap);
+        va_end(apg);
+        va_end(aps);
 
         // Enter an infinite loop.
         while(true) asm volatile("hlt");
