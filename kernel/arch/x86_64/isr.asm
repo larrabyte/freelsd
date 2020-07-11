@@ -5,17 +5,17 @@ extern isrdispatcher
 
 section .text
 idtflush:
-    lidt [rdi]
-    ret
+    lidt [rdi]          ; Load the LDTR with the address specified in rdi.
+    ret                 ; Return.
 
 commonisr:
-    pushaq
-    mov rdi, rsp
-    call isrdispatcher
+    pushaq              ; Push all general purpose registers (bar rsp).
+    mov rdi, rsp        ; Point the dispatcher to where our GPRs were just pushed.
+    call isrdispatcher  ; Call the common ISR dispatcher in C++-land.
 
-    popaq
-    add esp, 16
-    iretq
+    popaq               ; Pop all general purpose registers (bar rsp).
+    add esp, 16         ; Deallocate any error codes pushed manually or automatically.
+    iretq               ; Interrupt return.
 
 ISR_NOERRCODE 00
 ISR_NOERRCODE 01
