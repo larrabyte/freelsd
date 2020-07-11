@@ -76,7 +76,7 @@ namespace log {
 
         // Write some initialisation stuff to the log.
         info("[logger] system log initialised at tick %d.\n", timer::systicks);
-        info("[logger] current writers are:\n");
+        info("[logger] initial logger vector entries:\n", numwriters);
         for(size_t i = 0; i < numwriters; i++) {
             info("             -> %p\n", writers[i].function);
         } info("\n");

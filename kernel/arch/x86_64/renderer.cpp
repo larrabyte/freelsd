@@ -8,6 +8,7 @@
 namespace gfx {
     modeinfo_t mdata;
     size_t column, row;
+    size_t cmax, rmax;
     pixel_t colour;
 
     inline void drawpixel(size_t x, size_t y, pixel_t colours) {
@@ -44,14 +45,14 @@ namespace gfx {
         else drawchar(column++, row, fontmap[(uint8_t) c], colour);
 
         // Scrolling code.
-        if(column == mdata.width) row++;
-        else if(row == mdata.height) {
-            row = mdata.height - 1;
+        if(column == cmax) {
+            column = 0;
+            row++;
+        } else if(row == rmax) {
             scroll(TEXT_SPACING_H);
+            row = rmax - 1;
+            column = 0;
         }
-
-        // Reset the columns if we're at max height/width.
-        if(column == mdata.width || row == mdata.height) column = 0;
     }
 
     void write(const char *str) {
@@ -73,12 +74,18 @@ namespace gfx {
     }
 
     void initialise(void) {
+        // Cache values from the multiboot framebuffer tag.
         mdata.buffer = (pixel_t*) mboot::info.fbinfo->common.framebuffer;
         mdata.height = mboot::info.fbinfo->common.height;
         mdata.width = mboot::info.fbinfo->common.width;
         mdata.bpp = mboot::info.fbinfo->common.bpp / 8;
         mdata.pitch = mboot::info.fbinfo->common.pitch;
 
+        // Set the maximum values for columns and rows.
+        cmax = mdata.width / TEXT_SPACING_W;
+        rmax = mdata.height / TEXT_SPACING_H;
+
+        // Set the default colour and write the standard frog.
         colour = 0xFFFFFFFF;
         column = row = 0;
         write(stdfrog);
