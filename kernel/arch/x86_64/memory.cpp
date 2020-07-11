@@ -21,7 +21,7 @@ void memset(const void *memory, uint8_t value, size_t n) {
 }
 
 void *memcpy(const void *dest, const void *source, size_t n) {
-    if(dest == NULL || source == NULL || dest == source) return NULL;
+    if(dest == nullptr || source == nullptr || dest == source) return nullptr;
     char *src = (char*) source;
     char *dst = (char*) dest;
 

@@ -56,7 +56,7 @@ namespace gfx {
     }
 
     void write(const char *str) {
-        if(mdata.buffer == NULL) return;
+        if(mdata.buffer == nullptr) return;
 
         // Call writechar() on each character.
         for(size_t i = 0; i < strlen(str); i++) {

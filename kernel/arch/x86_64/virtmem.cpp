@@ -225,7 +225,7 @@ namespace mem {
         uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
 
         // Return NULL if there is no free virtual address space left.
-        if(virt == 0) return NULL;
+        if(virt == 0) return nullptr;
 
         // Map our free virtual address space to some physical blocks of memory.
         for(uintptr_t virtaddr = virt; virtaddr < vmax; phys += 0x1000, virtaddr += 0x1000) mappage(pml4, PGE_REGULAR_PAGE, virtaddr, phys);

@@ -14,7 +14,7 @@ namespace log {
     void registerwriter(writer_t function, bool info, bool warn, bool error) {
         for(size_t i = 0; i < LOGGER_MAX_OUTPUTS; i++) {
             // If this slot isn't empty, go to the next one.
-            if(writers[i].function != NULL) continue;
+            if(writers[i].function != nullptr) continue;
 
             // Write the address and associated data.
             writers[i].function = function;
@@ -30,7 +30,7 @@ namespace log {
         for(size_t i = 0; i < LOGGER_MAX_OUTPUTS; i++) {
             // Set the function pointer to NULL if we find the one we want to clear.
             if(writers[i].function == function) {
-                writers[i].function = NULL;
+                writers[i].function = nullptr;
                 numwriters--;
             }
         }
