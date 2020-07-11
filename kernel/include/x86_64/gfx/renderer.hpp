@@ -13,8 +13,10 @@ namespace gfx {
     typedef struct pixel {
         // Converts an integer into pixel_t.
         pixel(uint32_t colour) {
-            alpha = colour >> 24; red = colour >> 16;
-            green = colour >> 8; blue = colour;
+            blue = colour >> 24;
+            green = colour >> 16;
+            red = colour >> 8;
+            alpha = colour;
         }
 
         // Default constructor for a pixel_t.

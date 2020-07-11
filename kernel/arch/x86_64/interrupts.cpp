@@ -1,6 +1,6 @@
 #include <interrupts.hpp>
 #include <mem/libc.hpp>
-#include <serial.hpp>
+#include <errors.hpp>
 #include <hwio.hpp>
 
 extern "C" {
@@ -11,7 +11,7 @@ extern "C" {
     void isrdispatcher(idt::regs64_t *regs) {
         // Call the appropriate handler or print a message to serial.
         if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
-        else serial::printf("[isrdpc] unhandled interrupt %ld raised!\n", regs->isr);
+        else panic("unhandled interrupt %ld raised!", regs->isr);
 
         // Acknowledge the interrupt, if required send to both slave and master PICs.
         if(regs->isr >= 40) outportb(0xA0, 0x20);
