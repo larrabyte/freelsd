@@ -8,10 +8,6 @@
 // Typedef for printk output functions.
 typedef void (*printk_output_t)(const char);
 
-// Kernel log function, writes to both framebuffer and serial.
-void klog(const char *format, va_list apg, va_list aps);
-void klog(const char *format, ...);
-
 // Minimal printf() implementation. Supports integers, pointers and strings.
 void printk(printk_output_t func, const char *format, va_list ap);
 

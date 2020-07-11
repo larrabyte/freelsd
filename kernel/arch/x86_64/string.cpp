@@ -146,23 +146,3 @@ void printk(printk_output_t func, const char *format, va_list ap) {
         }
     }
 }
-
-void klog(const char *format, ...) {
-    // Initialise variadic argument list.
-    va_list apg, aps;
-    va_start(apg, format);
-    va_start(aps, format);
-
-    // Send log output to both framebuffer and serial.
-    klog(format, apg, aps);
-
-    // End argument list.
-    va_end(apg);
-    va_end(aps);
-}
-
-void klog(const char *format, va_list apg, va_list aps) {
-    // Use the passed in argument lists for printk().
-    printk(&gfx::writechar, format, apg);
-    printk(&serial::writechar, format, aps);
-}
