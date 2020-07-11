@@ -1,6 +1,7 @@
 #include <gfx/renderer.hpp>
 #include <interrupts.hpp>
 #include <multiboot.hpp>
+#include <keyboard.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <string.hpp>
@@ -11,11 +12,12 @@
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     idt::initialise();
-    serial::initialise();
-    timer::initpit(1000);
     mboot::initialise(mbaddr);
+    serial::initialise();
     mem::initialisephys();
     mem::initialisevirt();
+    timer::initpit(1000);
+    kboard::initialise();
     gfx::initialise();
 
     // Check if bootloader is Multiboot2-compliant.
