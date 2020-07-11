@@ -2,6 +2,7 @@
 #include <mem/libc.hpp>
 #include <errors.hpp>
 #include <hwio.hpp>
+#include <cpu.hpp>
 
 extern "C" {
     // Configures the IDTR register with a new IDT.
@@ -114,6 +115,40 @@ namespace idt {
         setentry(0x2D, irq13, 0x08, 0x8E);
         setentry(0x2E, irq14, 0x08, 0x8E);
         setentry(0x2F, irq15, 0x08, 0x8E);
+
+        // Register the generic CPU exception handler for interrupts 0-31.
+        registerhandler(0x00, &cpu::handler);
+        registerhandler(0x01, &cpu::handler);
+        registerhandler(0x02, &cpu::handler);
+        registerhandler(0x03, &cpu::handler);
+        registerhandler(0x04, &cpu::handler);
+        registerhandler(0x05, &cpu::handler);
+        registerhandler(0x06, &cpu::handler);
+        registerhandler(0x07, &cpu::handler);
+        registerhandler(0x08, &cpu::handler);
+        registerhandler(0x09, &cpu::handler);
+        registerhandler(0x0A, &cpu::handler);
+        registerhandler(0x0B, &cpu::handler);
+        registerhandler(0x0C, &cpu::handler);
+        registerhandler(0x0D, &cpu::handler);
+        registerhandler(0x0E, &cpu::handler);
+        registerhandler(0x0F, &cpu::handler);
+        registerhandler(0x10, &cpu::handler);
+        registerhandler(0x11, &cpu::handler);
+        registerhandler(0x12, &cpu::handler);
+        registerhandler(0x13, &cpu::handler);
+        registerhandler(0x14, &cpu::handler);
+        registerhandler(0x15, &cpu::handler);
+        registerhandler(0x16, &cpu::handler);
+        registerhandler(0x17, &cpu::handler);
+        registerhandler(0x18, &cpu::handler);
+        registerhandler(0x19, &cpu::handler);
+        registerhandler(0x1A, &cpu::handler);
+        registerhandler(0x1B, &cpu::handler);
+        registerhandler(0x1C, &cpu::handler);
+        registerhandler(0x1D, &cpu::handler);
+        registerhandler(0x1E, &cpu::handler);
+        registerhandler(0x1F, &cpu::handler);
 
         // Set the IDTR register and enable interrupts.
         idtflush(&pointer);
