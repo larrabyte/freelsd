@@ -116,10 +116,7 @@ longmode:
 
     pop rsi                  ; rsi is the second argument in the x86_64 System V ABI.
     pop rdi                  ; rdi is the first argument in the x86_64 System V ABI.
-    call kernelmain          ; Start FreeLSD.
-
-    call _fini               ; Kernel return? OK.
-    hlt                      ; Halt the processor.
+    jmp kernelmain           ; Start FreeLSD.
 
 section .mbheader
 align 8

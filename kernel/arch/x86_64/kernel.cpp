@@ -3,15 +3,16 @@
 #include <multiboot.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
-#include <mem/libc.hpp>
 #include <string.hpp>
 #include <serial.hpp>
 #include <errors.hpp>
+#include <timer.hpp>
 #include <stdint.h>
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     idt::initialise();
     serial::initialise();
+    timer::initpit(1000);
     mboot::initialise(mbaddr);
     mem::initialisephys();
     mem::initialisevirt();
@@ -31,4 +32,7 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     klog("[kernel] hello from long mode!\n");
     klog("[kernel] framebuffer address: %p\n", gfx::mdata.buffer);
     klog("[kernel] end-of-kernel address: %p\n", &kernelend);
+
+    // The kernel cannot return, therefore we halt here.
+    while(true) asm volatile("hlt");
 }

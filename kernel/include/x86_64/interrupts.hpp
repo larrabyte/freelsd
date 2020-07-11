@@ -3,7 +3,23 @@
 
 #include <stdint.h>
 
-#define IDTSIZE 256
+#define IDTSIZE  256
+#define IRQ0     32
+#define IRQ1     33
+#define IRQ2     34
+#define IRQ3     35
+#define IRQ4     36
+#define IRQ5     37
+#define IRQ6     38
+#define IRQ7     39
+#define IRQ8     40
+#define IRQ9     41
+#define IRQ10    42
+#define IRQ11    43
+#define IRQ12    44
+#define IRQ13    45
+#define IRQ14    46
+#define IRQ15    47
 
 extern "C" {
     void isr00(void);  // Interrupt Service Routine 00: Divide-by-zero.
@@ -83,6 +99,12 @@ namespace idt {
 
     // Function definition for an interrupt handler.
     typedef void (*handler_t)(regs64_t*);
+
+    // Array of programmable interrupt handlers.
+    extern handler_t handlers[IDTSIZE];
+
+    // Register an interrupt handler at the specified index.
+    void registerhandler(uint8_t index, handler_t handler);
 
     // Initialise the interrupt descriptor table.
     void initialise(void);

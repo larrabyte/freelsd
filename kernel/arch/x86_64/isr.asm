@@ -6,6 +6,7 @@ extern isrdispatcher
 section .text
 idtflush:
     lidt [rdi]          ; Load the LDTR with the address specified in rdi.
+    sti                 ; Re-enable interrupts.
     ret                 ; Return.
 
 commonisr:
@@ -14,7 +15,7 @@ commonisr:
     call isrdispatcher  ; Call the common ISR dispatcher in C++-land.
 
     popaq               ; Pop all general purpose registers (bar rsp).
-    add esp, 16         ; Deallocate any error codes pushed manually or automatically.
+    add rsp, 16         ; Deallocate any error codes pushed manually or automatically.
     iretq               ; Interrupt return.
 
 ISR_NOERRCODE 00

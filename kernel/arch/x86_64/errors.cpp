@@ -3,6 +3,7 @@
 #include <serial.hpp>
 #include <string.hpp>
 #include <errors.hpp>
+#include <timer.hpp>
 #include <frogs.hpp>
 #include <stdarg.h>
 
@@ -31,7 +32,7 @@ extern "C" {
         gfx::write(errfrog);
         klog("\n[kernel] freelsd panic: ");
         klog(format, apg, aps);
-        klog("\n[kernel] halting execution. final system uptime: NANms.\n");
+        klog("\n[kernel] halting execution. final system uptime: %ldms.\n", timer::sinceboot(TIMER_MILLISECONDS));
 
         // End argument list.
         va_end(apg);

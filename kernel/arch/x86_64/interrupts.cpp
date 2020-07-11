@@ -7,14 +7,20 @@ extern "C" {
     // Configures the IDTR register with a new IDT.
     void idtflush(idt::ptr_t *address);
 
-    // The ISR dispatcher, calls appropriate interrupt handlers.
+    // The common ISR dispatcher, called via commonisr.
     void isrdispatcher(idt::regs64_t *regs) {
-        serial::printf("[kernel] interrupt %ld raised!\n", regs->isr);
+        // Call the appropriate handler or print a message to serial.
+        if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
+        else serial::printf("[isrdpc] unhandled interrupt %ld raised!\n", regs->isr);
+
+        // Acknowledge the interrupt, if required send to both slave and master PICs.
+        if(regs->isr >= 40) outportb(0xA0, 0x20);
+        outportb(0x20, 0x20);
     }
 }
 
 namespace idt {
-    static handler_t handlers[IDTSIZE];
+    handler_t handlers[IDTSIZE];
     static entry_t entries[IDTSIZE];
     static ptr_t pointer;
 
@@ -32,6 +38,10 @@ namespace idt {
         entries[index].stacktable = 0;
         entries[index].reservedlow = 0;
         entries[index].reservedhi = 0;
+    }
+
+    void registerhandler(uint8_t index, handler_t handler) {
+        handlers[index] = handler;
     }
 
     void initialise(void) {
