@@ -10,6 +10,7 @@
 #include <errors.hpp>
 #include <timer.hpp>
 #include <stdint.h>
+#include <cpu.hpp>
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     mboot::initialise(mbaddr);
@@ -35,7 +36,10 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     // Write some debugging information to the log.
     log::info("[kernel] hello from long mode!\n");
     log::info("[kernel] framebuffer address: %p\n", gfx::mdata.buffer);
-    log::info("[kernel] end-of-kernel address: %p\n", &kernelend);
+    log::info("[kernel] end-of-kernel address: %p\n\n", &kernelend);
+
+    log::info("[kernel] CPU vendor: %s\n", cpu::getvendor());
+    log::info("[kernel] hypervisor: %hhd\n", cpu::supports(CPU_FEATURE_HVISOR));
 
     // The kernel cannot return, therefore we halt here.
     while(true) asm volatile("hlt");

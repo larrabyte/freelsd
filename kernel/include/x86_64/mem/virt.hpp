@@ -78,7 +78,7 @@
 #define PGE_FRAME_BITS             0x000FFFFFFFFFF000
 
 // Set control register three to a specified address.
-extern "C" void loadcr3(uint32_t address);
+extern "C" void loadcr3(uintptr_t address);
 
 typedef enum mempagetypes {
     PGE_REGULAR_PAGE = 0x1000,

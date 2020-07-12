@@ -1,7 +1,7 @@
 #ifndef FREELSD_KERNEL_LOGGER_HEADER
 #define FREELSD_KERNEL_LOGGER_HEADER
 
-#include <stdint.h>
+#include <stddef.h>
 
 #define LOGGER_MAX_OUTPUTS 256
 

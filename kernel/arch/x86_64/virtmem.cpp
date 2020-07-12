@@ -300,7 +300,7 @@ namespace mem {
 
     void initialisevirt(void) {
         // Set the address of the kernel's PML4 to the bootstrap PML4.
-        kernelpml4 = currentpml4 = 0x0000000000000000;
+        kernelpml4 = currentpml4 = (pml4_table_t*) pge64s;
 
         // Map the framebuffer into the address space.
         uintptr_t fbpend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width * (mboot::info.fbinfo->common.bpp / 8));
@@ -310,5 +310,8 @@ namespace mem {
 
         // Set the framebuffer to the new virtual address.
         mboot::info.fbinfo->common.framebuffer = 0x00007FFFFEFFF000;
+
+        // Reload CR3 and flush the TLB.
+        loadcr3((uintptr_t) kernelpml4);
     }
 }

@@ -73,7 +73,7 @@ extern "C" {
             log::error("[kpanic] rsi: %p, rdi: %p, rbp: %p, rsp: %p\n", regs->rsi, regs->rdi, regs->rbp, regs->rsp);
             log::error("[kpanic]  r8: %p,  r9: %p, r10: %p, r11: %p\n", regs->r8, regs->r9, regs->r10, regs->r11);
             log::error("[kpanic] r12: %p, r13: %p, r14: %p, r15: %p\n", regs->r12, regs->r13, regs->r14, regs->r15);
-            log::error("[kpanic]  cs: %p,  ss: %p, rfl: %p\n", regs->cs, regs->ss, regs->rflags);
+            log::error("[kpanic]  cs: %p,  ss: %p, rip: %p, rfl: %p\n", regs->cs, regs->ss, regs->rip, regs->rflags);
         }
 
         // Enter an infinite loop.
