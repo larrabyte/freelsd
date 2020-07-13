@@ -103,6 +103,6 @@ namespace mem {
 
         // Mark the kernel and any additional data structures as in use.
         markphysused(0x100000, (size_t) &kernelend - PGE_KERNEL_VBASE);
-        markphysused(pge64s, pge64l);
+        markphysused(pge64sel[0], pge64sel[2]);
     }
 }

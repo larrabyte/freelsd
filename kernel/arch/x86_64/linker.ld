@@ -20,9 +20,9 @@ SECTIONS {
         *(.dtors)
         *(.tm_clone_table)
         *(.eh_frame)
-        startcrtbss = .;
+        _scrtbss = .;
         *crtbegin.o(.bss)
-        endcrtbss = .;
+        _ecrtbss = .;
     }
 
     . += KERNEL_VBASE;
@@ -42,9 +42,9 @@ SECTIONS {
 
     /* Read-write data (uninitialized) and the stack. */
     .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VBASE) {
-        startbss = . - KERNEL_VBASE;
+        _skbss = . - KERNEL_VBASE;
         *(.bss)
-        endbss = . - KERNEL_VBASE;
+        _ekbss = . - KERNEL_VBASE;
         *(COMMON)
     }
 

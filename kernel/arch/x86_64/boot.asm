@@ -1,23 +1,11 @@
 %include "kernel/arch/x86_64/macros.asm"
 
-global bootstrap
-global pge64s
-global pge64e
-global pge64l
+global bootstrap, pge64sel
+extern _init, kernelmain
 
-extern gdt64.pointer64
-extern gdt64.pointer
-extern gdt64.code
-extern gdt64.data
-
-extern startcrtbss
-extern endcrtbss
-extern startbss
-extern endbss
-
-extern kernelmain
-extern _init
-extern _fini
+extern gdt64.ptr, gdt64.code, gdt64.data
+extern _scrtbss, _ecrtbss
+extern _skbss, _ekbss
 
 ; Multiboot 2 header definitions.
 ; See section .mbheader for tags.
@@ -36,6 +24,40 @@ PDPTPHYS     equ 0x0000000000001000
 PDPTVIRT     equ 0x0000000000002000
 PGESIZE      equ PDPTVIRT - PML4 + 0x1000
 
+section .data
+pge64sel:
+dq PML4                      ; The start address of the bootstrap paging structures.
+dq PDPTVIRT                  ; The end address of the bootstrap paging structures.
+dq PGESIZE                   ; The size of the bootstrap paging structures.
+
+section .bss
+align 16                     ; 16-byte alignment to conform with compiler.
+resb 16384                   ; Reserve 16KB in the kernel's BSS section for the stack.
+stacktop:                    ; x86 stacks grow downwards, hence we start from the top.
+
+section .mbheader
+hdrstart:
+dd MAGIC                     ; Denotes the Multiboot2 magic value.
+dd ARCH                      ; The specified architecture of our CPU.
+dd LENGTH                    ; Length of the header, including tags.
+dd CHECKSUM                  ; Checksum to verify header integrity.
+
+align 8                      ; Multiboot2 tags must be 8-byte aligned.
+fbtag.start:                 ; Start of the framebuffer tag.
+dw MB2TAG_FRAMEBUFFER        ; Denotes the tag's type: framebuffer.
+dw 0                         ; No flags required in an MB2TAG_FRAMEBUFFER.
+dd fbtag.end - fbtag.start   ; Size of the tag in bytes.
+dd 0                         ; Requested width.
+dd 0                         ; Requested height.
+dd 0                         ; Requested depth.
+fbtag.end:
+
+align 8                      ; Multiboot2 tags must be 8-byte aligned.
+dw MB2TAG_END                ; Denotes the end of tags in the header.
+dw 0                         ; No flags required in an MB2TAG_END.
+dd 8                         ; Size of an end tag is always 8.
+hdrend:                      ; End of the Multiboot2 header.
+
 section .mbtext
 [BITS 32]
 bootstrap:
@@ -43,13 +65,13 @@ bootstrap:
     mov esi, eax             ; Store the multiboot magic into esi.
     xor eax, eax             ; Zero out the eax register.
 
-    mov edi, startcrtbss     ; Set edi to crtbegin.o's BSS section.
-    mov ecx, endcrtbss       ; Set ecx to the end of the BSS section.
+    mov edi, _scrtbss        ; Set edi to crtbegin.o's BSS section.
+    mov ecx, _ecrtbss        ; Set ecx to the end of the BSS section.
     sub ecx, edi             ; Calculate the size of the BSS and store in ecx.
     rep stosb                ; Zero out memory in 1-byte chunks.
 
-    mov edi, startbss        ; Set edi to the kernel's BSS section.
-    mov ecx, endbss          ; Set ecx to the end of the BSS section.
+    mov edi, _skbss          ; Set edi to the kernel's BSS section.
+    mov ecx, _ekbss          ; Set ecx to the end of the BSS section.
     sub ecx, edi             ; Calculate the size of the BSS and store in ecx.
     rep stosb                ; Repeatedly zero memory in 1-byte chunks.
 
@@ -90,7 +112,7 @@ bootstrap:
     or eax, 1 << 31          ; Enable the paging bit.
     or eax, 1 << 0           ; Enable the protected mode bit.
     mov cr0, eax             ; Write eax back into cr0.
-    lgdt [gdt64.pointer]     ; Load the GDTR with the "real" address of the GDT.
+    lgdt [gdt64.ptr]         ; Load the GDTR with eax's address (physical).
 
     ; Far jump to load our GDT and switch to long mode.
     jmp gdt64.code:longmode - KERNEL_VBASE
@@ -98,13 +120,18 @@ bootstrap:
 section .text
 [BITS 64]
 longmode:
-    lgdt [gdt64.pointer64]   ; Reload the GDTR with the virtual address of the GDT.
     mov cx, gdt64.data       ; Move the data descriptor into cx.
     mov ss, cx               ; Set the stack segment to cx.
     mov ds, cx               ; Set the data segment to cx.
     mov es, cx               ; Set the extra segment to cx.
     mov fs, cx               ; Set the F segment to cx.
     mov gs, cx               ; Set the G segment to cx.
+
+    mov rcx, gdt64.ptr + 2   ; Set rcx to the address of the GDT pointer value.
+    mov rax, [rcx]           ; Load the GDT pointer's value into rbx.
+    add rax, KERNEL_VBASE    ; Add the kernel's virtual offset to the pointer.
+    mov [rcx], rax           ; Move the new pointer value back into the GDT's pointer.
+    lgdt [gdt64.ptr]         ; Reload the GDTR with our new virtual address.
 
     mov rsp, stacktop        ; Setup the stack pointer now that paging is done.
     push 0                   ; Push a zero 64-bit integer.
@@ -117,40 +144,3 @@ longmode:
     pop rsi                  ; rsi is the second argument in the x86_64 System V ABI.
     pop rdi                  ; rdi is the first argument in the x86_64 System V ABI.
     jmp kernelmain           ; Start FreeLSD.
-
-section .mbheader
-align 8
-hdrstart:
-dd MAGIC
-dd ARCH
-dd LENGTH
-dd CHECKSUM
-
-align 8
-fbtag.start:
-dw MULTIBOOT2_HEADERTAG_FRAMEBUFFER
-dw 0
-dd fbtag.end - fbtag.start
-dd 0
-dd 0
-dd 0
-fbtag.end:
-
-align 8
-dw MULTIBOOT2_HEADERTAG_END
-dw 0
-dd 8
-hdrend:
-
-section .data
-pge64s:
-dq PML4
-pge64e:
-dq PDPTVIRT
-pge64l:
-dq PGESIZE
-
-section .bss
-align 16
-resb 16384
-stacktop:

@@ -1,9 +1,8 @@
 %include "kernel/arch/x86_64/macros.asm"
 
-global gdt64.pointer64
-global gdt64.pointer
 global gdt64.data
 global gdt64.code
+global gdt64.ptr
 
 section .mbdata
 align 8
@@ -32,10 +31,6 @@ gdt64:
     db 00000000b
     db 0x00
 
-    .pointer:
+    .ptr:
     dw $ - gdt64 - 1
     dq gdt64
-
-    .pointer64:
-    dw $ - gdt64 - 1
-    dq gdt64 + KERNEL_VBASE

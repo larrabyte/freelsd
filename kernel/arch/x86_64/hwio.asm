@@ -5,6 +5,7 @@ global outportb
 global outportw
 global outportl
 
+section .text
 inportb:
     mov edx, edi  ; Move the first argument into edi.
     in al, dx     ; Use IN to retrieve one byte from the I/O port.

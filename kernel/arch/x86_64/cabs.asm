@@ -2,6 +2,7 @@ global loadcr3
 global idtflush
 global readcpuid
 
+section .text
 loadcr3:
     mov cr3, rdi                ; Move a new PML4 base address into CR3.
     ret                         ; Return.

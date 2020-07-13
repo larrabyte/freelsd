@@ -10,7 +10,7 @@
 #define PMMGR_BLOCK_SIZE         4096      // The size of a single block (in bytes).
 #define PMMGR_BLOCKS_PER_BYTE    8         // The number of blocks managed by one byte.
 
-extern "C" uint64_t pge64s, pge64e, pge64l;
+extern "C" uint64_t pge64sel[3];
 extern "C" void *kernelend;
   
 namespace mem {
