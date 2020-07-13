@@ -4,11 +4,6 @@ global idtflush
 extern isrdispatcher
 
 section .text
-idtflush:
-    lidt [rdi]          ; Load the LDTR with the address specified in rdi.
-    sti                 ; Re-enable interrupts.
-    ret                 ; Return.
-
 commonisr:
     pushaq              ; Push all general purpose registers (bar rsp).
     mov rdi, rsp        ; Point the dispatcher to where our GPRs were just pushed.

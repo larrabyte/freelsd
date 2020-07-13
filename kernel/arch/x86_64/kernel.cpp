@@ -13,14 +13,19 @@
 #include <cpu.hpp>
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
+    // Critical for early debugging.
     mboot::initialise(mbaddr);
-    mem::initialisephys();
-    mem::initialisevirt();
     serial::initialise();
     idt::initialise();
     timer::initpit(1000);
-    kboard::initialise();
+
+    // Memory and framebuffer renderer.
+    mem::initialisephys();
+    mem::initialisevirt();
     gfx::initialise();
+
+    // Final initialisation procedures.
+    kboard::initialise();
     log::initialise();
 
     // Check if bootloader is Multiboot2-compliant.

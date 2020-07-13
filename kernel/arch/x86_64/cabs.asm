@@ -1,8 +1,14 @@
 global loadcr3
+global idtflush
 global readcpuid
 
 loadcr3:
-    mov cr3, rdi                ; Move the address in rdi to cr3.
+    mov cr3, rdi                ; Move a new PML4 base address into CR3.
+    ret                         ; Return.
+
+idtflush:
+    lidt [rdi]                  ; Load the LDTR with the address specified in rdi.
+    sti                         ; Re-enable interrupts.
     ret                         ; Return.
 
 readcpuid:

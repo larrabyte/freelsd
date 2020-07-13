@@ -21,10 +21,10 @@ extern _fini
 
 ; Multiboot 2 header definitions.
 ; See section .mbheader for tags.
-MAGIC    equ 0xE85250D6
-ARCH     equ 0x00000000
-LENGTH   equ hdrend - hdrstart
-CHECKSUM equ -(MAGIC + ARCH + LENGTH)
+MAGIC        equ 0xE85250D6
+ARCH         equ 0x00000000
+LENGTH       equ hdrend - hdrstart
+CHECKSUM     equ -(MAGIC + ARCH + LENGTH)
 
 ; Bootstrap paging information and data structures.
 ; Should allow for an initial 1GB of address space.
