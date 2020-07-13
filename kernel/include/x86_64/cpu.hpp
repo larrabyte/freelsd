@@ -4,12 +4,7 @@
 #include <interrupts.hpp>
 #include <stdint.h>
 
-typedef struct cpuidregisters {
-        uint32_t eax;
-        uint32_t ebx;
-        uint32_t ecx;
-        uint32_t edx;
-    } cpuid_regs_t;
+#define CPUID_EDX_BIT 0x1000000000000000
 
 typedef enum cpuidfeature {
     // Features specified in the ecx register.
@@ -82,14 +77,33 @@ typedef enum cpuidfeature {
 extern "C" void readcpuid(uint32_t eax, void *storage);
 
 namespace cpu {
+    typedef struct cpuid_registers {
+        uint32_t eax;
+        uint32_t ebx;
+        uint32_t ecx;
+        uint32_t edx;
+    } cpuid_regs_t;
+
+    typedef struct cpuid_stats {
+        uint32_t stdmax, extmax;
+        char vendor[13];
+        char brand[48];
+    } cpuid_stats_t;
+
     // Generic CPU exception handler.
     void handler(idt::regs64_t *regs);
 
     // Get the CPU vendor as a string.
     char *getvendor(void);
 
+    // Get the CPU brand name.
+    char *getbrandname(void);
+
     // Checks whether the CPU supports a certain feature.
     bool supports(cpuid_feature_t feature);
+
+    // Get CPU information using CPUID.
+    void initialise(void);
 }
 
 #endif

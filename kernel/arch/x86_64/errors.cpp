@@ -77,9 +77,6 @@ extern "C" {
         }
 
         // Enter an infinite loop.
-        while(true) {
-            asm volatile("cli");
-            asm volatile("hlt");
-        }
+        while(true) asm volatile("hlt");
     }
 }

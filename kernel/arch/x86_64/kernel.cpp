@@ -14,8 +14,8 @@
 
 extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     // Critical for early debugging.
-    mboot::initialise(mbaddr);
     serial::initialise();
+    mboot::initialise(magic, mbaddr);
     idt::initialise();
     timer::initpit(1000);
 
@@ -26,10 +26,8 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
 
     // Final initialisation procedures.
     kboard::initialise();
+    cpu::initialise();
     log::initialise();
-
-    // Check if bootloader is Multiboot2-compliant.
-    if(magic != MULTIBOOT2_BOOTLOADER_MAGIC || mbaddr & 0x07) panic("bootloader is not multiboot2 compliant!");
 
     // Print the memory map out to the kernel log.
     mb_mmap_entry_t *mmapcur = mboot::info.mmap->entries;
@@ -43,8 +41,10 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     log::info("[kernel] framebuffer address: %p\n", gfx::mdata.buffer);
     log::info("[kernel] end-of-kernel address: %p\n\n", &kernelend);
 
-    log::info("[kernel] CPU vendor: %s\n", cpu::getvendor());
-    log::info("[kernel] hypervisor: %hhd\n", cpu::supports(CPU_FEATURE_HVISOR));
+    // Write information gathered from CPUID to the log.
+    log::info("[kcpuid] CPU brand name: %s\n", cpu::getbrandname());
+    log::info("[kcpuid] CPU vendor: %s\n", cpu::getvendor());
+    log::info("[kcpuid] hypervisor: %hhd\n", cpu::supports(CPU_FEATURE_HVISOR));
 
     // The kernel cannot return, therefore we halt here.
     while(true) asm volatile("hlt");

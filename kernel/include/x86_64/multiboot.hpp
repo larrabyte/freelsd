@@ -333,7 +333,7 @@ namespace mboot {
     extern mb_info_t info;
 
     // Fetch data from multiboot information structures.
-    void initialise(uintptr_t mbaddr);
+    void initialise(uint64_t magic, uintptr_t mbaddr);
 }
 
 #endif
