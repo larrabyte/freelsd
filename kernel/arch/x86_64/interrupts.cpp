@@ -12,7 +12,7 @@ extern "C" {
     void isrdispatcher(idt::regs64_t *regs) {
         // Call the appropriate handler or print a message to serial.
         if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
-        else panic("unhandled interrupt %ld raised!", regs->isr);
+        else ctxpanic(regs, "unhandled interrupt %ld raised!", regs->isr);
 
         // Acknowledge the interrupt, if required send to both slave and master PICs.
         if(regs->isr >= 40) outportb(0xA0, 0x20);

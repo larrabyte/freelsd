@@ -332,6 +332,9 @@ namespace mboot {
     // Multiboot information, stored in a neat little struct.
     extern mb_info_t info;
 
+    // Get a string representing the memory map type given.
+    const char *getmmaptype(uint8_t index);
+
     // Fetch data from multiboot information structures.
     void initialise(uint64_t magic, uintptr_t mbaddr);
 }

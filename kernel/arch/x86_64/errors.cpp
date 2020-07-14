@@ -51,7 +51,8 @@ extern "C" {
         gfx::write(errfrog);
         log::error("\n-------> FREELSD KERNEL PANIC!\n");
         log::error("         %s\n\n", panicmsgs[timer::systicks % (sizeof(panicmsgs) / sizeof(uintptr_t))]);
-        log::error("[kpanic] freelsd panic in %s -> %s(), ln %d: ", filename, function, line);
+        log::error("[kpanic] freelsd panic in %s -> %s(), ln %d.\n", filename, function, line);
+        log::error("[kpanic] reason: ");
 
         // Access the internal log vector table and print a kernel panic to any that will accept.
         for(size_t i = 0; i < log::numwriters; i++) {

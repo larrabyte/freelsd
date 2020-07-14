@@ -32,7 +32,7 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     // Print the memory map out to the kernel log.
     mb_mmap_entry_t *mmapcur = mboot::info.mmap->entries;
     while((uintptr_t) mmapcur < (uintptr_t) mboot::info.mmap->entries + mboot::info.mmap->size - 16) {
-        log::info("[physmm] memory map, %s | start: %p, length: %p or %ld KB\n", (mmapcur->type == MULTIBOOT_MEMORY_AVAILABLE) ? "AVAILABLE" : "RESERVED ", mmapcur->addr, mmapcur->len, mmapcur->len / 1024);
+        log::info("[physmm] memory map, %s | start: %p, length: %p or %ld KB\n", mboot::getmmaptype(mmapcur->type), mmapcur->addr, mmapcur->len, mmapcur->len / 1024);
         mmapcur = (mb_mmap_entry_t*) ((uintptr_t) mmapcur + mboot::info.mmap->entrysize);
     } log::info("\n");
 
@@ -44,7 +44,7 @@ extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     // Write information gathered from CPUID to the log.
     log::info("[kcpuid] CPU brand name: %s\n", cpu::getbrandname());
     log::info("[kcpuid] CPU vendor: %s\n", cpu::getvendor());
-    log::info("[kcpuid] hypervisor: %hhd\n", cpu::supports(CPU_FEATURE_HVISOR));
+    log::info("[kcpuid] hypervisor: %s\n", cpu::supports(CPU_FEATURE_HVISOR) ? "true" : "false");
 
     // The kernel cannot return, therefore we halt here.
     while(true) asm volatile("hlt");

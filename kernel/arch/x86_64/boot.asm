@@ -134,7 +134,7 @@ longmode:
     lgdt [gdt64.ptr]         ; Reload the GDTR with our new virtual address.
 
     mov rsp, stacktop        ; Setup the stack pointer now that paging is done.
-    push 0                   ; Push a zero 64-bit integer.
+    push qword 0             ; Push a zero 64-bit integer.
     popf                     ; Zero out RFLAGS.
 
     push rsi                 ; Push the multiboot magic number to the stack.

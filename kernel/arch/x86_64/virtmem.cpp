@@ -2,7 +2,6 @@
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
-#include <serial.hpp>
 #include <stdint.h>
 
 namespace mem {
@@ -44,14 +43,19 @@ namespace mem {
         intmax_t reqpages = n;
         if(n == 0) n = 1;
 
+        // Set table indexes to their initial values.
+        size_t j = pdpeindex(start);
+        size_t k = pdeindex(start);
+        size_t l = pteindex(start);
+
         // Iterate through each PML4E entry in range.
-        for(size_t i = pml4index(start); i < pml4index(end); i++) {
+        for(size_t i = pml4index(start); i < pml4index(end) + 1; i++) {
             pml4_entry_t *pml4e = &pml4->entries[i];
 
             if(testattribute(pml4e, PGE_PRESENT_BIT)) {
                 // Because the PML4E was present, iterate through it's PDPT.
                 pdp_table_t *pdpt = (pdp_table_t*) getframeaddr(pml4e);
-                for(size_t j = 0; j < PGE_ENTRIES_PER_STRUCTURE; j++) {
+                for(; j < PGE_ENTRIES_PER_STRUCTURE; j++) {
                     pdp_entry_t *pdpe = &pdpt->entries[j];
 
                     if(testattribute(pdpe, PGE_PRESENT_BIT)) {
@@ -64,7 +68,7 @@ namespace mem {
 
                         // Because the PDPE was present, we must search through the PDTs and PTs.
                         pd_directory_t *pdt = (pd_directory_t*) getframeaddr(pdpe);
-                        for(size_t k = 0; k < PGE_ENTRIES_PER_STRUCTURE; k++) {
+                        for(; k < PGE_ENTRIES_PER_STRUCTURE; k++) {
                             pd_entry_t *pde = &pdt->entries[k];
 
                             if(testattribute(pde, PGE_PRESENT_BIT)) {
@@ -77,7 +81,7 @@ namespace mem {
 
                                 // Because the PDE was present, we must search through the page tables.
                                 pt_table_t *pt = (pt_table_t*) getframeaddr(pde);
-                                for(size_t l = 0; l < PGE_ENTRIES_PER_STRUCTURE; l++) {
+                                for(; l < PGE_ENTRIES_PER_STRUCTURE; l++) {
                                     pt_entry_t *pte = &pt->entries[l];
 
                                     if(testattribute(pte, PGE_PRESENT_BIT)) {
@@ -86,30 +90,32 @@ namespace mem {
                                         reqpages = n;
                                         continue;
                                     } else {
-                                        // The page table entry isn't present, we have a free page!
-                                        setcacheaddr(&addrcached, &retaddr, i, j, k, l);
+                                        setcacheaddr(&addrcached, &retaddr, i, j, k, l); // Free page!
                                         if(--reqpages <= 0) return retaddr;
                                     }
                                 }
+
+                                // PTE reset.
+                                l = 0;
                             } else {
-                                // The PDE isn't present, we have a contiguous chunk of 512 free pages.
-                                setcacheaddr(&addrcached, &retaddr, i, j, k, 0);
-                                reqpages -= PGE_PDE_ADDRSPACE / 0x1000;
-                                if(reqpages <= 0) return retaddr;
+                                setcacheaddr(&addrcached, &retaddr, i, j, k, 0); // PDE not present! (512 free pages).
+                                if((reqpages -= PGE_PDE_ADDRSPACE / 0x1000) <= 0) return retaddr;
                             }
                         }
+
+                        // PDE reset.
+                        k = 0;
                     } else {
-                        // The PDPE isn't present, we have a contiguous chunk of ~256k free pages.
-                        setcacheaddr(&addrcached, &retaddr, i, j, 0, 0);
-                        reqpages -= PGE_PDPE_ADDRSPACE / 0x1000;
-                        if(reqpages <= 0) return retaddr;
+                        setcacheaddr(&addrcached, &retaddr, i, j, 0, 0); // PDPE not present! (256k free pages).
+                        if((reqpages -= PGE_PDPE_ADDRSPACE / 0x1000) <= 0) return retaddr;
                     }
                 }
+
+                // PDPE reset.
+                j = 0;
             } else {
-                // The PML4E is not present, we have a contiguous chunk of ~134M free pages.
-                setcacheaddr(&addrcached, &retaddr, i, 0, 0, 0);
-                reqpages -= PGE_PML4E_ADDRSPACE / 0x1000;
-                if(reqpages <= 0) return retaddr;
+                setcacheaddr(&addrcached, &retaddr, i, 0, 0, 0); // PML4E not present! (~134M free pages).
+                if((reqpages -= PGE_PML4E_ADDRSPACE / 0x1000) <= 0) return retaddr;
             }
         }
 

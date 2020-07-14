@@ -8,6 +8,19 @@ namespace mboot {
     static mb_tag_t *cursor;
     mb_info_t info;
 
+    static const char *mmaptypes[] = {
+        "UNKNOWN  ",
+        "AVAILABLE",
+        "RESERVED ",
+        "ACPI REC.",
+        "NVS RAM  ",
+        "BAD AREA "
+    };
+
+    const char *getmmaptype(uint8_t index) {
+        return mmaptypes[index];
+    }
+
     void initialise(uint64_t magic, uintptr_t mbaddr) {
         // Make sure that the multiboot magic value is present and the struct address is aligned.
         if(magic != MULTIBOOT2_BOOTLOADER_MAGIC) serial::printf("[kpanic] %p: bootloader non-multiboot2 compliant.\n", magic);

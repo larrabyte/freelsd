@@ -56,7 +56,7 @@ namespace cpu {
         return stats.brand;
     }
 
-    bool supports(cpuid_feature_t feature) {
+    bool supports(volatile cpuid_feature_t feature) {
         // Execute CPUID with a leaf of 1.
         if(stats.stdmax >= 1) readcpuid(1, &registers);
         else panic("CPUID leaf 0x1 not supported!");

@@ -60,8 +60,8 @@ MB2TAG_RELOCATABLE          equ 10
 %macro ISR_NOERRCODE 1
     global isr%1
     isr%1:
-        push 0
-        push %1
+        push qword 0
+        push qword %1
         jmp commonisr
 %endmacro
 
@@ -70,7 +70,7 @@ MB2TAG_RELOCATABLE          equ 10
 %macro ISR_ERRCODE 1
     global isr%1
     isr%1:
-        push %1
+        push qword %1
         jmp commonisr
 %endmacro
 
@@ -79,7 +79,7 @@ MB2TAG_RELOCATABLE          equ 10
 %macro IRQ 2
     global irq%1
     irq%1:
-        push 0
-        push %2
+        push qword 0
+        push qword %2
         jmp commonisr
 %endmacro
