@@ -120,12 +120,12 @@ bootstrap:
 section .text
 [BITS 64]
 longmode:
-    mov cx, gdt64.data       ; Move the data descriptor into cx.
-    mov ss, cx               ; Set the stack segment to cx.
-    mov ds, cx               ; Set the data segment to cx.
-    mov es, cx               ; Set the extra segment to cx.
-    mov fs, cx               ; Set the F segment to cx.
-    mov gs, cx               ; Set the G segment to cx.
+    mov ax, gdt64.data       ; Move the data descriptor into ax.
+    mov ss, ax               ; Set the stack segment to ax.
+    mov ds, ax               ; Set the data segment to ax.
+    mov es, ax               ; Set the extra segment to ax.
+    mov fs, ax               ; Set the F segment to ax.
+    mov gs, ax               ; Set the G segment to ax.
 
     mov rcx, gdt64.ptr + 2   ; Set rcx to the address of the GDT pointer value.
     mov rax, [rcx]           ; Load the GDT pointer's value into rbx.
@@ -137,10 +137,21 @@ longmode:
     push qword 0             ; Push a zero 64-bit integer.
     popf                     ; Zero out RFLAGS.
 
+    mov rax, cr0             ; Copy contents of cr0 into rax.
+    or rax, 1 << 1           ; Enable bit 1 of cr0: Monitor Coprocessor (MP).
+    and ax, 0xFFFB           ; Clear bit 2 of cr0: Emulate Coprocessor (EM).
+    mov cr0, rax             ; Store the result back into cr0.
+
+    mov rax, cr4             ; Copy contents of cr4 into rax.
+    or rax, 1 << 9           ; Enable bit 9 of cr4: FXSAVE/FXRSTOR support (OXFXSR).
+    or rax, 1 << 10          ; Enable bit 10 of cr4: Unmasked Exception support (OSMMEXCPT).
+    mov cr4, rax             ; Store the result back into cr4.
+
     push rsi                 ; Push the multiboot magic number to the stack.
     push rbx                 ; Push the multiboot struct address onto the stack.
     call _init               ; Initialise global constructors.
 
     pop rsi                  ; rsi is the second argument in the x86_64 System V ABI.
     pop rdi                  ; rdi is the first argument in the x86_64 System V ABI.
+    sub rsp, 8               ; GCC assumes a function call, so masquerade a stack push.
     jmp kernelmain           ; Start FreeLSD.

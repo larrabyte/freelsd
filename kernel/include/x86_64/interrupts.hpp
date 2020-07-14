@@ -3,6 +3,13 @@
 
 #include <stdint.h>
 
+#define MASTER_PIC_COMMAND  0x20
+#define MASTER_PIC_DATA     0x21
+#define SLAVE_PIC_COMMAND   0xA0
+#define SLAVE_PIC_DATA      0xA1
+#define PIC_READ_IRR        0x0A
+#define PIC_READ_ISR        0x0B
+
 #define IDTSIZE  256
 #define IRQ0     32
 #define IRQ1     33
@@ -105,6 +112,9 @@ namespace idt {
 
     // Register an interrupt handler at the specified index.
     void registerhandler(uint8_t index, handler_t handler);
+
+    // Read both PIC's registers (ISR or IRR) and return their value.
+    uint16_t readpicregs(uint8_t command);
 
     // Initialise the interrupt descriptor table.
     void initialise(void);

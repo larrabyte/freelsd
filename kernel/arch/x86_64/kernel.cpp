@@ -12,7 +12,7 @@
 #include <stdint.h>
 #include <cpu.hpp>
 
-extern "C" void kernelmain(uint64_t magic, uintptr_t mbaddr) {
+extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     // Critical for early debugging.
     serial::initialise();
     mboot::initialise(magic, mbaddr);

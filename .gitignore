@@ -6,7 +6,6 @@ tools/initrdgen/initrdgen
 *.img
 
 # Unwanted folders
-.vmconfig/
 .vscode/
 
 # Prerequisites

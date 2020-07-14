@@ -10,9 +10,18 @@ extern "C" {
 
     // The common ISR dispatcher, called via commonisr.
     void isrdispatcher(idt::regs64_t *regs) {
-        // Call the appropriate handler or print a message to serial.
+        // Check if it's a spurious IRQ.
+        if(regs->isr == 7 || regs->isr == 15) {
+            uint16_t picisr = idt::readpicregs(PIC_READ_ISR);
+            if((picisr & (1 << regs->isr)) == 0) {
+                if(regs->isr == 15) outportb(0x20, 0x20);
+                return;
+            }
+        }
+
+        // Not spurious, check for any available interrupt handlers.
         if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
-        else ctxpanic(regs, "unhandled interrupt %ld raised!", regs->isr);
+        else ctxpanic(regs, "unhandled interrupt %ld (0x%lx) raised!", regs->isr, regs->isr);
 
         // Acknowledge the interrupt, if required send to both slave and master PICs.
         if(regs->isr >= 40) outportb(0xA0, 0x20);
@@ -39,6 +48,12 @@ namespace idt {
         entries[index].stacktable = 0;
         entries[index].reservedlow = 0;
         entries[index].reservedhi = 0;
+    }
+
+    uint16_t readpicregs(uint8_t command) {
+        outportb(MASTER_PIC_COMMAND, command);
+        outportb(SLAVE_PIC_COMMAND, command);
+        return (inportb(MASTER_PIC_COMMAND) << 8) | inportb(SLAVE_PIC_COMMAND);
     }
 
     void registerhandler(uint8_t index, handler_t handler) {

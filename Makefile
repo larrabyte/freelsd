@@ -1,10 +1,9 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: default tools clean cleanall
+.PHONY: default qemu bochs tools clean cleanall
 
 ARCH := x86_64
-QEMU := qemu-system-x86_64
 CPP  := /usr/x86_64-elf/bin/x86_64-elf-g++
 ASM  := nasm
 
@@ -13,9 +12,8 @@ ASM  := nasm
 # ----------------------------------
 WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter
 CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions -fno-rtti \
-			-mcmodel=kernel -mno-red-zone -zmax-page-size=0x1000 -O2 -nostdlib
+			-mcmodel=kernel -mno-red-zone -zmax-page-size=0x1000 -O3 -nostdlib
 
-QFLAGS := -no-reboot -no-shutdown -serial stdio -display sdl -M q35,accel=whpx:kvm:tcg -cdrom build/freelsd.iso
 AFLAGS := -felf64
 
 # -----------------------------
@@ -34,9 +32,15 @@ OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELS
 # --------
 # Targets.
 # --------
-default: build/freelsd.iso
+default: qemu
+
+qemu: build/freelsd.iso
 	@printf "[qmu] Now booting FreeLSD.\n"
-	@$(QEMU) $(QFLAGS)
+	@./scripts/virtualise.sh qemu
+
+bochs: build/freelsd.iso
+	@printf "[box] Now booting FreeLSD.\n"
+	@./scripts/virtualise.sh bochs
 
 tools:
 	@cd tools/initrdgen && $(MAKE) --no-print-directory
