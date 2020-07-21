@@ -44,11 +44,14 @@ namespace gfx {
         // Otherwise, print character to screen.
         else drawchar(column++, row, fontmap[(uint8_t) c], colour);
 
-        // Scrolling code.
+        // Column scroller (LR).
         if(column == cmax) {
             column = 0;
             row++;
-        } else if(row == rmax) {
+        }
+
+        // Row scroller (UD).
+        if(row == rmax) {
             scroll(TEXT_SPACING_H);
             row = rmax - 1;
             column = 0;

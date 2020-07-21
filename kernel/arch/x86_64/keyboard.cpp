@@ -45,7 +45,7 @@ namespace kboard {
             case 0x3A: flags ^= 1 << 4; break;
 
             // Manually initiate kernel panic with the Escape key.
-            case 0x01: panic("escape pressed, user initiated crash.");
+            case 0x01: ctxpanic(regs, "escape pressed, user initiated crash.");
 
             default:
                 // Make sure bit 7 isn't set.

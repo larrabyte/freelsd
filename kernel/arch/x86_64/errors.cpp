@@ -34,12 +34,13 @@ static const char *panicmsgs[] = {
 
 extern "C" {
     uintptr_t __stack_chk_guard = 0xC001BEEFDEADBEEF;
+    bool __nestedpanic = false;
 
     __attribute__((noreturn)) void __stack_chk_fail(void) {
         panic("stack smashing guard overwritten!");
     }
 
-    __attribute__((noreturn)) void internalpanic(const char *filename, const char *function, int line, idt::regs64_t *regs, const char *format, ...) {
+    __attribute__((noreturn)) void __internalpanic(const char *filename, const char *function, int line, idt::regs64_t *regs, const char *format, ...) {
         // Disable interrupts.
         asm volatile("cli");
 
@@ -47,6 +48,13 @@ extern "C" {
         memset(gfx::mdata.buffer, 0xFF, gfx::mdata.width * gfx::mdata.height * gfx::mdata.bpp);
         gfx::colour = gfx::column = 0;
         gfx::row = 1;
+
+        // Immediately halt if a new panic is nested.
+        if(__nestedpanic) {
+            log::error("[kpanic] nested kernel panic!\n");
+            log::error("[kpanic] system is in an unreliable state, halting.");
+            goto halt;
+        } else __nestedpanic = true;
 
         gfx::write(errfrog);
         log::error("\n-------> FREELSD KERNEL PANIC!\n");
@@ -78,6 +86,6 @@ extern "C" {
         }
 
         // Enter an infinite loop.
-        while(true) asm volatile("hlt");
+        halt: while(true) asm volatile("hlt");
     }
 }
