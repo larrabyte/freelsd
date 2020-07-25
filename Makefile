@@ -4,7 +4,7 @@
 .PHONY: default qemu qemudebug bochs bochsdebug tools clean cleanall
 
 ARCH := x86_64
-CPP  := /usr/x86_64-elf/bin/x86_64-elf-g++
+CPP  := x86_64-elf-g++
 ASM  := nasm
 
 # ----------------------------------

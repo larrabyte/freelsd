@@ -15,8 +15,20 @@ MB2TAG_ENTRY_ADDRESS_EFI32  equ 8
 MB2TAG_ENTRY_ADDRESS_EFI64  equ 9
 MB2TAG_RELOCATABLE          equ 10
 
+; Broadcasts a 32-bit value to all x86 GPRs.
+; Does not broadcast to the instruction pointer or accumulator (eip/eax).
+%macro bcast32 1
+    mov ebx, %1
+    mov ecx, %1
+    mov edx, %1
+    mov esi, %1
+    mov edi, %1
+    mov ebp, %1
+    mov esp, %1
+%endmacro
+
 ; Pushes all 64-bit general registers onto the stack.
-; Does not push the stack pointer, rsp.
+; Does not push the stack pointer or instruction pointer (rsp/rip).
 %macro pushaq 0
     push rax
     push rcx
@@ -36,7 +48,7 @@ MB2TAG_RELOCATABLE          equ 10
 %endmacro
 
 ; Pops all 64-bit general registers off the stack.
-; Does not pop the stack pointer, rsp.
+; Does not pop the stack pointer or instruction pointer (rsp/rip).
 %macro popaq 0
     pop r15
     pop r14

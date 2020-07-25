@@ -310,12 +310,12 @@ namespace mem {
 
         // Map the framebuffer into the address space.
         uintptr_t fbpend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width * (mboot::info.fbinfo->common.bpp / 8));
-        for(uintptr_t fbp = mboot::info.fbinfo->common.framebuffer, fbv = 0x00007FFFFEFFF000; fbp < fbpend; fbp += 0x1000, fbv += 0x1000) {
+        for(uintptr_t fbp = mboot::info.fbinfo->common.framebuffer, fbv = 0xFFFFFFFFC0000000; fbp < fbpend; fbp += 0x1000, fbv += 0x1000) {
             mappage(kernelpml4, PGE_REGULAR_PAGE, fbv, fbp);
         }
 
         // Set the framebuffer to the new virtual address.
-        mboot::info.fbinfo->common.framebuffer = 0x00007FFFFEFFF000;
+        mboot::info.fbinfo->common.framebuffer = 0xFFFFFFFFC0000000;
 
         // Reload CR3 and flush the TLB.
         loadcr3((uintptr_t) kernelpml4);

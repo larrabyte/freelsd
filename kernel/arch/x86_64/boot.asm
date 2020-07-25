@@ -1,11 +1,10 @@
 %include "kernel/arch/x86_64/macros.asm"
 
 global bootstrap, pge64sel
-extern _init, kernelmain
 
 extern gdt64.ptr, gdt64.code, gdt64.data
-extern _scrtbss, _ecrtbss
-extern _skbss, _ekbss
+extern _init, kernelmain
+extern startbss, endbss
 
 ; Multiboot 2 header definitions.
 ; See section .mbheader for tags.
@@ -35,6 +34,11 @@ align 16                     ; 16-byte alignment to conform with compiler.
 resb 16384                   ; Reserve 16KB in the kernel's BSS section for the stack.
 stacktop:                    ; x86 stacks grow downwards, hence we start from the top.
 
+section .mbdata
+align 16                     ; 16-byte alignment to conform with compiler.
+times 64 db 0                ; Reserve 64 bytes in the multiboot area for a bootstrap stack.
+bootstack:                   ; x86 stacks grow downwards, hence we start from the top.
+
 section .mbheader
 hdrstart:
 dd MAGIC                     ; Denotes the Multiboot2 magic value.
@@ -62,17 +66,42 @@ section .mbtext
 [BITS 32]
 bootstrap:
     cli                      ; Disable interrupts.
-    mov esi, eax             ; Store the multiboot magic into esi.
-    xor eax, eax             ; Zero out the eax register.
+    mov esp, bootstack       ; Setup the stack pointer.
+    push eax                 ; Push the multiboot magic.
+    push ebx                 ; Push the multiboot struct address.
 
-    mov edi, _scrtbss        ; Set edi to crtbegin.o's BSS section.
-    mov ecx, _ecrtbss        ; Set ecx to the end of the BSS section.
-    sub ecx, edi             ; Calculate the size of the BSS and store in ecx.
-    rep stosb                ; Zero out memory in 1-byte chunks.
+    push dword 0             ; Push a zero 64-bit integer.
+    or dword [esp], 1 << 1   ; Keep reserved bit 1 set.
+    or dword [esp], 1 << 21  ; Test bit 21 of EFLAGS: CPUID support.
+    popfd                    ; Pop into EFLAGS.
 
-    mov edi, _skbss          ; Set edi to the kernel's BSS section.
-    mov ecx, _ekbss          ; Set ecx to the end of the BSS section.
+    pushfd                   ; Repush EFLAGS.
+    pop eax                  ; Pop it into eax.
+    test eax, 1 << 21        ; Test if bit 21 is still set.
+    mov eax, 0x1             ; If panicing, set eax to indicate lack of CPUID support.
+    jz earlypanic            ; Panic if the test instruction returned zero.
+
+    mov eax, 0x80000000      ; Set the CPUID leaf to read (highest extended function).
+    cpuid                    ; Execute CPUID to get highest available function.
+    cmp eax, 0x80000001      ; Compare highest leaf with extended processor info.
+    mov eax, 0x2             ; If panicing, set eax to indicate lack of extended info.
+    jb earlypanic            ; Panic if highest function is less than 0x80000001.
+
+    mov eax, 0x80000001      ; Set eax to get extended processor info from CPUID.
+    cpuid                    ; Execute CPUID again. 
+
+    test edx, 1 << 29        ; Test bit 29 of edx: Long Mode (LM).
+    mov eax, 0x3             ; If panicing, set eax to indicate LM non-support.
+    jz earlypanic            ; If the bit isn't set, then panic!
+
+    test edx, 1 << 26        ; Test bit 26 of edx: Gigabyte Pages (PDPE1GB).
+    mov eax, 0x4             ; If panicing, set eax to indicate PDPE1GB non-support.
+    jz earlypanic            ; If the bit isn't set, then panic!
+
+    mov edi, startbss        ; Set edi to the kernel's BSS section.
+    mov ecx, endbss          ; Set ecx to the end of the BSS section.
     sub ecx, edi             ; Calculate the size of the BSS and store in ecx.
+    xor eax, eax             ; Zero out eax, this is what we want in memory.
     rep stosb                ; Repeatedly zero memory in 1-byte chunks.
 
     mov edi, PML4            ; Move the base paging structure's address into edi.
@@ -117,6 +146,10 @@ bootstrap:
     ; Far jump to load our GDT and switch to long mode.
     jmp gdt64.code:longmode - KERNEL_VBASE
 
+earlypanic:
+    bcast32 0xDEADC0DE       ; Broadcast 0xDEADC0DE to all GPRs.
+    ud2                      ; Force a triple fault.
+
 section .text
 [BITS 64]
 longmode:
@@ -127,15 +160,11 @@ longmode:
     mov fs, ax               ; Set the F segment to ax.
     mov gs, ax               ; Set the G segment to ax.
 
-    mov rcx, gdt64.ptr + 2   ; Set rcx to the address of the GDT pointer value.
-    mov rax, [rcx]           ; Load the GDT pointer's value into rbx.
+    mov rcx, gdt64.ptr       ; Set rcx to the address of the GDT pointer.
+    mov rax, [rcx + 0x2]     ; Load the GDT pointer's value into rcx.
     add rax, KERNEL_VBASE    ; Add the kernel's virtual offset to the pointer.
-    mov [rcx], rax           ; Move the new pointer value back into the GDT's pointer.
-    lgdt [gdt64.ptr]         ; Reload the GDTR with our new virtual address.
-
-    mov rsp, stacktop        ; Setup the stack pointer now that paging is done.
-    push qword 0             ; Push a zero 64-bit integer.
-    popf                     ; Zero out RFLAGS.
+    mov [rcx + 0x2], rax     ; Move the new pointer value back into the GDT's pointer.
+    lgdt [rcx]               ; Reload the GDTR with our new virtual address.
 
     mov rax, cr0             ; Copy contents of cr0 into rax.
     or rax, 1 << 1           ; Enable bit 1 of cr0: Monitor Coprocessor (MP).
@@ -147,11 +176,14 @@ longmode:
     or rax, 1 << 10          ; Enable bit 10 of cr4: Unmasked Exception support (OSMMEXCPT).
     mov cr4, rax             ; Store the result back into cr4.
 
-    push rsi                 ; Push the multiboot magic number to the stack.
-    push rbx                 ; Push the multiboot struct address onto the stack.
+    pop rbx                  ; Pop both the multiboot magic (upper) and struct (lower) into rax.
+    mov rsp, stacktop        ; Load the stack pointer with the kernel's proper stack address.
     call _init               ; Initialise global constructors.
 
-    pop rsi                  ; rsi is the second argument in the x86_64 System V ABI.
-    pop rdi                  ; rdi is the first argument in the x86_64 System V ABI.
-    sub rsp, 8               ; GCC assumes a function call, so masquerade a stack push.
-    jmp kernelmain           ; Start FreeLSD.
+    mov esi, ebx             ; Move the lower 32-bits of ebx into esi and zero extend to 64-bits.
+    mov rdi, rbx             ; Move the whole of rbx into rdi.
+    shr rdi, 32              ; Shift rdi by 32-bits to retrieve magic value.
+
+    sub rsp, 8               ; GCC assumes a function call, so masquerade an rip push.
+    mov rax, kernelmain      ; Move the full 64-bit address of kernelmain into rax.
+    jmp rax                  ; Jump to the address and start FreeLSD.

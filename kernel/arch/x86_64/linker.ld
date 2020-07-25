@@ -14,18 +14,15 @@ SECTIONS {
         *(.mbdata)
     }
 
-    /* Global ctors/dtors. */
-    .crtstuff : ALIGN(4K) {
+    . += KERNEL_VBASE;
+
+    /* Global constructors/destructors. */
+    .crtstuff ALIGN(4K) : AT(ADDR(.crtstuff) - KERNEL_VBASE) {
         *(.ctors)
         *(.dtors)
         *(.tm_clone_table)
         *(.eh_frame)
-        _scrtbss = .;
-        *crtbegin.o(.bss)
-        _ecrtbss = .;
     }
-
-    . += KERNEL_VBASE;
 
     /* Code section and read-only data. */
     .text ALIGN(4K) : AT(ADDR(.text) - KERNEL_VBASE) {
@@ -42,9 +39,9 @@ SECTIONS {
 
     /* Read-write data (uninitialized) and the stack. */
     .bss ALIGN(4K) : AT(ADDR(.bss) - KERNEL_VBASE) {
-        _skbss = . - KERNEL_VBASE;
+        startbss = . - KERNEL_VBASE;
         *(.bss)
-        _ekbss = . - KERNEL_VBASE;
+        endbss = . - KERNEL_VBASE;
         *(COMMON)
     }
 

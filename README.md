@@ -1,7 +1,6 @@
 # freelsd
 An attempt to make an OS, following the [OSDev Wiki](https://wiki.osdev.org) along with what I presume will be many days of fustration. See [Lemon](https://github.com/fido2020/Lemon-OS) and [OSDev: Beginner Mistakes](https://wiki.osdev.org/Beginner_Mistakes) for reasons I shouldn't be doing this.
 
-
 ## Features
 FreeLSD currently has the following features:
 * Interrupt handling (currently implemented in the keyboard/timer).
@@ -12,10 +11,8 @@ FreeLSD currently has the following features:
 * Basic support for writing to serial.
 * The FreeLSD frog!
 
-
 ## Compatiability and Minimum Requirements
 FreeLSD can currently run on an **x86 processor with around 8MB of RAM.** As more features are added, the minimum requirements will change, so be sure to check this page every once in a while.
-
 
 ## Prerequisites and Compilation
 You'll need `nasm` and `i686-elf-gcc` to compile FreeLSD. I use Arch Linux, so for fellow users, simply type the following in a terminal:
@@ -40,7 +37,6 @@ cd freelsd
 make tools && make
 ```
 Boom! FreeLSD compiled and running on your system.
-
 
 ## Showcase (as of commit #106, just after [this](https://github.com/larrabyte/freelsd/commit/710782a337d7f1fa90587deaea89dcdea6ec8b2b) one.)
 ![FreeLSD Graphical Output and Serial Log](showcase.png)
