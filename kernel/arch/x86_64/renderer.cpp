@@ -6,19 +6,20 @@
 #include <frogs.hpp>
 
 namespace gfx {
-    modeinfo_t mdata;
     size_t column, row;
     size_t cmax, rmax;
+    modeinfo_t mdata;
     pixel_t colour;
+    uint8_t fill;
 
     inline void drawpixel(size_t x, size_t y, pixel_t colours) {
         mdata.buffer[y * mdata.width + x] = colours;
     }
 
-    inline void scroll(size_t n) {
+    inline void scroll(size_t n, uint8_t fill) {
         // Copy ahead of the buffer back into the base framebuffer, this scrolls the screen up one line. Then simply memset() the final line.
         memcpy(mdata.buffer, &mdata.buffer[n * mdata.width], mdata.pitch * (mdata.height - TEXT_SPACING_H));
-        memset(&mdata.buffer[mdata.width * (mdata.height - TEXT_SPACING_H)], 0, mdata.pitch * TEXT_SPACING_H);
+        memset(&mdata.buffer[mdata.width * (mdata.height - TEXT_SPACING_H)], fill, mdata.pitch * TEXT_SPACING_H);
     }
 
     void drawchar(size_t x, size_t y, raster_font_t font, pixel_t colours) {
@@ -52,7 +53,7 @@ namespace gfx {
 
         // Row scroller (UD).
         if(row == rmax) {
-            scroll(TEXT_SPACING_H);
+            scroll(TEXT_SPACING_H, fill);
             row = rmax - 1;
             column = 0;
         }
@@ -88,9 +89,9 @@ namespace gfx {
         cmax = mdata.width / TEXT_SPACING_W;
         rmax = mdata.height / TEXT_SPACING_H;
 
-        // Set the default colour and write the standard frog.
+        // Set the default colours and write the standard frog.
+        column = row = fill = 0;
         colour = 0xFFFFFFFF;
-        column = row = 0;
         write(stdfrog);
     }
 }

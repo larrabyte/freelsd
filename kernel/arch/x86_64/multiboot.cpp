@@ -24,7 +24,7 @@ namespace mboot {
     void initialise(uint64_t magic, uintptr_t mbaddr) {
         // Make sure that the multiboot magic value is present and the struct address is aligned.
         if(magic != MULTIBOOT2_BOOTLOADER_MAGIC) serial::printf("[kpanic] %p: bootloader non-multiboot2 compliant.\n", magic);
-        else if(mbaddr & 0x07) serial::printf("[kpanic] %p: multiboot2 struct unaligned.\n", mbaddr);
+        if(mbaddr & 0x07) serial::printf("[kpanic] %p: multiboot2 struct unaligned.\n", mbaddr);
 
         mbisize = *(size_t*) mbaddr;
         cursor = (mb_tag_t*) (mbaddr + 8);

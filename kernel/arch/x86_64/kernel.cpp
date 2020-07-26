@@ -32,9 +32,9 @@ extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t m
     // Print the memory map out to the kernel log.
     mb_mmap_entry_t *mmapcur = mboot::info.mmap->entries;
     while((uintptr_t) mmapcur < (uintptr_t) mboot::info.mmap->entries + mboot::info.mmap->size - 16) {
-        log::info("[physmm] memory map, %s | start: %p, length: %p or %ld KB\n", mboot::getmmaptype(mmapcur->type), mmapcur->addr, mmapcur->len, mmapcur->len / 1024);
+        log::trace("[physmm] memory map, %s | start: %p, length: %p or %ld KB\n", mboot::getmmaptype(mmapcur->type), mmapcur->addr, mmapcur->len, mmapcur->len / 1024);
         mmapcur = (mb_mmap_entry_t*) ((uintptr_t) mmapcur + mboot::info.mmap->entrysize);
-    } log::info("\n");
+    } log::trace("\n");
 
     // Write some debugging information to the log.
     log::info("[kernel] hello from long mode!\n");
