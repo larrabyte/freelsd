@@ -49,6 +49,8 @@ namespace mem {
     void freephys(uintptr_t base, size_t n) {
         // Get the block index for unsetting and flip.
         size_t blocks = base / PMMGR_BLOCK_SIZE;
+        if(base % PMMGR_BLOCK_SIZE != 0) blocks++;
+
         for(size_t i = 0; i < n; i++) unsetbit(blocks + i);
         usedblocks -= n;
     }
@@ -56,13 +58,17 @@ namespace mem {
     void markphysfree(uintptr_t base, size_t size) {
         // Get the block's index and number of blocks.
         size_t blocks = size / PMMGR_BLOCK_SIZE;
-        if(size % PMMGR_BLOCK_SIZE != 0) blocks++;
+        if(base % PMMGR_BLOCK_SIZE != 0) blocks++;
         size_t align = base / PMMGR_BLOCK_SIZE;
 
         // Unset and decrement.
         while(blocks-- > 0) {
-            unsetbit(align++);
-            usedblocks--;
+            if(testbit(align)) {
+                unsetbit(align);
+                usedblocks--;
+            }
+
+            align++;
         }
     }
 
@@ -74,8 +80,12 @@ namespace mem {
 
         // Set and increment.
         while(blocks-- > 0) {
-            setbit(align++);
-            usedblocks++;
+            if(!testbit(align)) {
+                setbit(align);
+                usedblocks++;
+            }
+
+            align++;
         }
     }
 
@@ -101,8 +111,14 @@ namespace mem {
         maxblocks = totalsize / PMMGR_BLOCK_SIZE;
         usedblocks = 0;
 
-        // Mark the kernel and any additional data structures as in use.
+        // Mark the kernel and the bootstrap paging structures as in use.
         markphysused(0x100000, (size_t) &kernelend - PGE_KERNEL_VBASE);
         markphysused(pge64sel[0], pge64sel[2]);
+
+        // Mark multiboot structures as in use so they aren't corrupted by the PMM.
+        markphysused((uintptr_t) mboot::info.fbinfo, mboot::info.fbinfo->common.size);
+        markphysused((uintptr_t) mboot::info.meminfo, mboot::info.meminfo->size);
+        markphysused((uintptr_t) mboot::info.bootdev, mboot::info.bootdev->size);
+        markphysused((uintptr_t) mboot::info.mmap, mboot::info.mmap->size);
     }
 }

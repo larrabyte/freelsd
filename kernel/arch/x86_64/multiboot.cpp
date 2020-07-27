@@ -9,16 +9,29 @@ namespace mboot {
     mb_info_t info;
 
     static const char *mmaptypes[] = {
-        "UNKNOWN  ",
-        "AVAILABLE",
-        "RESERVED ",
-        "ACPI REC.",
-        "NVS RAM  ",
-        "BAD AREA "
+        "UNKNOWN   ",
+        "AVAILABLE ",
+        "RESERVED  ",
+        "ACPI REC. ",
+        "NVS MEMORY",
+        "BAD MEMORY",
+        "PERSISTENT",
+        "COREBOOT  ",
+        "FIRMWARE  "
     };
 
     const char *getmmaptype(uint8_t index) {
-        return mmaptypes[index];
+        // If the index is within standard boundaries, simply return from mmaptypes.
+        if(index > 0 && index <= 5) return mmaptypes[index];
+
+        // Non-standard!
+        switch(index) {
+            case 07: return mmaptypes[6]; break;
+            case 12: return mmaptypes[6]; break;
+            case 16: return mmaptypes[7]; break;
+            case 20: return mmaptypes[8]; break;
+            default: return mmaptypes[0]; break;
+        }
     }
 
     void initialise(uint64_t magic, uintptr_t mbaddr) {

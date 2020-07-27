@@ -59,10 +59,10 @@ extern "C" {
             goto halt;
         } else nestedpanic = true;
 
-        gfx::printf("%s\n", errfrog);
-        log::error("-------> FREELSD KERNEL PANIC!\n");
+        gfx::write(errfrog);
+        log::error("\n-------> FREELSD KERNEL PANIC!\n");
         log::error("-------> %s\n\n", panicmsgs[timer::systicks % (sizeof(panicmsgs) / sizeof(uintptr_t))]);
-        log::error("[kpanic] freelsd panic in %s -> %s(), ln %d.\n", filename, function, line);
+        log::error("[kpanic] freelsd panic in %s -> %s, ln %d.\n", filename, function, line);
         log::error("[kpanic] reason: ");
 
         // Access the internal log vector table and print a kernel panic to any that will accept.
@@ -91,7 +91,7 @@ extern "C" {
         // Check if the stack was smashed before printing a stack trace.
         if(stacksmashed) {
             log::error("[kpanic] stack trace unavailable.\n");
-            log::error("[kpanic] stack checking guard overwritten.\n");
+            log::error("[kpanic] stack canary guard overwritten.\n");
             goto halt;
         }
 

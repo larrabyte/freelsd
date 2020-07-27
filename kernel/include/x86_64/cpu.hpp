@@ -100,8 +100,7 @@ namespace cpu {
     char *getbrandname(void);
 
     // Checks whether the CPU supports a certain feature.
-    // For some reason, GCC will overwrite rdi without the volatile keyword.
-    bool supports(volatile cpuid_feature_t feature);
+    bool supports(cpuid_feature_t feature);
 
     // Get CPU information using CPUID.
     void initialise(void);

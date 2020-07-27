@@ -15,7 +15,7 @@ uint32_t getfilesize(const char *filename) {
     FILE *fstream = fopen(combinestr(root, filename), "r");
 
     if(fstream == NULL) {
-        printf("[ram] getfilesize(): cannot open %s at %s\n", filename, combinestr(root, filename));
+        printf("[initrd] getfilesize(): cannot open %s at %s\n", filename, combinestr(root, filename));
         exit(-1);
     }
 

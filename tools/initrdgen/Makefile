@@ -13,14 +13,14 @@ $(EXECNAME): src/main.o src/utils.o
 
 src/main.o: src/main.c src/utils.h
 	@$(CC) $(CFLAGS) -c src/main.c -o src/main.o
-	@printf "[gcc] src/main.c compiled.\n"
+	@printf "[c->obj] src/main.c compiled.\n"
 
 src/utils.o: src/utils.c src/utils.h
 	@$(CC) $(CFLAGS) -c src/utils.c -o src/utils.o
-	@printf "[gcc] src/utils.c compiled.\n"
+	@printf "[c->obj] src/utils.c compiled.\n"
 
 clean:
 	@rm -f $(EXECNAME)
-	@printf "[del] Deleted $(EXECNAME) executable.\n"
+	@printf "[remove] Deleted $(EXECNAME) executable.\n"
 	@rm -f src/*.o
-	@printf "[del] Deleted object files.\n"
+	@printf "[remove] Deleted object files.\n"

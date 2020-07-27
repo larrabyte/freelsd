@@ -25,6 +25,9 @@
 #define MULTIBOOT_MEMORY_ACPI_RECLAIMABLE           3
 #define MULTIBOOT_MEMORY_NVS                        4
 #define MULTIBOOT_MEMORY_BADRAM                     5
+#define MULTIBOOT_MEMORY_PERSISTENT                 12
+#define MULTIBOOT_MEMORY_COREBOOT                   16
+#define MULTIBOOT_MEMORY_FIRMWARE                   20
 
 // ---------------------------------------------------------
 // Flags, set in the 'flags' member of the multiboot header.

@@ -35,19 +35,19 @@ OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELS
 default: qemu
 
 qemu: build/freelsd.iso
-	@printf "[qmu] Now booting FreeLSD.\n"
+	@printf "[qemuvm] Now booting FreeLSD (KVM/WHPX).\n"
 	@./scripts/virtualise.sh qemu
 
 qemudebug: build/freelsd.iso
-	@printf "[qmu] Now booting FreeLSD (QEMU debug).\n"
+	@printf "[qemuvm] Now booting FreeLSD (QEMU debug).\n"
 	@./scripts/virtualise.sh qemudebug
 
 bochs: build/freelsd.iso
-	@printf "[box] Now booting FreeLSD.\n"
+	@printf "[vbochs] Now booting FreeLSD (no acceleration).\n"
 	@./scripts/virtualise.sh bochs
 
 bochsdebug: build/freelsd.iso
-	@printf "[box] Now booting FreeLSD (Bochs debug).\n"
+	@printf "[vbochs] Now booting FreeLSD (Bochs debug).\n"
 	@./scripts/virtualise.sh bochsdebug
 
 tools:
@@ -55,25 +55,25 @@ tools:
 
 clean:
 	@rm -f $(KERNELOBJ)/*.o
-	@printf "[del] Deleted object files from kernel/obj.\n"
+	@printf "[remove] Deleted object files from kernel/obj.\n"
 
 cleanall: clean
 	@rm -f isoroot/kernel.bin
-	@printf "[del] Deleted isoroot/kernel.bin.\n"
+	@printf "[remove] Deleted isoroot/kernel.bin.\n"
 	@rm -f build/freelsd.iso
-	@printf "[del] Deleted build/freelsd.iso.\n"
+	@printf "[remove] Deleted build/freelsd.iso.\n"
 	@cd tools/initrdgen && $(MAKE) --no-print-directory clean
 
 build/freelsd.iso: $(OBJFILES)
-	@printf "[g++] Linking object files and creating ISO.\n"
+	@printf "[linker] Linking object files and creating ISO.\n"
 	@$(CPP) -T $(KERNELSRC)/linker.ld $(CFLAGS) $(CRTBEGIN) $(sort $(OBJFILES)) $(CRTFINAL) -o isoroot/kernel.bin -lgcc
 	@./tools/initrdgen/initrdgen
 	@grub-mkrescue -o build/freelsd.iso isoroot &> /dev/null
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.cpp
-	@printf "[g++] $< compiled.\n"
+	@printf "[cppobj] $< compiled.\n"
 	@$(CPP) $(CFLAGS) -I $(KERNELINC) -c $< -o $@
 
 $(KERNELOBJ)/%.o: $(KERNELSRC)/%.asm
-	@printf "[asm] $< assembled.\n"
+	@printf "[asmobj] $< assembled.\n"
 	@$(ASM) $(AFLAGS) $< -o $@
