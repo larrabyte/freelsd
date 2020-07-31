@@ -50,7 +50,7 @@ dd fbtag.end - fbtag.start      ; Size of the tag in bytes.
 dd 0                            ; Requested width.
 dd 0                            ; Requested height.
 dd 0                            ; Requested depth.
-fbtag.end:
+fbtag.end:                      ; End of the framebuffer tag.
 
 align 8                         ; Multiboot2 tags must be 8-byte aligned.
 dw MB2TAG_END                   ; Denotes the end of tags in the header.

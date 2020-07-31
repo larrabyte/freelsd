@@ -1,11 +1,22 @@
+#include <interrupts.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
 #include <stdint.h>
 
+extern "C" {
+    // Control register load/store functions.
+    void loadcr2(uintptr_t address);
+    void loadcr3(uintptr_t address);
+    uint64_t readcr2(void);
+    uint64_t readcr3(void);
+}
+
+// The kernel's PML4, found in cabs.asm.
+extern "C" mem::pml4_table_t *kernelpml4;
+
 namespace mem {
-    pml4_table_t *kernelpml4;
     pml4_table_t *currentpml4;
 
     static inline void addattribute(uint64_t *entry, uint64_t attribute) {
@@ -35,6 +46,10 @@ namespace mem {
             if(*addr & PGE_SIGNEXTENSION_BIT) *addr |= 0xFFFF000000000000;
             *cacheset = true;
         }
+    }
+
+    pml4_table_t *getkernelpml4(void) {
+        return kernelpml4;
     }
 
     uintptr_t findfirstfree(pml4_table_t *pml4, uintptr_t start, uintptr_t end, size_t n) {
@@ -304,20 +319,53 @@ namespace mem {
         }
     }
 
-    void initialisevirt(void) {
-        // Set the address of the kernel's PML4 to the bootstrap PML4.
-        kernelpml4 = currentpml4 = (pml4_table_t*) pge64sel[0];
+    void pfhandler(idt::regs64_t *regs) {
+        // Read the required control registers into C variables.
+        uint64_t cr2 = readcr2();
+        uint64_t cr3 = readcr3();
+        const char *reason;
 
-        // Map the framebuffer into the address space.
-        uintptr_t fbpend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width * (mboot::info.fbinfo->common.bpp / 8));
-        for(uintptr_t fbp = mboot::info.fbinfo->common.framebuffer, fbv = 0xFFFFFFFFC0000000; fbp < fbpend; fbp += 0x1000, fbv += 0x1000) {
-            mappage(kernelpml4, PGE_REGULAR_PAGE, fbv, fbp);
+        switch(regs->err) {
+            case 0x0: reason = "supervisor process tried to read a non-present page entry."; break;
+            case 0x1: reason = "supervisory process tried to read a page and caused a protection fault."; break;
+            case 0x2: reason = "supervisory process tried to write to a non-present page entry."; break;
+            case 0x3: reason = "supervisory process tried to write a page and caused a protection fault."; break;
+            case 0x4: reason = "user process tried to read a non-present page entry."; break;
+            case 0x5: reason = "user process tried to read a page and caused a protection fault."; break;
+            case 0x6: reason = "user process tried to write to a non-present page entry."; break;
+            case 0x7: reason = "user process tried to write a page and caused a protection fault."; break;
+            default: reason = "unknown."; break;
         }
 
-        // Set the framebuffer to the new virtual address.
-        mboot::info.fbinfo->common.framebuffer = 0xFFFFFFFFC0000000;
+        ctxpanic(regs, "Page fault exception, %s\n"
+                       "[kpanic] cr2 (page address): %p\n"
+                       "[kpanic] cr3 (PML4 address): %p",
+                       reason, cr2, cr3);
+    }
 
-        // Reload CR3 and flush the TLB.
+    void initialisevirt(void) {
+        // Identity map the first two megabytes except for 0x0.
+        for(uintptr_t p = 0x1000; p < 0x200000; p += 0x1000) {
+            mappage(kernelpml4, PGE_REGULAR_PAGE, p, p);
+        }
+
+        // Map the kernel into the higher half of the VAS.
+        for(uintptr_t p = 0x100000, v = p + PGE_KERNEL_VBASE; v < (uintptr_t) &kernelend; p += 0x1000, v += 0x1000) {
+            mappage(kernelpml4, PGE_REGULAR_PAGE, v, p);
+        }
+
+        // Map the framebuffer into the kernel's address space.
+        uintptr_t pend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width * (mboot::info.fbinfo->common.bpp / 8));
+        for(uintptr_t p = mboot::info.fbinfo->common.framebuffer, v = 0xFFFFFFFFC0000000; p < pend; p += 0x1000, v += 0x1000) {
+            mappage(kernelpml4, PGE_REGULAR_PAGE, v, p);
+        }
+
+        // Register mem::pfhandler() as the page fault handler.
+        idt::registerhandler(14, &pfhandler);
+
+        // Change the framebuffer, mark bootstrap structures as free and reload CR3.
+        mboot::info.fbinfo->common.framebuffer = 0xFFFFFFFFC0000000;
+        markphysfree(pge64sel[0], pge64sel[2]);
         loadcr3((uintptr_t) kernelpml4);
     }
 }

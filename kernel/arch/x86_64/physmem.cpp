@@ -11,15 +11,15 @@ namespace mem {
     size_t totalsize;
 
     inline void setbit(size_t index) {
-        physmap[index / 64] |= (1 << (index % 64));
+        physmap[index / 64] |= (1UL << (index % 64));
     }
 
     inline void unsetbit(size_t index) {
-        physmap[index / 64] &= ~(1 << (index % 64));
+        physmap[index / 64] &= ~(1UL << (index % 64));
     }
 
     inline bool testbit(size_t index) {
-        return physmap[index / 64] & (1 << (index % 64));
+        return physmap[index / 64] & (1UL << (index % 64));
     }
 
     int findfirstfree(size_t n) {

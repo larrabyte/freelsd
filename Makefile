@@ -38,7 +38,7 @@ qemu: build/freelsd.iso
 	@printf "[qemuvm] Now booting FreeLSD (KVM/WHPX).\n"
 	@./scripts/virtualise.sh qemu
 
-qemudebug: build/freelsd.iso
+qemudebug: build/freelsd.iso objdump
 	@printf "[qemuvm] Now booting FreeLSD (QEMU debug).\n"
 	@./scripts/virtualise.sh qemudebug
 
@@ -46,16 +46,22 @@ bochs: build/freelsd.iso
 	@printf "[vbochs] Now booting FreeLSD (no acceleration).\n"
 	@./scripts/virtualise.sh bochs
 
-bochsdebug: build/freelsd.iso
+bochsdebug: build/freelsd.iso objdump
 	@printf "[vbochs] Now booting FreeLSD (Bochs debug).\n"
 	@./scripts/virtualise.sh bochsdebug
 
 tools:
 	@cd tools/initrdgen && $(MAKE) --no-print-directory
 
+objdump:
+	@printf "[objdmp] Creating new disassembly file for kernel.bin.\n"
+	@objdump -D -M intel isoroot/kernel.bin > scripts/disassembly.log
+
 clean:
 	@rm -f $(KERNELOBJ)/*.o
 	@printf "[remove] Deleted object files from kernel/obj.\n"
+	@rm -f scripts/*.log
+	@printf "[remove] Deleted log files from scripts/log.\n"
 
 cleanall: clean
 	@rm -f isoroot/kernel.bin

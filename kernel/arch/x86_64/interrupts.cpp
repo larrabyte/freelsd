@@ -6,7 +6,7 @@
 
 extern "C" {
     // Configures the IDTR register with a new IDT.
-    void idtflush(idt::ptr_t *address);
+    void loadidtr(idt::ptr_t *address);
 
     // The common ISR dispatcher, called via commonisr.
     void isrdispatcher(idt::regs64_t *regs) {
@@ -166,6 +166,6 @@ namespace idt {
         registerhandler(0x1F, &cpu::handler);
 
         // Set the IDTR register and enable interrupts.
-        idtflush(&pointer);
+        loadidtr(&pointer);
     }
 }

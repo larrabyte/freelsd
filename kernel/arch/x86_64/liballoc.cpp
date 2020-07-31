@@ -44,11 +44,11 @@ static int unlock(void) {
 }
 
 static void *allocate(size_t n) {
-    return mem::allocatevirt(mem::kernelpml4, LIBALLOC_KERNEL_HEAP_START, LIBALLOC_KERNEL_HEAP_FINAL, n);
+    return mem::allocatevirt(mem::getkernelpml4(), LIBALLOC_KERNEL_HEAP_START, LIBALLOC_KERNEL_HEAP_FINAL, n);
 }
 
 static int release(void *pointer, size_t n) {
-    mem::freevirt(mem::kernelpml4, (uintptr_t) pointer, n);
+    mem::freevirt(mem::getkernelpml4(), (uintptr_t) pointer, n);
     return 0;
 }
 

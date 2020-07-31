@@ -77,9 +77,6 @@
 #define PGE_NOEXECUTE_BIT          0x8000000000000000
 #define PGE_FRAME_BITS             0x000FFFFFFFFFF000
 
-// Set control register three to a specified address.
-extern "C" void loadcr3(uintptr_t address);
-
 typedef enum mempagetypes {
     PGE_REGULAR_PAGE = 0x1000,
     PGE_HUGE2MB_PAGE = 0x200000,
@@ -108,11 +105,11 @@ namespace mem {
         pt_entry_t entries[PGE_ENTRIES_PER_STRUCTURE];
     } pt_table_t;
 
-    // The kernel's base PML4 address.
-    extern pml4_table_t *kernelpml4;
-
     // The current PML4 table in use.
     extern pml4_table_t *currentpml4;
+
+    // Return the address of the kernel's PML4.
+    pml4_table_t *getkernelpml4(void);
 
     // Find the first instance of n pages of memory in a given PML4 table.
     uintptr_t findfirstfree(pml4_table_t *dir, uintptr_t start, uintptr_t end, size_t n);
