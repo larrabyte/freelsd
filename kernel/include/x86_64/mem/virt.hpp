@@ -4,30 +4,11 @@
 /*  Paging information and data structures.
     ---------------------------------------
     Paging data structure layout:
-        pml4_table_t:          --> Page Map Level 4 abstraction, manages 256TB of address space.
-            pml4_entry_t[512]  --> 512 page map level 4 entries.
-
-        pdp_table_t:           --> Page directory pointer abstraction, manages 512GB of address space.
-            pdp_entry_t[512]   --> 512 page directory pointer entries.
-
-        pd_directory_t:        --> Page directory abstraction, manages 1GB of address space.
-            pd_entry_t[512]    --> 512 page directory entries.
-
-        pt_table_t:            --> Page table abstraction, manages 2MB of address space.
-            pt_entry_t[512]    --> 512 page table entries.
-
-    Paging entry formats:
-        pml4_entry_t:          --> Page Map Level 4 entry, manages 512GB of address space.
-            pdp_table_t*       --> Address of a page directory pointer table along with flags.
-
-        pdp_entry_t:           --> Page directory pointer entry, manages 1GB of address space.
-            pd_directory_t*    --> Address of a page directory along with flags.
-
-        pd_entry_t:            --> Page directory entry, manages 2MB of address space.
-            pt_table_t*        --> Address of a page table along with flags.
-
-        pt_entry_t:            --> Page table entry, manages 4KB of address space.
-            uint64_t           --> Address of physical page along with flags.
+        pge_structure_t:       --> Paging abstraction.
+            pml4_entry_t[512]  --> 512 page map level 4 entries.            -> 512GB * 512 = 256TB of address space.
+            pdp_entry_t[512]   --> 512 page directory pointer entries.      -> 1GB   * 512 = 512GB of address space.
+            pd_entry_t[512]    --> 512 page directory entries.              -> 2MB   * 512 = 1GB of address space. 
+            pt_entry_t[512]    --> 512 page table entries.                  -> 4KB   * 512 = 2MB of address space.
 
     Format of a virtual address:
         0xAAAAAAAAAAAAAAAA BBBBBBBBB CCCCCCCCC DDDDDDDDD EEEEEEEEE FFFFFFFFFFFF
@@ -43,6 +24,21 @@
 #include <multiboot.hpp>
 #include <stddef.h>
 #include <stdint.h>
+
+// Macro to set an address based on a boolean passed in.
+#define pgecacheaddr(set, addr, pml4e, pdpe, pde, pte)                \
+    if(!set) {                                                        \
+        addr = pml4e << 39 | pdpe << 30 | pde << 21 | pte << 12;      \
+        if(addr & PGE_SIGNEXTENSION_BIT) addr |= 0xFFFF000000000000;  \
+        set = true;                                                   \
+    }                                                                 \
+
+// Macro to allocate a zeroed-out paging structure.
+#define pgeallocstruct(structure, entry)                              \
+    structure = (pge_structure_t*) mem::allocatephys(1);              \
+    memset(structure, 0, sizeof(pge_structure_t));                    \
+    addattribute(entry, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);          \
+    setframeaddr(entry, (uint64_t) structure);                        \
 
 #define pml4index(addr) ((addr >> 39) & 0x1FF)  // Returns the 9 bits for a PML4 index.
 #define pdpeindex(addr) ((addr >> 30) & 0x1FF)  // Returns the 9 bits for a PDPT index.
@@ -74,6 +70,7 @@
 #define PGE_ACCESSED_BIT           0x0000000000000020
 #define PGE_DIRTY_BIT              0x0000000000000040
 #define PGE_HUGEPAGE_BIT           0x0000000000000080
+#define PGE_ALLOCATED_BIT          0x0000000000000200
 #define PGE_NOEXECUTE_BIT          0x8000000000000000
 #define PGE_FRAME_BITS             0x000FFFFFFFFFF000
 
@@ -84,44 +81,32 @@ typedef enum mempagetypes {
 } mem_pagetype_t;
 
 namespace mem {
-    typedef uint64_t pml4_entry_t;  // A page map level 4 entry.
-    typedef uint64_t pdp_entry_t;   // A page directory pointer entry.
-    typedef uint64_t pd_entry_t;    // A page directory entry.
-    typedef uint64_t pt_entry_t;    // A page table entry.
+    typedef uint64_t pge_entry_t;
 
-    typedef struct pagemap4 {
-        pml4_entry_t entries[PGE_ENTRIES_PER_STRUCTURE];
-    } pml4_table_t;
-
-    typedef struct directoryptr {
-        pdp_entry_t entries[PGE_ENTRIES_PER_STRUCTURE];
-    } pdp_table_t;
-
-    typedef struct directory {
-        pd_entry_t entries[PGE_ENTRIES_PER_STRUCTURE];
-    } pd_directory_t;
-
-    typedef struct table {
-        pt_entry_t entries[PGE_ENTRIES_PER_STRUCTURE];
-    } pt_table_t;
+    typedef struct pgestructure {
+        pge_entry_t entries[PGE_ENTRIES_PER_STRUCTURE];
+    } pge_structure_t;
 
     // The current PML4 table in use.
-    extern pml4_table_t *currentpml4;
+    extern pge_structure_t *currentpml4;
 
     // Return the address of the kernel's PML4.
-    pml4_table_t *getkernelpml4(void);
+    pge_structure_t *getkernelpml4(void);
 
     // Find the first instance of n pages of memory in a given PML4 table.
-    uintptr_t findfirstfree(pml4_table_t *dir, uintptr_t start, uintptr_t end, size_t n);
+    uintptr_t findfirstfree(pge_structure_t *dir, uintptr_t start, uintptr_t end, size_t n);
 
     // Maps a page-aligned virtual address to a page-aligned physical address.
-    void mappage(pml4_table_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys);
+    void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, bool allocated);
+
+    // Frees a mapped page, starting from base. Will also call mem::freephys() if page was allocated.
+    void unmappage(pge_structure_t *pml4, uintptr_t base, size_t n);
 
     // Allocates n virtual pages in a PML4 table.
-    void *allocatevirt(pml4_table_t *pml4, uintptr_t start, uintptr_t end, size_t n);
+    void *allocatevirt(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n);
 
     // Frees n virtual pages (and their physical counterparts) in a PML4 table.
-    void freevirt(pml4_table_t *pml4, uintptr_t base, size_t n);
+    void freevirt(pge_structure_t *pml4, uintptr_t base, size_t n);
 
     // Initialise the virtual memory manager.
     void initialisevirt(void);

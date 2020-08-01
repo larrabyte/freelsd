@@ -16,7 +16,7 @@ namespace gfx {
         mdata.buffer[y * mdata.width + x] = colours;
     }
 
-    inline void scroll(size_t n, uint8_t fill) {
+    inline void scroll(size_t n) {
         // Copy ahead of the buffer back into the base framebuffer, this scrolls the screen up one line. Then simply memset() the final line.
         memcpy(mdata.buffer, &mdata.buffer[n * mdata.width], mdata.pitch * (mdata.height - TEXT_SPACING_H));
         memset(&mdata.buffer[mdata.width * (mdata.height - TEXT_SPACING_H)], fill, mdata.pitch * TEXT_SPACING_H);
@@ -53,7 +53,7 @@ namespace gfx {
 
         // Row scroller (UD).
         if(row == rmax) {
-            scroll(TEXT_SPACING_H, fill);
+            scroll(TEXT_SPACING_H);
             row = rmax - 1;
             column = 0;
         }
