@@ -39,8 +39,8 @@ namespace mem {
         return (pge_structure_t*) (*entry & PGE_FRAME_BITS);
     }
 
-    pge_structure_t *getkernelpml4(void) {
-        return kernelpml4;
+    pge_structure_t *getkernelpml4(bool phys) {
+        return (phys) ? kernelpml4 : (pge_structure_t*) ((uintptr_t) kernelpml4 + PGE_KERNEL_VBASE);
     }
 
     uintptr_t findfirstfree(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n) {
@@ -284,10 +284,13 @@ namespace mem {
 
         // Register mem::pfhandler() as the page fault handler.
         idt::registerhandler(14, &pfhandler);
+        currentpml4 = kernelpml4;
 
-        // Change the framebuffer, mark bootstrap structures as free and reload CR3.
+        // Change the framebuffer, mark bootstrap structures as free.
         mboot::info.fbinfo->common.framebuffer = 0xFFFFFFFFC0000000;
         markphysfree(pge64sel[0], pge64sel[2]);
+
+        // Reload CR3.
         loadcr3((uintptr_t) kernelpml4);
     }
 }

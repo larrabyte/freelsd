@@ -10,4 +10,6 @@ elif [[ $1 == "bochs" ]]; then
     bochs -q -f scripts/bochsrc.bxrc
 elif [[ $1 == "bochsdebug" ]]; then
     bochsdbg -q -f scripts/bochsrc.bxrc
+elif [[ $1 == "vmware" ]]; then
+    vmrun start "C:\Users\larra\Documents\Virtual Machines\FreeLSD\FreeLSD.vmx"
 fi

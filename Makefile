@@ -1,7 +1,7 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: default qemu qemudebug bochs bochsdebug tools clean cleanall
+.PHONY: default qemu qemudebug bochs bochsdebug vmware tools clean cleanall
 
 ARCH := x86_64
 CPP  := x86_64-elf-g++
@@ -10,9 +10,10 @@ ASM  := nasm
 # ----------------------------------
 # Assember, compiler and QEMU flags.
 # ----------------------------------
-WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter
-CFLAGS   := $(WARNINGS) -ffreestanding -fstack-protector -fno-exceptions -fno-rtti \
-			-mcmodel=kernel -mno-red-zone -mno-sse -zmax-page-size=0x1000 -O3 -nostdlib
+WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-builtin-macro-redefined
+CFLAGS   := $(WARNINGS) -D__TIMESTAMP__=\"$(shell date +'"%A, %d %B %Y %r %Z"')\" -ffreestanding \
+			-fstack-protector -fno-exceptions -fno-rtti -mcmodel=kernel -mno-red-zone -mno-sse \
+			-zmax-page-size=0x1000 -O3 -nostdlib
 
 AFLAGS := -felf64
 
@@ -49,6 +50,10 @@ bochs: build/freelsd.iso
 bochsdebug: build/freelsd.iso objdump
 	@printf "[vbochs] Now booting FreeLSD (Bochs debug).\n"
 	@./scripts/virtualise.sh bochsdebug
+
+vmware: build/freelsd.iso
+	@printf "[vmware] Now booting FreeLSD (Windows: VMware).\n"
+	@./scripts/virtualise.sh vmware
 
 tools:
 	@cd tools/initrdgen && $(MAKE) --no-print-directory

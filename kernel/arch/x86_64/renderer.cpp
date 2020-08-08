@@ -3,6 +3,7 @@
 #include <gfx/fonts.hpp>
 #include <mem/libc.hpp>
 #include <string.hpp>
+#include <logger.hpp>
 #include <frogs.hpp>
 
 namespace gfx {
@@ -93,5 +94,11 @@ namespace gfx {
         column = row = fill = 0;
         colour = 0xFFFFFFFF;
         write(stdfrog);
+
+
+        // Register the framebuffer as a logging device and print some debug information.
+        log::registerwriter(&writechar, false, true, true, true);
+        log::trace("[render] registered %p (gfx::writechar) as a logging device.\n", &writechar);
+        log::trace("[render] current resolution: %zd/%zd/%zd\n\n", mdata.width, mdata.height, mdata.bpp * 8);
     }
 }

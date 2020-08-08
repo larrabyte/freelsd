@@ -81,14 +81,10 @@ namespace log {
         // Zero out the logging vector table.
         memset(writers, 0, sizeof(metadata_t) * LOGGER_MAX_OUTPUTS);
 
-        // Register the serial and graphical writers.
+        // Register the serial port as a logging device and write an initialisation printout.
         registerwriter(&serial::writechar, true, true, true, true);
-        registerwriter(&gfx::writechar, false, true, true, true);
-
-        // Write some initialisation stuff to the log.
-        trace("[logger] system log initialised at tick %d.\n", timer::systicks);
-        trace("[logger] initial logger vector entries:\n", numwriters);
-        for(size_t i = 0; i < numwriters; i++) trace("             -> %p\n", writers[i].function);
-        trace("\n");
+        trace("[logger] system log initialised.\n");
+        trace("[logger] kernel build date: %s.\n", __TIMESTAMP__);
+        trace("[logger] registered %p (serial::writechar) as a logging device.\n\n", &serial::writechar);
     }
 }

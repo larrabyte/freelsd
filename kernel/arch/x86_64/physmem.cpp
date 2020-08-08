@@ -2,6 +2,7 @@
 #include <mem/phys.hpp>
 #include <mem/virt.hpp>
 #include <mem/libc.hpp>
+#include <logger.hpp>
 #include <errors.hpp>
 
 namespace mem {
@@ -103,9 +104,10 @@ namespace mem {
                 totalsize += mmapcur->len;
             }
 
-            // Advance along the memory map to the next entry.
+            // Print out the memory map entry to the log and advance along to the next entry.
+            log::trace("[physmm] memory map, %s | start: %p, length: %p or %ld KB\n", mboot::getmmaptype(mmapcur->type), mmapcur->addr, mmapcur->len, mmapcur->len / 1024);
             mmapcur = (mb_mmap_entry_t*) ((uintptr_t) mmapcur + mboot::info.mmap->entrysize);
-        }
+        } log::trace("\n");
 
         // Properly define the maximum and used number of blocks.
         maxblocks = totalsize / PMMGR_BLOCK_SIZE;
@@ -120,5 +122,6 @@ namespace mem {
         markphysused((uintptr_t) mboot::info.meminfo, mboot::info.meminfo->size);
         markphysused((uintptr_t) mboot::info.bootdev, mboot::info.bootdev->size);
         markphysused((uintptr_t) mboot::info.mmap, mboot::info.mmap->size);
+        markphysused((uintptr_t) mboot::info.rsdp, mboot::info.rsdp->size);
     }
 }

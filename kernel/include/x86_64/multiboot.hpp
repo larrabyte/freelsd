@@ -329,6 +329,7 @@ typedef struct multiboot_information {
     mb_tag_basicmem_t *meminfo;
     mb_tag_bootdev_t *bootdev;
     mb_tag_mmap_t *mmap;
+    mb_tag_acpi_t *rsdp;
 } mb_info_t;
 
 namespace mboot {

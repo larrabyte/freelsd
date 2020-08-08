@@ -13,7 +13,7 @@ cpuid: mmx=true, apic=xapic, simd=sse4_2, sse4a=true, misaligned_sse=true, sep=t
 cpuid: movbe=true, adx=true, aes=true, sha=true, xsave=true, xsaveopt=true, x86_64=true
 cpuid: 1g_pages=true, pcid=true, fsgsbase=true, smep=true, smap=true, mwait=true
 magic_break: enabled=1
-clock: sync=slowdown, time0=local, rtc_sync=0
+clock: sync=none, time0=local, rtc_sync=0
 keyboard: type=mf, serial_delay=250, paste_delay=100000, user_shortcut=none
 mouse: type=ps2, enabled=false, toggle=ctrl+mbutton
 speaker: enabled=true, mode=sound

@@ -1,5 +1,6 @@
 #include <multiboot.hpp>
 #include <serial.hpp>
+#include <acpi.hpp>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -44,6 +45,8 @@ namespace mboot {
 
         while(cursor->type != MULTIBOOT_TAG_TYPE_END) {
             switch(cursor->type) {
+                case MULTIBOOT_TAG_TYPE_ACPI_NEW: acpi::rsdptr = (acpi::rsdp_t*) ((mb_tag_acpi_t*) cursor)->rsdp; break;
+                case MULTIBOOT_TAG_TYPE_ACPI_OLD: acpi::rsdptr = (acpi::rsdp_t*) ((mb_tag_acpi_t*) cursor)->rsdp; break;
                 case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME: info.bootloader = ((mb_tag_string_t*) cursor)->string; break;
                 case MULTIBOOT_TAG_TYPE_CMDLINE: info.cmdline = ((mb_tag_string_t*) cursor)->string; break;
                 case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO: info.meminfo = (mb_tag_basicmem_t*) cursor; break;

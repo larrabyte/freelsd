@@ -44,7 +44,8 @@ extern "C" {
     __attribute__((noreturn)) void internalpanic(const char *filename, const char *function, int line, idt::regs64_t *regs, const char *format, ...) {
         // Disable interrupts.
         asm volatile("cli");
-        uint64_t *stackrbp, stackrip;
+        uint64_t *stackrbp = nullptr;
+        uint64_t stackrip = 0;
 
         // Setup the graphical renderer for the white death.
         memset(gfx::mdata.buffer, 0xFF, gfx::mdata.width * gfx::mdata.height * gfx::mdata.bpp);
@@ -54,8 +55,9 @@ extern "C" {
 
         // Immediately halt if a new panic is nested.
         if(nestedpanic) {
-            log::error("[kpanic] nested kernel panic!\n");
-            log::error("[kpanic] system is in an unreliable state, halting.\n");
+            gfx::row = 0;
+            log::error("\n >>>>>>> FREELSD NESTED KERNEL PANIC!\n");
+            log::error(" >>>>>>> SYSTEM IS IN AN UNRELIABLE STATE, HALTING.\n");
             goto halt;
         } else nestedpanic = true;
 
@@ -86,23 +88,28 @@ extern "C" {
             log::error("[kpanic]  r8: %p,  r9: %p, r10: %p, r11: %p\n", regs->r8, regs->r9, regs->r10, regs->r11);
             log::error("[kpanic] r12: %p, r13: %p, r14: %p, r15: %p\n", regs->r12, regs->r13, regs->r14, regs->r15);
             log::error("[kpanic]  cs: %p,  ss: %p, rip: %p, rfl: %p\n\n", regs->cs, regs->ss, regs->rip, regs->rflags);
+
+            // Setup the stack tracer with an rbp value.
+            stackrbp = (uint64_t*) regs->rbp;
         }
 
-        // Check if the stack was smashed before printing a stack trace.
+        // Check if the stack was smashed.
         if(stacksmashed) {
             log::error("[kpanic] stack trace unavailable.\n");
             log::error("[kpanic] stack canary guard overwritten.\n");
             goto halt;
         }
 
-        stackrbp = (uint64_t*) regs->rbp;
-        log::error("[kpanic] stack trace available.\n", stackrbp);
-        log::error("[kpanic] kernel panic occurred at %p.\n", regs->rip);
+        // Check if we have a stack trace available to print.
+        if(stackrbp != nullptr) {
+            log::error("[kpanic] stack trace available.\n");
+            log::error("[kpanic] kernel panic occurred at %p.\n", regs->rip);
 
-        while(stackrbp) {
-            stackrip = *(stackrbp + 1);
-            log::error("[kpanic] which was called from -> %p.\n", stackrip);
-            stackrbp = (uint64_t*) (*stackrbp);
+            while(stackrbp) {
+                stackrip = *(stackrbp + 1);
+                log::error("[kpanic] which was called from -> %p.\n", stackrip);
+                stackrbp = (uint64_t*) (*stackrbp);
+            }
         }
 
         // Enter an infinite loop.
