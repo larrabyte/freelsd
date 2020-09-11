@@ -39,89 +39,103 @@ namespace mem {
         return (pge_structure_t*) (*entry & PGE_FRAME_BITS);
     }
 
+    static inline void cacheaddress(bool *conditional, uintptr_t *cache, size_t pml4e, size_t pdpe, size_t pde, size_t pte) {
+        if(!*conditional) {
+            uintptr_t address = pml4e << 39 | pdpe << 30 | pde << 21 | pte << 12;
+            if(address & PGE_SIGNEXTENSION_BIT) address |= 0xFFFF000000000000;
+            *conditional = true;
+            *cache = address;
+        }
+    }
+
+    static inline void allocatestructure(pge_structure_t **structure, pge_entry_t *entry) {
+        *structure = (pge_structure_t*) mem::allocatephys(1);
+        memset(*structure, 0, sizeof(pge_structure_t));
+        addattribute(entry, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
+        setframeaddr(entry, (uint64_t) *structure);
+    }
+
     pge_structure_t *getkernelpml4(bool phys) {
         return (phys) ? kernelpml4 : (pge_structure_t*) ((uintptr_t) kernelpml4 + PGE_KERNEL_VBASE);
     }
 
     uintptr_t findfirstfree(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n) {
-        uintptr_t retaddr = 0x0;
-        bool addrcached = false;
         intmax_t reqpages = n;
+        uintptr_t firstfree;
+        bool cached = false;
 
-        // Set table indexes to their initial values.
+        // Set our table indexes to their initial values.
+        size_t i = pml4index(start);
         size_t j = pdpeindex(start);
         size_t k = pdeindex(start);
         size_t l = pteindex(start);
 
-        // Iterate through each PML4 entry in range.
-        for(size_t i = pml4index(start); i < pml4index(end) + 1; i++) {
+        do { // Start iterating through the PML4.
             pge_entry_t *pml4e = &pml4->entries[i];
-
             if(testattribute(pml4e, PGE_PRESENT_BIT)) {
-                // PML4E is present, iterate through it's PDPT.
+                // Get the address of the PDPT from the PML4E.
                 pge_structure_t *pdpt = getframeaddr(pml4e);
-                while(j < PGE_ENTRIES_PER_STRUCTURE) {
-                    pge_entry_t *pdpe = &pdpt->entries[j++];
 
+                do { // Start iterating through the PDPT.
+                    pge_entry_t *pdpe = &pdpt->entries[j];
                     if(testattribute(pdpe, PGE_PRESENT_BIT)) {
-                        // If PDPE is present & huge, reset parameters.
+                        // If we have a huge present PDPE, reset parameters.
                         if(testattribute(pdpe, PGE_HUGEPAGE_BIT)) {
-                            addrcached = false;
+                            cached = false;
                             reqpages = n;
                             continue;
                         }
 
-                        // PDPE wasn't huge, iterate through it's PDT.
+                        // Get the address of the PDT from the PDPE.
                         pge_structure_t *pdt = getframeaddr(pdpe);
-                        while (k < PGE_ENTRIES_PER_STRUCTURE) {
-                            pge_entry_t *pde = &pdt->entries[k++];
 
+                        do { // Start iterating through the PDT.
+                            pge_entry_t *pde = &pdt->entries[k];
                             if(testattribute(pde, PGE_PRESENT_BIT)) {
-                                // If PDE is present & huge, reset parameters.
+                                // If we have a huge present PDE, reset parameters.
                                 if(testattribute(pde, PGE_HUGEPAGE_BIT)) {
-                                    addrcached = false;
+                                    cached = false;
                                     reqpages = n;
                                     continue;
                                 }
 
-                                // PDE wasn't huge, iterate through it's page table.
+                                // Get the address of the PT from the PDE.
                                 pge_structure_t *pt = getframeaddr(pde);
-                                while(l < PGE_ENTRIES_PER_STRUCTURE) {
-                                    pge_entry_t *pte = &pt->entries[l++];
 
-                                    // If PTE is present, we can't go any further. Reset parameters.
+                                do { // Start iterating through the PT.
+                                    pge_entry_t *pte = &pt->entries[l];
                                     if(testattribute(pte, PGE_PRESENT_BIT)) {
-                                        addrcached = false;
+                                        cached = false;
                                         reqpages = n;
                                         continue;
                                     } else {
-                                        pgecacheaddr(addrcached, retaddr, i, j, k, l); // Free page!
-                                        if(--reqpages <= 0) return retaddr;
+                                        cacheaddress(&cached, &firstfree, i, j, k, l); // Free page!
+                                        if(--reqpages <= 0) return firstfree;
                                     }
-                                }
+                                } while(++l < PGE_ENTRIES_PER_STRUCTURE);
 
-                                l = 0; // Reset PT index upon next PDE iteration.
+                            l = 0;
                             } else {
-                                pgecacheaddr(addrcached, retaddr, i, j, k, 0); // Free PDE: 512 free pages.
-                                if((reqpages -= PGE_PDE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return retaddr;
+                                cacheaddress(&cached, &firstfree, i, j, k, l); // Free PDE: 512 free pages.
+                                if((reqpages -= PGE_PDE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return firstfree;
                             }
-                        }
+                        } while(++k < PGE_ENTRIES_PER_STRUCTURE);
 
-                        k = 0; // Reset PDT index upon next PDPE iteration.
+                    k = 0;
                     } else {
-                        pgecacheaddr(addrcached, retaddr, i, j, 0, 0); // Free PDPE: 256k free pages.
-                        if((reqpages -= PGE_PDPE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return retaddr;
+                        cacheaddress(&cached, &firstfree, i, j, k, l); // Free PDPE: 256k free pages.
+                        if((reqpages -= PGE_PDPE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return firstfree;
                     }
-                }
+                } while(++j < PGE_ENTRIES_PER_STRUCTURE);
 
-                j = 0; // Reset PDPT index upon next PML4E iteration.
+            j = 0;
             } else {
-                pgecacheaddr(addrcached, retaddr, i, 0, 0, 0); // Free PML4E: ~134M free pages.
-                if((reqpages -= PGE_PML4E_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return retaddr;
+                cacheaddress(&cached, &firstfree, i, j, k, l); // Free PML4E: ~134M free pages.
+                if((reqpages -= PGE_PML4E_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return firstfree;
             }
-        }
+        } while(++i <= pml4index(end));
 
-        // Didn't find anything.
+        // Didn't find anything :(
         return 0;
     }
 
@@ -130,7 +144,7 @@ namespace mem {
 
         // If the PML4E isn't present, allocate a new PDPT and mark the PML4E as present.
         pge_structure_t *pdpt = getframeaddr(pml4e);
-        if(!testattribute(pml4e, PGE_PRESENT_BIT)) { pgeallocstruct(pdpt, pml4e); }
+        if(!testattribute(pml4e, PGE_PRESENT_BIT)) allocatestructure(&pdpt, pml4e);
         pge_entry_t *pdpe = &pdpt->entries[pdpeindex(virt)];
 
         if(type == PGE_HUGE1GB_PAGE) {
@@ -143,7 +157,7 @@ namespace mem {
 
         // If the PDPE isn't present, allocate a new PDT and mark the PDPE as present.
         pge_structure_t *pdt = getframeaddr(pdpe);
-        if(!testattribute(pdpe, PGE_PRESENT_BIT)) { pgeallocstruct(pdt, pdpe); }
+        if(!testattribute(pdpe, PGE_PRESENT_BIT)) allocatestructure(&pdt, pdpe);
         pge_entry_t *pde = &pdt->entries[pdeindex(virt)];
 
         if(type == PGE_HUGE2MB_PAGE) {
@@ -156,7 +170,7 @@ namespace mem {
 
         // If the PDE isn't present, allocate a new page table and mark the PDE as present.
         pge_structure_t *pt = getframeaddr(pde);
-        if(!testattribute(pde, PGE_PRESENT_BIT)) { pgeallocstruct(pt, pde); }
+        if(!testattribute(pde, PGE_PRESENT_BIT)) allocatestructure(&pt, pde);
         pge_entry_t *pte = &pt->entries[pteindex(virt)];
 
         if(type == PGE_REGULAR_PAGE) {
@@ -237,6 +251,19 @@ namespace mem {
         return (void*) virt;
     }
 
+    void *allocatemmio(uintptr_t phys, size_t n) {
+        uintptr_t virt = findfirstfree(kernelpml4, PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, n);
+        uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
+        uintptr_t palign = phys & 0xFFFFFFFFFFFFF000;
+        uintptr_t offset = phys & 0xFFF;
+
+        // Return nullptr if there isn't any free virtual address space left.
+        if(virt == 0) return nullptr;
+
+        for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(kernelpml4, PGE_REGULAR_PAGE, v, palign, false);
+        return (void*) (virt + offset);
+    }
+
     void freevirt(pge_structure_t *pml4, uintptr_t base, size_t n) {
         unmappage(pml4, base, n);
     }
@@ -282,15 +309,15 @@ namespace mem {
             mappage(kernelpml4, PGE_REGULAR_PAGE, v, p, false);
         }
 
-        // Register mem::pfhandler() as the page fault handler.
+        // Register mem::pfhandler() as the page fault handler and free the bootstrap paging structures.
+        // We keep 0x0 in use so the virtual memory manager doesn't try and use an unmapped page.
         idt::registerhandler(14, &pfhandler);
+        markphysfree(pge64sel[0], pge64sel[2]);
+        markphysused(0x0, 0x1000);
         currentpml4 = kernelpml4;
 
-        // Change the framebuffer, mark bootstrap structures as free.
+        // Set the framebuffer's address and reload CR3.
         mboot::info.fbinfo->common.framebuffer = 0xFFFFFFFFC0000000;
-        markphysfree(pge64sel[0], pge64sel[2]);
-
-        // Reload CR3.
         loadcr3((uintptr_t) kernelpml4);
     }
 }

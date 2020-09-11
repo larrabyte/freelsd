@@ -25,21 +25,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-// Macro to set an address based on a boolean passed in.
-#define pgecacheaddr(set, addr, pml4e, pdpe, pde, pte)                \
-    if(!set) {                                                        \
-        addr = pml4e << 39 | pdpe << 30 | pde << 21 | pte << 12;      \
-        if(addr & PGE_SIGNEXTENSION_BIT) addr |= 0xFFFF000000000000;  \
-        set = true;                                                   \
-    }                                                                 \
-
-// Macro to allocate a zeroed-out paging structure.
-#define pgeallocstruct(structure, entry)                              \
-    structure = (pge_structure_t*) mem::allocatephys(1);              \
-    memset(structure, 0, sizeof(pge_structure_t));                    \
-    addattribute(entry, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);          \
-    setframeaddr(entry, (uint64_t) structure);                        \
-
 #define pml4index(addr) ((addr >> 39) & 0x1FF)  // Returns the 9 bits for a PML4 index.
 #define pdpeindex(addr) ((addr >> 30) & 0x1FF)  // Returns the 9 bits for a PDPT index.
 #define pdeindex(addr)  ((addr >> 21) & 0x1FF)  // Returns the 9 bits for a PDE index.
@@ -48,6 +33,10 @@
 #define PGE_KERNEL_VBASE           0xFFFFFFFF80000000
 #define PGE_SIGNEXTENSION_BIT      0x0000800000000000
 #define PGE_ENTRIES_PER_STRUCTURE  512
+
+#define PGE_MMIO_BASEADDR          0xFFFFFFFF7FE00000
+#define PGE_MMIO_ENDADDR           0xFFFFFFFF80000000
+#define PGE_MMIO_ADDRSPACE         0x0000000000200000
 
 // ------------------------------------
 // Address ranges of paging structures.
@@ -91,7 +80,7 @@ namespace mem {
     extern pge_structure_t *currentpml4;
 
     // Return the address of the kernel's PML4.
-    pge_structure_t *getkernelpml4(void);
+    pge_structure_t *getkernelpml4(bool phys);
 
     // Find the first instance of n pages of memory in a given PML4 table.
     uintptr_t findfirstfree(pge_structure_t *dir, uintptr_t start, uintptr_t end, size_t n);
@@ -104,6 +93,9 @@ namespace mem {
 
     // Allocates n virtual pages in a PML4 table.
     void *allocatevirt(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n);
+
+    // Allocate virtual address space for MMIO in the kernel's PML4.
+    void *allocatemmio(uintptr_t phys, size_t n);
 
     // Frees n virtual pages (and their physical counterparts) in a PML4 table.
     void freevirt(pge_structure_t *pml4, uintptr_t base, size_t n);

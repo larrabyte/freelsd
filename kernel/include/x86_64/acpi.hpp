@@ -17,12 +17,6 @@ namespace acpi {
         uint8_t xreserved[3];
     } __attribute__((packed)) rsdp_t;
 
-    typedef struct rootdescriptor {
-        uintptr_t mainsdt;
-        uint8_t revision;
-        char oemid[7];
-    } rdsc_t;
-
     typedef struct sdtheader {
         char signature[4];
         uint32_t length;
@@ -33,12 +27,22 @@ namespace acpi {
         uint32_t oemrevision;
         uint32_t creatorid;
         uint32_t creatorrev;
-    } sdthdr_t;
+    } __attribute__((packed)) sdthdr_t;
 
-    typedef struct mainsdt {
+    typedef struct rsdt {
         sdthdr_t header;
-        uintptr_t pointers[1];
-    } msdt_t;
+        uint32_t pointers[1];
+    } __attribute__((packed)) rsdt_t;
+
+    typedef struct xsdt {
+        sdthdr_t header;
+        uint64_t pointers[1];
+    } __attribute__((packed)) xsdt_t;
+
+    typedef struct descriptor {
+        uintptr_t msdt;
+        uint8_t revision;
+    } rdsc_t;
 
     // Root system description pointer.
     extern rsdp_t *rsdptr;
