@@ -42,6 +42,8 @@ namespace acpi {
     typedef struct descriptor {
         uintptr_t msdt;
         uint8_t revision;
+        size_t count;
+        uintptr_t *pointers;
     } rdsc_t;
 
     // Root system description pointer.

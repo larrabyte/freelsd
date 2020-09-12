@@ -7,6 +7,7 @@
 #include <acpi.hpp>
 
 namespace acpi {
+    char signature[5] = "FLSD";
     rdsc_t descriptor;
     rsdp_t *rsdptr;
 
@@ -23,8 +24,8 @@ namespace acpi {
         uint8_t c2 = checksum((char*) rsdptr, 36);
 
         // Make sure the checksums are valid before proceeding.
-        if(c1 != 0) panic("RSDP table checksum not valid! 0x%hx != 0x00.", c1);
-        if(rsdptr->revision == 2 && c2 != 0) panic("RSDP extended table checksum not valid! 0x%hx != 0x00.", c2);
+        if(c1 != 0) panic("RSDP table checksum not valid! 0x%hhx != 0x00.", c1);
+        if(rsdptr->revision == 2 && c2 != 0) panic("RSDP extended table checksum not valid! 0x%hhx != 0x00.", c2);
 
         // Make sure to set the correct system descriptor table address in the ACPI descriptor.
         descriptor.msdt = (rsdptr->revision == 0) ? rsdptr->rsdtaddr : rsdptr->xsdtaddr;
@@ -33,24 +34,26 @@ namespace acpi {
 
         // Create a new array to store ACPI table pointers.
         sdthdr_t *msdt = (sdthdr_t*) descriptor.msdt;
-        size_t entries = (msdt->length - sizeof(sdthdr_t)) / 4;
-        if(msdt->revision == 2) entries /= 2;
-        uintptr_t *pointers = (uintptr_t*) kmalloc(entries * 8);
+        descriptor.count = (msdt->length - sizeof(sdthdr_t)) / 4;
+        if(descriptor.revision == 2) descriptor.count /= 2;
+        descriptor.pointers = (uintptr_t*) kmalloc(descriptor.count * 8);
 
         if(descriptor.revision == 0) {
             uint32_t *tables = (uint32_t*) ((uintptr_t) msdt + sizeof(sdthdr_t) + 2);
-            for(size_t i = 0; i < entries; i++) pointers[i] = (uintptr_t) tables[i];
-        }
-
-        else if(descriptor.revision == 2) {
+            for(size_t i = 0; i < descriptor.count; i++) descriptor.pointers[i] = (uintptr_t) tables[i];
+        } else if(descriptor.revision == 2) {
             uint64_t *tables = (uint64_t*) ((uintptr_t) msdt + sizeof(sdthdr_t) + 2);
-            for(size_t i = 0; i < entries; i++) pointers[i] = (uintptr_t) tables[i];
+            for(size_t i = 0; i < descriptor.count; i++) descriptor.pointers[i] = (uintptr_t) tables[i];
         }
 
-        log::info("[osacpi] central SDT address: %p (%d bytes, rev %hd)\n", msdt, msdt->length, descriptor.revision);
-        for(size_t i = 0; i < entries; i++) {
-            pointers[i] = (uintptr_t) mem::allocatemmio(pointers[i]);
-            log::info("[osacpi] SDT table addresses: %p\n", pointers[i]);
+        // Copy the main table signature before logging it.
+        memcpy(signature, msdt->signature, 4);
+        log::info("[osacpi] %s address: %p (%d bytes)\n", signature, msdt, msdt->length);
+
+        for(size_t i = 0; i < descriptor.count; i++) {
+            descriptor.pointers[i] = (uintptr_t) mem::allocatemmio(descriptor.pointers[i]);
+            memcpy(signature, ((sdthdr_t*) descriptor.pointers[i])->signature, 4);
+            log::info("[osacpi] %s address: %p (%d bytes)\n", signature, descriptor.pointers[i], ((sdthdr_t*) descriptor.pointers[i])->length);
         } log::info("\n");
     }
 }
