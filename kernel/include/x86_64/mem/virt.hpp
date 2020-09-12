@@ -85,6 +85,9 @@ namespace mem {
     // Find the first instance of n pages of memory in a given PML4 table.
     uintptr_t findfirstfree(pge_structure_t *dir, uintptr_t start, uintptr_t end, size_t n);
 
+    // Convert a virtual address in a given PML4 table to a physical address.
+    uintptr_t virt2phys(pge_structure_t *pml4, uintptr_t virt);
+
     // Maps a page-aligned virtual address to a page-aligned physical address.
     void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, bool allocated);
 
@@ -95,7 +98,7 @@ namespace mem {
     void *allocatevirt(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n);
 
     // Allocate virtual address space for MMIO in the kernel's PML4.
-    void *allocatemmio(uintptr_t phys, size_t n);
+    void *allocatemmio(uintptr_t phys);
 
     // Frees n virtual pages (and their physical counterparts) in a PML4 table.
     void freevirt(pge_structure_t *pml4, uintptr_t base, size_t n);

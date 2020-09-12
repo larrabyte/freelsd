@@ -28,29 +28,29 @@ namespace acpi {
 
         // Make sure to set the correct system descriptor table address in the ACPI descriptor.
         descriptor.msdt = (rsdptr->revision == 0) ? rsdptr->rsdtaddr : rsdptr->xsdtaddr;
-        descriptor.msdt = (uintptr_t) mem::allocatemmio(descriptor.msdt, 1);
+        descriptor.msdt = (uintptr_t) mem::allocatemmio(descriptor.msdt);
         descriptor.revision = rsdptr->revision;
 
-        if(descriptor.revision == 0) {
-            rsdt_t *rsdt = (rsdt_t*) descriptor.msdt;
-            size_t entries = (rsdt->header.length - sizeof(sdthdr_t)) / 4;
-            uint32_t *tables = (uint32_t*) ((uintptr_t) rsdt->pointers + 2);
-            log::info("[osacpi] rsdt address: %p (%d bytes)\n", rsdt, rsdt->header.length);
+        // Create a new array to store ACPI table pointers.
+        sdthdr_t *msdt = (sdthdr_t*) descriptor.msdt;
+        size_t entries = (msdt->length - sizeof(sdthdr_t)) / 4;
+        if(msdt->revision == 2) entries /= 2;
+        uintptr_t *pointers = (uintptr_t*) kmalloc(entries * 8);
 
-            for(size_t i = 0; i < entries; i++) {
-                log::info("[osacpi] rsdt entry %zd: %p\n", i, (uintptr_t) tables[i]);
-            } log::info("\n");
+        if(descriptor.revision == 0) {
+            uint32_t *tables = (uint32_t*) ((uintptr_t) msdt + sizeof(sdthdr_t) + 2);
+            for(size_t i = 0; i < entries; i++) pointers[i] = (uintptr_t) tables[i];
         }
 
         else if(descriptor.revision == 2) {
-            xsdt_t *xsdt = (xsdt_t*) descriptor.msdt;
-            size_t entries = (xsdt->header.length - sizeof(sdthdr_t)) / 8;
-            uint64_t *tables = (uint64_t*) ((uintptr_t) xsdt->pointers + 2);
-            log::info("[osacpi] xsdt address: %p (%d bytes)\n", xsdt, xsdt->header.length);
-
-            for(size_t i = 0; i < entries; i++) {
-                log::info("[osacpi] xsdt entry %zd: %p\n", i, (uintptr_t) tables[i]);
-            } log::info("\n");
+            uint64_t *tables = (uint64_t*) ((uintptr_t) msdt + sizeof(sdthdr_t) + 2);
+            for(size_t i = 0; i < entries; i++) pointers[i] = (uintptr_t) tables[i];
         }
+
+        log::info("[osacpi] central SDT address: %p (%d bytes, rev %hd)\n", msdt, msdt->length, descriptor.revision);
+        for(size_t i = 0; i < entries; i++) {
+            pointers[i] = (uintptr_t) mem::allocatemmio(pointers[i]);
+            log::info("[osacpi] SDT table addresses: %p\n", pointers[i]);
+        } log::info("\n");
     }
 }

@@ -60,8 +60,8 @@ namespace mem {
     }
 
     uintptr_t findfirstfree(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n) {
+        uintptr_t firstfree = 0;
         intmax_t reqpages = n;
-        uintptr_t firstfree;
         bool cached = false;
 
         // Set our table indexes to their initial values.
@@ -110,33 +110,64 @@ namespace mem {
                                         continue;
                                     } else {
                                         cacheaddress(&cached, &firstfree, i, j, k, l); // Free page!
-                                        if(--reqpages <= 0) return firstfree;
+                                        if(--reqpages <= 0) goto returner;
                                     }
                                 } while(++l < PGE_ENTRIES_PER_STRUCTURE);
 
                             l = 0;
                             } else {
                                 cacheaddress(&cached, &firstfree, i, j, k, l); // Free PDE: 512 free pages.
-                                if((reqpages -= PGE_PDE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return firstfree;
+                                if((reqpages -= PGE_PDE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) goto returner;
                             }
                         } while(++k < PGE_ENTRIES_PER_STRUCTURE);
 
                     k = 0;
                     } else {
                         cacheaddress(&cached, &firstfree, i, j, k, l); // Free PDPE: 256k free pages.
-                        if((reqpages -= PGE_PDPE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return firstfree;
+                        if((reqpages -= PGE_PDPE_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) goto returner;
                     }
                 } while(++j < PGE_ENTRIES_PER_STRUCTURE);
 
             j = 0;
             } else {
                 cacheaddress(&cached, &firstfree, i, j, k, l); // Free PML4E: ~134M free pages.
-                if((reqpages -= PGE_PML4E_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) return firstfree;
+                if((reqpages -= PGE_PML4E_ADDRSPACE / PGE_PTE_ADDRSPACE) <= 0) goto returner;
             }
         } while(++i <= pml4index(end));
 
-        // Didn't find anything :(
+        returner:
+        if(firstfree < end) return firstfree;
         return 0;
+    }
+
+    uintptr_t virt2phys(pge_structure_t *pml4, uintptr_t virt) {
+        // Get the paging table indexes for this virtual address.
+        size_t i = pml4index(virt);
+        size_t j = pdpeindex(virt);
+        size_t k = pdeindex(virt);
+        size_t l = pteindex(virt);
+
+        // Check if the PML4E is present.
+        pge_entry_t *pml4e = &pml4->entries[i];
+        if(!testattribute(pml4e, PGE_PRESENT_BIT)) return 0;
+
+        // Check if the PDPE is present.
+        pge_structure_t *pdpt = getframeaddr(pml4e);
+        pge_entry_t *pdpe = &pdpt->entries[j];
+        if(!testattribute(pdpe, PGE_PRESENT_BIT)) return 0;
+        if(testattribute(pdpe, PGE_HUGEPAGE_BIT)) return (uintptr_t) getframeaddr(pdpe);
+
+        // Check if the PDE is present.
+        pge_structure_t *pdt = getframeaddr(pdpe);
+        pge_entry_t *pde = &pdt->entries[k];
+        if(!testattribute(pde, PGE_PRESENT_BIT)) return 0;
+        if(testattribute(pde, PGE_HUGEPAGE_BIT)) return (uintptr_t) getframeaddr(pde);
+
+        // Check if the PT is present.
+        pge_structure_t *pt = getframeaddr(pde);
+        pge_entry_t *pte = &pt->entries[l];
+        if(!testattribute(pte, PGE_PRESENT_BIT)) return 0;
+        return (uintptr_t) getframeaddr(pte);
     }
 
     void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, bool allocated) {
@@ -251,13 +282,20 @@ namespace mem {
         return (void*) virt;
     }
 
-    void *allocatemmio(uintptr_t phys, size_t n) {
-        uintptr_t virt = findfirstfree(kernelpml4, PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, n);
-        uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
+    void *allocatemmio(uintptr_t phys) {
+        // Cache the page-aligned address and the offset.
         uintptr_t palign = phys & 0xFFFFFFFFFFFFF000;
         uintptr_t offset = phys & 0xFFF;
 
-        // Return nullptr if there isn't any free virtual address space left.
+        // Check the MMIO address space for already mapped addresses.
+        for(uintptr_t cursor = PGE_MMIO_BASEADDR; cursor < PGE_MMIO_ENDADDR; cursor += 0x1000) {
+            uintptr_t mapped = virt2phys(kernelpml4, cursor);
+            if(mapped != 0 && mapped == palign) return (void*) (cursor + offset);
+        }
+
+        // Find the next free page available if it hasn't already been mapped.
+        uintptr_t virt = findfirstfree(kernelpml4, PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, 1);
+        uintptr_t vmax = virt + PGE_PTE_ADDRSPACE;
         if(virt == 0) return nullptr;
 
         for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(kernelpml4, PGE_REGULAR_PAGE, v, palign, false);
@@ -286,7 +324,7 @@ namespace mem {
             default: reason = "unknown."; break;
         }
 
-        ctxpanic(regs, "Page fault exception, %s\n"
+        ctxpanic(regs, "page fault exception, %s\n"
                        "[kpanic] cr2 (page address): %p\n"
                        "[kpanic] cr3 (PML4 address): %p",
                        reason, cr2, cr3);
