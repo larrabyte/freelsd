@@ -282,7 +282,7 @@ namespace mem {
         return (void*) virt;
     }
 
-    void *allocatemmio(uintptr_t phys) {
+    void *allocatemmio(uintptr_t phys, size_t n) {
         // Cache the page-aligned address and the offset.
         uintptr_t palign = phys & 0xFFFFFFFFFFFFF000;
         uintptr_t offset = phys & 0xFFF;
@@ -293,9 +293,9 @@ namespace mem {
             if(mapped != 0 && mapped == palign) return (void*) (cursor + offset);
         }
 
-        // Find the next free page available if it hasn't already been mapped.
-        uintptr_t virt = findfirstfree(kernelpml4, PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, 1);
-        uintptr_t vmax = virt + PGE_PTE_ADDRSPACE;
+        // Find some free space in the kernel's address space if it hasn't already been mapped.
+        uintptr_t virt = findfirstfree(kernelpml4, PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, n);
+        uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
         if(virt == 0) return nullptr;
 
         for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(kernelpml4, PGE_REGULAR_PAGE, v, palign, false);

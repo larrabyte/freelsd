@@ -4,6 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+// Compare two blocks of memory, x and y for n bytes.
+int memcmp(const void *x, const void *y, size_t n);
+
 // Sets a block of memory to a certain value.
 void memset(const void *memory, uint8_t value, size_t n);
 

@@ -21,8 +21,8 @@
 #define USECASE4
 #define USECASE5
 
-static liballoc_major_t *memroot = NULL;  // The root memory block acquired from the system.
-static liballoc_major_t *bestbet = NULL;  // The major with the most free memory.
+static liballoc_major_t *memroot = nullptr;  // The root memory block acquired from the system.
+static liballoc_major_t *bestbet = nullptr;  // The major with the most free memory.
 
 static uint64_t pagesize = 4096;  // The size of an individual page in bytes.
 static uint64_t pagecount = 16;   // The number of pages to request per chunk.
@@ -92,17 +92,17 @@ static liballoc_major_t *allocnewpage(size_t size) {
     maj = (liballoc_major_t*) allocate(st);
 
     // Uh oh, we ran out of memory.
-    if(maj == NULL) {
+    if(maj == nullptr) {
         liballoc_warnings += 1;
-        return NULL;
+        return nullptr;
     }
 
-    maj->prev = NULL;
-    maj->next = NULL;
+    maj->prev = nullptr;
+    maj->next = nullptr;
     maj->pages = st;
     maj->size = st * pagesize;
     maj->usage = sizeof(liballoc_major_t);
-    maj->first = NULL;
+    maj->first = nullptr;
 
     allocated += maj->size;
     return maj;
@@ -112,7 +112,7 @@ void *kmalloc(size_t reqsize) {
     uint64_t startedbet = 0, bestsize = 0;
     size_t size = reqsize;
     uintptr_t diff;
-    void *p = NULL;
+    void *p = nullptr;
 
     liballoc_minor_t *min, *newmin;
     liballoc_major_t *maj;
@@ -129,20 +129,20 @@ void *kmalloc(size_t reqsize) {
     }
 
     // This is the first time we are being used.
-    if(memroot == NULL) {
+    if(memroot == nullptr) {
         memroot = allocnewpage(size);
 
-        // Return NULL if we can't initialise.
-        if(memroot == NULL) {
+        // Return nullptr if we can't initialise.
+        if(memroot == nullptr) {
             unlock();
-            return NULL;
+            return nullptr;
         }
     }
 
     maj = memroot;
 
     // Start at the best bet.
-    if(bestbet != NULL) {
+    if(bestbet != nullptr) {
         bestsize = bestbet->size - bestbet->usage;
         if(bestsize > (size + sizeof(liballoc_minor_t))) {
             maj = bestbet;
@@ -150,7 +150,7 @@ void *kmalloc(size_t reqsize) {
         }
     }
 
-    while(maj != NULL) {
+    while(maj != nullptr) {
         // Get free memory in the block.
         diff = maj->size - maj->usage;
 
@@ -165,7 +165,7 @@ void *kmalloc(size_t reqsize) {
         // Case 1: There isn't enough space in this major block.
         if(diff < (size + sizeof(liballoc_minor_t))) {
 
-            if(maj->next != NULL) {
+            if(maj->next != nullptr) {
                 maj = maj->next;     // Set the new maj to the next one.
                 continue;            // Hop to that one.
             }
@@ -179,7 +179,7 @@ void *kmalloc(size_t reqsize) {
 
             // Create a new major block next to this one.
             maj->next = allocnewpage(size);
-            if(maj->next == NULL) break;
+            if(maj->next == nullptr) break;
             maj->next->prev = maj;
             maj = maj->next;
 
@@ -191,14 +191,14 @@ void *kmalloc(size_t reqsize) {
         #ifdef USECASE2
 
         // Case 2: It's a brand new block.
-        if(maj->first == NULL) {
+        if(maj->first == nullptr) {
             maj->first = (liballoc_minor_t*) ((uintptr_t) maj + sizeof(liballoc_major_t));
 
             maj->usage += size + sizeof(liballoc_minor_t);
             maj->first->magic = LIBALLOC_MAGIC;
             maj->first->reqsize = reqsize;
-            maj->first->prev = NULL;
-            maj->first->next = NULL;
+            maj->first->prev = nullptr;
+            maj->first->next = nullptr;
             maj->first->block = maj;
             maj->first->size = size;
 
@@ -225,7 +225,7 @@ void *kmalloc(size_t reqsize) {
             maj->first = maj->first->prev;
 
             maj->first->magic = LIBALLOC_MAGIC;
-            maj->first->prev = NULL;
+            maj->first->prev = nullptr;
             maj->first->block = maj;
             maj->first->size = size;
             maj->first->reqsize = reqsize;
@@ -249,9 +249,9 @@ void *kmalloc(size_t reqsize) {
         min = maj->first;
 
         // Looping within the block now...
-        while(min != NULL) {
+        while(min != nullptr) {
             // Case 4.1: End of minors in a block. Space from last and end?
-            if(min->next == NULL) {
+            if(min->next == nullptr) {
                 // The rest of this block is free... is it big enough?
                 diff = (uintptr_t) maj + maj->size - (uintptr_t) min - sizeof(liballoc_minor_t) - min->size;
 
@@ -260,7 +260,7 @@ void *kmalloc(size_t reqsize) {
                     min->next = (liballoc_minor_t*) ((uintptr_t) min + sizeof(liballoc_minor_t) + min->size);
                     min->next->prev = min;
                     min = min->next;
-                    min->next = NULL;
+                    min->next = nullptr;
                     min->magic = LIBALLOC_MAGIC;
                     min->block = maj;
                     min->size = size;
@@ -279,7 +279,7 @@ void *kmalloc(size_t reqsize) {
             }
 
             // Case 4.2: Is there space between two minors?
-            if(min->next != NULL) {
+            if(min->next != nullptr) {
                 // Is the difference between here and next big enough?
                 diff = (uintptr_t) min->next - (uintptr_t) min - sizeof(liballoc_minor_t) - min->size;
         
@@ -316,7 +316,7 @@ void *kmalloc(size_t reqsize) {
         #ifdef USECASE5
 
         // Case 5: block full! Ensure next block and loop.
-        if(maj->next == NULL) {
+        if(maj->next == nullptr) {
             if(startedbet == 1) {
                 maj = memroot;
                 startedbet = 0;
@@ -325,7 +325,7 @@ void *kmalloc(size_t reqsize) {
 
             // We've run out. We need more...
             maj->next = allocnewpage(size);
-            if(maj->next == NULL) break;
+            if(maj->next == nullptr) break;
             maj->next->prev = maj;
         }
 
@@ -336,14 +336,14 @@ void *kmalloc(size_t reqsize) {
 
     // Release the lock and return.
     unlock();
-    return NULL;
+    return nullptr;
 }
 
 void kfree(void *pointer) {
     liballoc_major_t *maj;
     liballoc_minor_t *min;
 
-    if(pointer == NULL) {
+    if(pointer == nullptr) {
         liballoc_warnings += 1;
         return;
     }
@@ -374,21 +374,21 @@ void kfree(void *pointer) {
     maj->usage -= (min->size + sizeof(liballoc_minor_t));
     min->magic = LIBALLOC_DEAD; // No mojo.
 
-    if(min->next != NULL) min->next->prev = min->prev;
-    if(min->prev != NULL) min->prev->next = min->next;
-    if(min->prev == NULL) maj->first = min->next;
+    if(min->next != nullptr) min->next->prev = min->prev;
+    if(min->prev != nullptr) min->prev->next = min->next;
+    if(min->prev == nullptr) maj->first = min->next;
 
     // We need to clean up after the majors now.
-    if(maj->first == NULL) { // Block completely unused.
+    if(maj->first == nullptr) { // Block completely unused.
         if(memroot == maj) memroot = maj->next;
-        if(bestbet == maj) bestbet = NULL;
-        if(maj->prev != NULL) maj->prev->next = maj->next;
-        if(maj->next != NULL) maj->next->prev = maj->prev;
+        if(bestbet == maj) bestbet = nullptr;
+        if(maj->prev != nullptr) maj->prev->next = maj->next;
+        if(maj->next != nullptr) maj->next->prev = maj->prev;
         allocated -= maj->size;
 
         release(maj, maj->pages);
     } else {
-        if(bestbet != NULL) {
+        if(bestbet != nullptr) {
             unsigned int bestsize = bestbet->size - bestbet->usage;
             unsigned int majsize = maj->size - maj->usage;
 
@@ -413,14 +413,14 @@ void *krealloc(void *pointer, size_t size) {
     unsigned int realsize;
     void *p;
 
-    // Honour the case of size == 0 => free old and return NULL.
+    // Honour the case of size == 0 => free old and return nullptr.
     if(size == 0) {
         kfree(pointer);
-        return NULL;
+        return nullptr;
     }
 
-    // In the case of a NULL pointer, return a simple malloc.
-    if(pointer == NULL) return kmalloc(size);
+    // In the case of a nullptr pointer, return a simple malloc.
+    if(pointer == nullptr) return kmalloc(size);
 
     // Unalign the pointer if required.
     p = unalign(pointer);
@@ -441,7 +441,7 @@ void *krealloc(void *pointer, size_t size) {
 
         // Being lied to... release the lock.
         unlock();
-        return NULL;
+        return nullptr;
     }
 
     // Definitely a memory block.

@@ -20,6 +20,9 @@ int strcmp(const char *x, const char *y);
 // Copy the source string into dest. Only stops at a terminating NULL character!
 char *strcpy(char *dest, char *source);
 
+// Copy the source string into dest. Stops at a terminating NULL character or n characters, whichever comes first.
+char *strncpy(char *dest, char *source, size_t n);
+
 // Return the size of a C-style string minus the terminating NULL character.
 size_t strlen(const char *str);
 

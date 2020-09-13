@@ -52,6 +52,13 @@ char *strcpy(char *dest, char *source) {
     return temp;
 }
 
+char *strncpy(char *dest, char *source, size_t n) {
+    char *temp = dest;
+    while((*dest++ = *source++) != '\0' && --n > 0);
+    *dest = '\0';
+    return temp;
+}
+
 char *itoa(uintmax_t num, char *buffer, int base, bool pointer) {
     size_t index = 0;
 

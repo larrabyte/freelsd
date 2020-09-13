@@ -1,15 +1,26 @@
 #include <mem/libc.hpp>
 #include <stdint.h>
 
+int memcmp(const void *x, const void *y, size_t n) {
+    const char *a = (const char*) x;
+    const char *b = (const char*) y;
+
+    while(n-- > 0) {
+        // Return non-zero if the values aren't equal.
+        if(*a++ != *b++) return (*a > *b) ? 1 : -1;
+    }
+
+    return 0;
+}
+
 void memset(const void *memory, uint8_t value, size_t n) {
     // Stuff 8-bit value into a 64-bit integer using bitshifting.
-    uint32_t manybits = value << 24 | value << 16 | value << 8 | value;
-    uint64_t morebits = (uint64_t) manybits << 32 | manybits;
+    uint64_t bits = (uint64_t) value << 56 | (uint64_t) value << 48 | (uint64_t) value << 40 | (uint64_t) value << 32 | (uint64_t) value << 24 | (uint64_t) value << 16 | (uint64_t) value << 8 | (uint64_t) value;
     char *memoryptr = (char*) memory;
 
     // Set memory in 8-byte chunks.
     while(n >= sizeof(uint64_t)) {
-        *((uint64_t*) memoryptr) = morebits;
+        *((uint64_t*) memoryptr) = bits;
         memoryptr += sizeof(uint64_t);
         n -= sizeof(uint64_t);
     }

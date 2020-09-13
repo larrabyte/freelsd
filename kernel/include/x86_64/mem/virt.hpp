@@ -98,7 +98,7 @@ namespace mem {
     void *allocatevirt(pge_structure_t *pml4, uintptr_t start, uintptr_t end, size_t n);
 
     // Allocate virtual address space for MMIO in the kernel's PML4.
-    void *allocatemmio(uintptr_t phys);
+    void *allocatemmio(uintptr_t phys, size_t n);
 
     // Frees n virtual pages (and their physical counterparts) in a PML4 table.
     void freevirt(pge_structure_t *pml4, uintptr_t base, size_t n);
