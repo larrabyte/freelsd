@@ -32,6 +32,7 @@ namespace apic {
         uint64_t regvalue = 0;
 
         if(read64) {
+            // Read the upper 32-bits if read64 is true.
             *regselect = index + 1;
             regvalue = ((uint64_t) *datawindow << 32);
         }
@@ -46,8 +47,9 @@ namespace apic {
         uint32_t volatile *regselect = (uint32_t*) iobase;
 
         if(write64) {
+            // Write the upper 32-bits if write64 is true.
             *regselect = index + 1;
-            *datawindow = value << 32;
+            *datawindow = value >> 32;
         }
 
         *regselect = index;
@@ -56,6 +58,8 @@ namespace apic {
 
     void redirectio(uint8_t irq, uint8_t vector, uint8_t id, io_deliverymode_t mode) {
         uint8_t redirectindex = irq * 0x2 + 0x10;
+
+        // Bit 16 controls interrupt masking, ID is 4 bits.
         uint64_t entry = readio(redirectindex, true);
         entry |= (uint64_t) id << 56 | mode << 8 | vector;
         entry &= ~(1 << 16);
