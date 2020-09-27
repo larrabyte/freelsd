@@ -24,10 +24,10 @@ static void reverse(char *str, size_t length) {
 
 static void pkargfinder(va_list ap, uintmax_t *stackdata, uint8_t bits) {
     switch(bits) {
-        case 8: *stackdata = (char) va_arg(ap, int); break;
-        case 16: *stackdata = (short) va_arg(ap, int); break;
-        case 32: *stackdata = va_arg(ap, int); break;
-        case 64: *stackdata = va_arg(ap, long); break;
+        case 8: *stackdata = (uint8_t) va_arg(ap, uint32_t); break;
+        case 16: *stackdata = (uint16_t) va_arg(ap, uint32_t); break;
+        case 32: *stackdata = (uint32_t) va_arg(ap, uint32_t); break;
+        case 64: *stackdata = (uint64_t) va_arg(ap, uint64_t); break;
         default: *stackdata = 0; break;
     }
 }

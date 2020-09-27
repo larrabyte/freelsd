@@ -6,9 +6,9 @@
 #include <stdint.h>
 
 extern "C" {
-    // Control register load/store functions.
-    void loadcr2(uintptr_t address);
-    void loadcr3(uintptr_t address);
+    // Control register read/write functions.
+    void writecr2(uintptr_t address);
+    void writecr3(uintptr_t address);
     uint64_t readcr2(void);
     uint64_t readcr3(void);
 }
@@ -170,7 +170,7 @@ namespace mem {
         return (uintptr_t) getframeaddr(pte);
     }
 
-    void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, bool allocated) {
+    void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, uint64_t flags) {
         pge_entry_t *pml4e = &pml4->entries[pml4index(virt)];
 
         // If the PML4E isn't present, allocate a new PDPT and mark the PML4E as present.
@@ -180,8 +180,7 @@ namespace mem {
 
         if(type == PGE_HUGE1GB_PAGE) {
             // Set the hugepage bit if required and return, job finished.
-            addattribute(pdpe, PGE_PRESENT_BIT | PGE_WRITABLE_BIT | PGE_HUGEPAGE_BIT);
-            if(allocated) addattribute(pdpe, PGE_ALLOCATED_BIT);
+            addattribute(pdpe, flags | PGE_HUGEPAGE_BIT);
             setframeaddr(pdpe, phys & 0x000FFFFFC0000000);
             return;
         }
@@ -193,8 +192,7 @@ namespace mem {
 
         if(type == PGE_HUGE2MB_PAGE) {
             // Set the hugepage bit if required and return, job finished.
-            addattribute(pde, PGE_PRESENT_BIT | PGE_WRITABLE_BIT | PGE_HUGEPAGE_BIT);
-            if(allocated) addattribute(pde, PGE_ALLOCATED_BIT);
+            addattribute(pde, flags | PGE_HUGEPAGE_BIT);
             setframeaddr(pde, phys & 0x000FFFFFFFE00000);
             return;
         }
@@ -205,8 +203,7 @@ namespace mem {
         pge_entry_t *pte = &pt->entries[pteindex(virt)];
 
         if(type == PGE_REGULAR_PAGE) {
-            addattribute(pte, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
-            if(allocated) addattribute(pte, PGE_ALLOCATED_BIT);
+            addattribute(pte, flags);
             setframeaddr(pte, phys);
             return;
         }
@@ -278,7 +275,7 @@ namespace mem {
         if(virt == 0) return nullptr;
 
         // Map the free virtual address space to some physical blocks of memory.
-        for(uintptr_t v = virt; v < vmax; v += 0x1000, phys += 0x1000) mappage(pml4, PGE_REGULAR_PAGE, v, phys, true);
+        for(uintptr_t v = virt; v < vmax; v += 0x1000, phys += 0x1000) mappage(pml4, PGE_REGULAR_PAGE, v, phys, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
         return (void*) virt;
     }
 
@@ -298,7 +295,7 @@ namespace mem {
         uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
         if(virt == 0) return nullptr;
 
-        for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(kernelpml4, PGE_REGULAR_PAGE, v, palign, false);
+        for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(kernelpml4, PGE_REGULAR_PAGE, v, palign, PGE_PRESENT_BIT | PGE_WRITABLE_BIT | PGE_UNCACHEABLE_BIT);
         return (void*) (virt + offset);
     }
 
@@ -333,18 +330,18 @@ namespace mem {
     void initialisevirt(void) {
         // Identity map the first two megabytes except for 0x0.
         for(uintptr_t p = 0x1000; p < 0x200000; p += 0x1000) {
-            mappage(kernelpml4, PGE_REGULAR_PAGE, p, p, false);
+            mappage(kernelpml4, PGE_REGULAR_PAGE, p, p, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
         }
 
         // Map the kernel into the higher half of the VAS.
         for(uintptr_t p = 0x100000, v = p + PGE_KERNEL_VBASE; v < (uintptr_t) &kernelend; p += 0x1000, v += 0x1000) {
-            mappage(kernelpml4, PGE_REGULAR_PAGE, v, p, false);
+            mappage(kernelpml4, PGE_REGULAR_PAGE, v, p, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
         }
 
         // Map the framebuffer into the kernel's address space.
         uintptr_t pend = mboot::info.fbinfo->common.framebuffer + (mboot::info.fbinfo->common.height * mboot::info.fbinfo->common.width * (mboot::info.fbinfo->common.bpp / 8));
         for(uintptr_t p = mboot::info.fbinfo->common.framebuffer, v = 0xFFFFFFFFC0000000; p < pend; p += 0x1000, v += 0x1000) {
-            mappage(kernelpml4, PGE_REGULAR_PAGE, v, p, false);
+            mappage(kernelpml4, PGE_REGULAR_PAGE, v, p, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
         }
 
         // Register mem::pfhandler() as the page fault handler and free the bootstrap paging structures.
@@ -356,6 +353,6 @@ namespace mem {
 
         // Set the framebuffer's address and reload CR3.
         mboot::info.fbinfo->common.framebuffer = 0xFFFFFFFFC0000000;
-        loadcr3((uintptr_t) kernelpml4);
+        writecr3((uintptr_t) kernelpml4);
     }
 }

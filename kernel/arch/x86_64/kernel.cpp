@@ -10,6 +10,7 @@
 #include <errors.hpp>
 #include <timer.hpp>
 #include <acpi.hpp>
+#include <apic.hpp>
 #include <stdint.h>
 #include <cpu.hpp>
 
@@ -22,6 +23,7 @@ extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t m
     // Interrupt initialisation.
     idt::initialise();
     timer::initpit(1000);
+    kboard::initialise();
 
     // Memory initialisation.
     mem::initialisephys();
@@ -29,8 +31,8 @@ extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t m
     gfx::initialise();
 
     // Last-stage initialisation.
-    kboard::initialise();
     acpi::initialise();
+    apic::initialisebsp();
     cpu::initialise();
 
     // Write some debugging information to the log.

@@ -7,6 +7,7 @@
 #include <frogs.hpp>
 
 namespace gfx {
+    bool ready = false;
     size_t column, row;
     size_t cmax, rmax;
     modeinfo_t mdata;
@@ -95,10 +96,10 @@ namespace gfx {
         colour = 0xFFFFFFFF;
         write(stdfrog);
 
-
         // Register the framebuffer as a logging device and print some debug information.
         log::registerwriter(&writechar, false, true, true, true);
         log::trace("[render] registered %p (gfx::writechar) as a logging device.\n", &writechar);
         log::trace("[render] current resolution: %zd/%zd/%zd\n\n", mdata.width, mdata.height, mdata.bpp * 8);
+        ready = true;
     }
 }

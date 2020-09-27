@@ -47,6 +47,7 @@ namespace gfx {
     extern size_t column, row;
     extern pixel_t colour;
     extern uint8_t fill;
+    extern bool ready;
 
     // Draw a character on screen at (x, y) using the specified bitmap and colours.
     void drawchar(size_t x, size_t y, raster_font_t font, pixel_t colours);

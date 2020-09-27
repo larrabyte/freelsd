@@ -27,6 +27,14 @@
 #define IRQ13    45
 #define IRQ14    46
 #define IRQ15    47
+#define IRQ16    48
+#define IRQ17    49
+#define IRQ18    50
+#define IRQ19    51
+#define IRQ20    52
+#define IRQ21    53
+#define IRQ22    54
+#define IRQ23    55
 
 extern "C" {
     void isr00(void);  // Interrupt Service Routine 00: Divide-by-zero.
@@ -78,6 +86,14 @@ extern "C" {
     void irq13(void);
     void irq14(void);
     void irq15(void);
+    void irq16(void);
+    void irq17(void);
+    void irq18(void);
+    void irq19(void);
+    void irq20(void);
+    void irq21(void);
+    void irq22(void);
+    void irq23(void);
 }
 
 namespace idt {
@@ -113,8 +129,11 @@ namespace idt {
     // Register an interrupt handler at the specified index.
     void registerhandler(uint8_t index, handler_t handler);
 
-    // Read both PIC's registers (ISR or IRR) and return their value.
-    uint16_t readpicregs(uint8_t command);
+    // Enable the Programmable Interrupt Controller.
+    void enablepic(void);
+
+    // Disable the Programmable Interrupt Controller.
+    void disablepic(void);
 
     // Initialise the interrupt descriptor table.
     void initialise(void);

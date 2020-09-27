@@ -2,7 +2,6 @@
 #include <interrupts.hpp>
 #include <multiboot.hpp>
 #include <keyboard.hpp>
-#include <serial.hpp>
 #include <errors.hpp>
 #include <hwio.hpp>
 #include <stdint.h>
@@ -48,13 +47,10 @@ namespace kboard {
             case 0x01: ctxpanic(regs, "escape pressed, user initiated crash.");
 
             default:
-                // Make sure bit 7 isn't set.
-                if(!checkbit(scancode, 7)) {
+                if(!checkbit(scancode, 7) && gfx::ready) { // Make sure bit 7 isn't set and that the renderer is online.
                     // Write from the upper layout if any relevant key states are active (both shifts or caps lock).
                     if((checkbit(flags, 0) || checkbit(flags, 1)) || (checkbit(flags, 4) && scancode > 14)) gfx::writechar(uslayout_upper[scancode]);
-
-                    // Write from the lower layout otherwise.
-                    else gfx::writechar(uslayout_lower[scancode]);
+                    else gfx::writechar(uslayout_lower[scancode]); // Otherwise, write from the lowercase layout.
                 }
         }
     }

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define ACPI_MAX_PROCESSORS 256
+
 namespace acpi {
     typedef struct rsdp {
         char signature[8];
@@ -29,25 +31,70 @@ namespace acpi {
         uint32_t creatorrev;
     } __attribute__((packed)) sdthdr_t;
 
-    typedef struct rsdt {
-        sdthdr_t header;
-        uint32_t pointers[1];
-    } __attribute__((packed)) rsdt_t;
+    typedef struct madt_entry {
+        uint8_t type;
+        uint8_t length;
+    } __attribute__((packed)) madt_entry_t;
 
-    typedef struct xsdt {
+    typedef struct madt_localapic {
+        madt_entry_t header;
+        uint8_t procid;
+        uint8_t apicid;
+        uint32_t flags;
+    } __attribute__((packed)) madt_entry_localapic_t;
+
+    typedef struct madt_ioapic {
+        madt_entry_t header;
+        uint8_t id;
+        uint8_t reserved;
+        uint32_t address;
+        uint32_t gsib;
+    } __attribute__((packed)) madt_entry_ioapic_t;
+
+    typedef struct madt_iso {
+        madt_entry_t header;
+        uint8_t sourcebus;
+        uint8_t sourceirq;
+        uint32_t gsi;
+        uint16_t flags;
+    } __attribute__((packed)) madt_entry_iso_t;
+
+    typedef struct madt_nmi {
+        madt_entry_t header;
+        uint8_t procid;
+        uint16_t flags;
+        uint8_t lint;
+    } __attribute__((packed)) madt_entry_nmi_t;
+
+    typedef struct madt_apic_override {
+        uint16_t reserved;
+        uint64_t address;
+    } __attribute__((packed)) madt_entry_override_t;
+
+    typedef struct madt {
         sdthdr_t header;
-        uint64_t pointers[1];
-    } __attribute__((packed)) xsdt_t;
+        uint32_t localapic;
+        uint32_t flags;
+    } madt_t;
 
     typedef struct descriptor {
         uintptr_t msdt;
         uint8_t revision;
         size_t count;
         uintptr_t *pointers;
-    } rdsc_t;
+    } rsdc_t;
 
     // Root system description pointer.
     extern rsdp_t *rsdptr;
+
+    // Number of processors detected by the MADT.
+    extern size_t cpucount;
+
+    // Calculate an ACPI table's checksum.
+    uint8_t checksum(char *address, size_t length);
+
+    // Return a pointer to an ACPI SDT given a signature.
+    void *findsdt(const char *signature);
 
     // Initialise the ACPI subsystem.
     void initialise(void);

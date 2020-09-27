@@ -3,7 +3,6 @@
 #include <logger.hpp>
 #include <serial.hpp>
 #include <string.hpp>
-#include <timer.hpp>
 #include <stdarg.h>
 #include <stddef.h>
 

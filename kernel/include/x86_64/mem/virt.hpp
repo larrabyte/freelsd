@@ -89,7 +89,7 @@ namespace mem {
     uintptr_t virt2phys(pge_structure_t *pml4, uintptr_t virt);
 
     // Maps a page-aligned virtual address to a page-aligned physical address.
-    void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, bool allocated);
+    void mappage(pge_structure_t *pml4, mem_pagetype_t type, uintptr_t virt, uintptr_t phys, uint64_t flags);
 
     // Frees a mapped page, starting from base. Will also call mem::freephys() if page was allocated.
     void unmappage(pge_structure_t *pml4, uintptr_t base, size_t n);
