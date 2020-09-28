@@ -3,13 +3,6 @@
 
 #include <stdint.h>
 
-#define MASTER_PIC_COMMAND  0x20
-#define MASTER_PIC_DATA     0x21
-#define SLAVE_PIC_COMMAND   0xA0
-#define SLAVE_PIC_DATA      0xA1
-#define PIC_READ_IRR        0x0A
-#define PIC_READ_ISR        0x0B
-
 #define IDTSIZE  256
 #define IRQ0     32
 #define IRQ1     33
@@ -37,63 +30,63 @@
 #define IRQ23    55
 
 extern "C" {
-    void isr00(void);  // Interrupt Service Routine 00: Divide-by-zero.
-    void isr01(void);  // Interrupt Service Routine 01: Debug exception.
-    void isr02(void);  // Interrupt Service Routine 02: Non-maskable interrupt.
-    void isr03(void);  // Interrupt Service Routine 03: Breakpoint exception.
-    void isr04(void);  // Interrupt Service Routine 04: Overflow exception.
-    void isr05(void);  // Interrupt Service Routine 05: Bound range exceeded.
-    void isr06(void);  // Interrupt Service Routine 06: Invalid opcode exception.
-    void isr07(void);  // Interrupt Service Routine 07: Device not available.
-    void isr08(void);  // Interrupt Service Routine 08: Double fault exception.
-    void isr09(void);  // Interrupt Service Routine 09: Reserved.
-    void isr10(void);  // Interrupt Service Routine 10: Invalid task state segment.
-    void isr11(void);  // Interrupt Service Routine 11: Segment not present.
-    void isr12(void);  // Interrupt Service Routine 12: Stack-segment fault.
-    void isr13(void);  // Interrupt Service Routine 13: General protection fault.
-    void isr14(void);  // Interrupt Service Routine 14: Page fault.
-    void isr15(void);  // Interrupt Service Routine 15: Reserved.
-    void isr16(void);  // Interrupt Service Routine 16: x87 Floating-Point exception.
-    void isr17(void);  // Interrupt Service Routine 17: Alignment check exception.
-    void isr18(void);  // Interrupt Service Routine 18: Machine check exception.
-    void isr19(void);  // Interrupt Service Routine 19: SIMD Floating-Point exception.
-    void isr20(void);  // Interrupt Service Routine 20: Virtualisation exception.
-    void isr21(void);  // Interrupt Service Routine 21: Reserved.
-    void isr22(void);  // Interrupt Service Routine 22: Reserved.
-    void isr23(void);  // Interrupt Service Routine 23: Reserved.
-    void isr24(void);  // Interrupt Service Routine 24: Reserved.
-    void isr25(void);  // Interrupt Service Routine 25: Reserved.
-    void isr26(void);  // Interrupt Service Routine 26: Reserved.
-    void isr27(void);  // Interrupt Service Routine 27: Reserved.
-    void isr28(void);  // Interrupt Service Routine 28: Reserved.
-    void isr29(void);  // Interrupt Service Routine 29: Reserved.
-    void isr30(void);  // Interrupt Service Routine 30: Security exception.
-    void isr31(void);  // Interrupt Service Routine 31: Reserved.
+    void isr000(void); // Interrupt Service Routine 000: Divide-by-zero.
+    void isr001(void); // Interrupt Service Routine 001: Debug exception.
+    void isr002(void); // Interrupt Service Routine 002: Non-maskable interrupt.
+    void isr003(void); // Interrupt Service Routine 003: Breakpoint exception.
+    void isr004(void); // Interrupt Service Routine 004: Overflow exception.
+    void isr005(void); // Interrupt Service Routine 005: Bound range exceeded.
+    void isr006(void); // Interrupt Service Routine 006: Invalid opcode exception.
+    void isr007(void); // Interrupt Service Routine 007: Device not available.
+    void isr008(void); // Interrupt Service Routine 008: Double fault exception.
+    void isr009(void); // Interrupt Service Routine 009: Reserved.
+    void isr010(void); // Interrupt Service Routine 010: Invalid task state segment.
+    void isr011(void); // Interrupt Service Routine 011: Segment not present.
+    void isr012(void); // Interrupt Service Routine 012: Stack-segment fault.
+    void isr013(void); // Interrupt Service Routine 013: General protection fault.
+    void isr014(void); // Interrupt Service Routine 014: Page fault.
+    void isr015(void); // Interrupt Service Routine 015: Reserved.
+    void isr016(void); // Interrupt Service Routine 016: x87 Floating-Point exception.
+    void isr017(void); // Interrupt Service Routine 017: Alignment check exception.
+    void isr018(void); // Interrupt Service Routine 018: Machine check exception.
+    void isr019(void); // Interrupt Service Routine 019: SIMD Floating-Point exception.
+    void isr020(void); // Interrupt Service Routine 020: Virtualisation exception.
+    void isr021(void); // Interrupt Service Routine 021: Reserved.
+    void isr022(void); // Interrupt Service Routine 022: Reserved.
+    void isr023(void); // Interrupt Service Routine 023: Reserved.
+    void isr024(void); // Interrupt Service Routine 024: Reserved.
+    void isr025(void); // Interrupt Service Routine 025: Reserved.
+    void isr026(void); // Interrupt Service Routine 026: Reserved.
+    void isr027(void); // Interrupt Service Routine 027: Reserved.
+    void isr028(void); // Interrupt Service Routine 028: Reserved.
+    void isr029(void); // Interrupt Service Routine 029: Reserved.
+    void isr030(void); // Interrupt Service Routine 030: Security exception.
+    void isr031(void); // Interrupt Service Routine 031: Reserved.
 
-    void irq00(void);
-    void irq01(void);
-    void irq02(void);
-    void irq03(void);
-    void irq04(void);
-    void irq05(void);
-    void irq06(void);
-    void irq07(void);
-    void irq08(void);
-    void irq09(void);
-    void irq10(void);
-    void irq11(void);
-    void irq12(void);
-    void irq13(void);
-    void irq14(void);
-    void irq15(void);
-    void irq16(void);
-    void irq17(void);
-    void irq18(void);
-    void irq19(void);
-    void irq20(void);
-    void irq21(void);
-    void irq22(void);
-    void irq23(void);
+    void irq000(void);
+    void irq001(void);
+    void irq002(void);
+    void irq003(void);
+    void irq004(void);
+    void irq005(void);
+    void irq006(void);
+    void irq007(void);
+    void irq008(void);
+    void irq009(void);
+    void irq010(void);
+    void irq011(void);
+    void irq012(void);
+    void irq013(void);
+    void irq014(void);
+    void irq015(void);
+    void irq016(void);
+    void irq017(void);
+    void irq018(void);
+    void irq019(void);
+    void irq020(void);
+    void irq021(void);
+    void irq022(void);
+    void irq023(void);
 }
 
 namespace idt {
@@ -128,12 +121,6 @@ namespace idt {
 
     // Register an interrupt handler at the specified index.
     void registerhandler(uint8_t index, handler_t handler);
-
-    // Enable the Programmable Interrupt Controller.
-    void enablepic(void);
-
-    // Disable the Programmable Interrupt Controller.
-    void disablepic(void);
 
     // Initialise the interrupt descriptor table.
     void initialise(void);

@@ -3,11 +3,15 @@
 #include <errors.hpp>
 #include <hwio.hpp>
 #include <apic.hpp>
+#include <pic.hpp>
 #include <cpu.hpp>
 
 extern "C" {
     // Configures the IDTR register with a new IDT.
     void loadidtr(idt::ptr_t *address);
+
+    // Spurious interrupt handler.
+    void spuriousisr(void);
 
     // The common ISR dispatcher, called via commonisr.
     void isrdispatcher(idt::regs64_t *regs) {
@@ -15,13 +19,9 @@ extern "C" {
         if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
         else ctxpanic(regs, "unhandled interrupt %ld (0x%lx) raised!", regs->isr, regs->isr);
 
-        // Acknowledge the interrupt through the LAPIC's EOI register.
-        if(apic::localbase) {
-            apic::writelocal(apic::LAPIC_END_OF_INTERRUPT_REG, 0);
-        } else { // Otherwise, acknowledge the PIC.
-            if(regs->isr >= 40) outportb(0xA0, 0x20);
-            outportb(0x20, 0x20);
-        }
+        // Acknowledge the interrupt if needed.
+        if(!apic::localbase) pic::sendeoi(regs->isr);
+        else apic::writelocal(apic::LAPIC_END_OF_INTERRUPT_REG, 0);
     }
 }
 
@@ -50,32 +50,6 @@ namespace idt {
         handlers[index] = handler;
     }
 
-    void enablepic(void) {
-        outportb(MASTER_PIC_COMMAND, 0x11);
-        outportb(SLAVE_PIC_COMMAND, 0x11);
-        outportb(MASTER_PIC_DATA, 0x20);
-        outportb(SLAVE_PIC_DATA, 0x28);
-        outportb(MASTER_PIC_DATA, 0x04);
-        outportb(SLAVE_PIC_DATA, 0x02);
-        outportb(MASTER_PIC_DATA, 0x01);
-        outportb(SLAVE_PIC_DATA, 0x01);
-        outportb(MASTER_PIC_DATA, 0x00);
-        outportb(SLAVE_PIC_DATA, 0x00);
-    }
-
-    void disablepic(void) {
-        outportb(MASTER_PIC_COMMAND, 0x11);
-        outportb(SLAVE_PIC_COMMAND, 0x11);
-        outportb(MASTER_PIC_DATA, 0xE0);
-        outportb(SLAVE_PIC_DATA, 0xE8);
-        outportb(MASTER_PIC_DATA, 0x04);
-        outportb(SLAVE_PIC_DATA, 0x02);
-        outportb(MASTER_PIC_DATA, 0x01);
-        outportb(SLAVE_PIC_DATA, 0x01);
-        outportb(MASTER_PIC_DATA, 0xFF);
-        outportb(SLAVE_PIC_DATA, 0xFF);
-    }
-
     void initialise(void) {
         // Configure the pointer's address and size.
         pointer.size = sizeof(entry_t) * IDTSIZE - 1;
@@ -84,65 +58,70 @@ namespace idt {
         // Initialise the IDT entries and handler addresses to zero.
         memset(entries, 0, sizeof(entry_t) * IDTSIZE);
         memset(handlers, 0, sizeof(handler_t) * IDTSIZE);
-        enablepic();
+        pic::enable();
 
         // Map interrupt vectors 0-55 into the IDT.
-        setentry(0x00, isr00, 0x08, 0x8E);
-        setentry(0x01, isr01, 0x08, 0x8E);
-        setentry(0x02, isr02, 0x08, 0x8E);
-        setentry(0x03, isr03, 0x08, 0x8E);
-        setentry(0x04, isr04, 0x08, 0x8E);
-        setentry(0x05, isr05, 0x08, 0x8E);
-        setentry(0x06, isr06, 0x08, 0x8E);
-        setentry(0x07, isr07, 0x08, 0x8E);
-        setentry(0x08, isr08, 0x08, 0x8E);
-        setentry(0x09, isr09, 0x08, 0x8E);
-        setentry(0x0A, isr10, 0x08, 0x8E);
-        setentry(0x0B, isr11, 0x08, 0x8E);
-        setentry(0x0C, isr12, 0x08, 0x8E);
-        setentry(0x0D, isr13, 0x08, 0x8E);
-        setentry(0x0E, isr14, 0x08, 0x8E);
-        setentry(0x0F, isr15, 0x08, 0x8E);
-        setentry(0x10, isr16, 0x08, 0x8E);
-        setentry(0x11, isr17, 0x08, 0x8E);
-        setentry(0x12, isr18, 0x08, 0x8E);
-        setentry(0x13, isr19, 0x08, 0x8E);
-        setentry(0x14, isr20, 0x08, 0x8E);
-        setentry(0x15, isr21, 0x08, 0x8E);
-        setentry(0x16, isr22, 0x08, 0x8E);
-        setentry(0x17, isr23, 0x08, 0x8E);
-        setentry(0x18, isr24, 0x08, 0x8E);
-        setentry(0x19, isr25, 0x08, 0x8E);
-        setentry(0x1A, isr26, 0x08, 0x8E);
-        setentry(0x1B, isr27, 0x08, 0x8E);
-        setentry(0x1C, isr28, 0x08, 0x8E);
-        setentry(0x1D, isr29, 0x08, 0x8E);
-        setentry(0x1E, isr30, 0x08, 0x8E);
-        setentry(0x1F, isr31, 0x08, 0x8E);
-        setentry(0x20, irq00, 0x08, 0x8E);
-        setentry(0x21, irq01, 0x08, 0x8E);
-        setentry(0x22, irq02, 0x08, 0x8E);
-        setentry(0x23, irq03, 0x08, 0x8E);
-        setentry(0x24, irq04, 0x08, 0x8E);
-        setentry(0x25, irq05, 0x08, 0x8E);
-        setentry(0x26, irq06, 0x08, 0x8E);
-        setentry(0x27, irq07, 0x08, 0x8E);
-        setentry(0x28, irq08, 0x08, 0x8E);
-        setentry(0x29, irq09, 0x08, 0x8E);
-        setentry(0x2A, irq10, 0x08, 0x8E);
-        setentry(0x2B, irq11, 0x08, 0x8E);
-        setentry(0x2C, irq12, 0x08, 0x8E);
-        setentry(0x2D, irq13, 0x08, 0x8E);
-        setentry(0x2E, irq14, 0x08, 0x8E);
-        setentry(0x2F, irq15, 0x08, 0x8E);
-        setentry(0x30, irq16, 0x08, 0x8E);
-        setentry(0x31, irq17, 0x08, 0x8E);
-        setentry(0x32, irq18, 0x08, 0x8E);
-        setentry(0x33, irq19, 0x08, 0x8E);
-        setentry(0x34, irq20, 0x08, 0x8E);
-        setentry(0x35, irq21, 0x08, 0x8E);
-        setentry(0x36, irq22, 0x08, 0x8E);
-        setentry(0x37, irq23, 0x08, 0x8E);
+        setentry(0x00, isr000, 0x08, 0x8E);
+        setentry(0x01, isr001, 0x08, 0x8E);
+        setentry(0x02, isr002, 0x08, 0x8E);
+        setentry(0x03, isr003, 0x08, 0x8E);
+        setentry(0x04, isr004, 0x08, 0x8E);
+        setentry(0x05, isr005, 0x08, 0x8E);
+        setentry(0x06, isr006, 0x08, 0x8E);
+        setentry(0x07, isr007, 0x08, 0x8E);
+        setentry(0x08, isr008, 0x08, 0x8E);
+        setentry(0x09, isr009, 0x08, 0x8E);
+        setentry(0x0A, isr010, 0x08, 0x8E);
+        setentry(0x0B, isr011, 0x08, 0x8E);
+        setentry(0x0C, isr012, 0x08, 0x8E);
+        setentry(0x0D, isr013, 0x08, 0x8E);
+        setentry(0x0E, isr014, 0x08, 0x8E);
+        setentry(0x0F, isr015, 0x08, 0x8E);
+        setentry(0x10, isr016, 0x08, 0x8E);
+        setentry(0x11, isr017, 0x08, 0x8E);
+        setentry(0x12, isr018, 0x08, 0x8E);
+        setentry(0x13, isr019, 0x08, 0x8E);
+        setentry(0x14, isr020, 0x08, 0x8E);
+        setentry(0x15, isr021, 0x08, 0x8E);
+        setentry(0x16, isr022, 0x08, 0x8E);
+        setentry(0x17, isr023, 0x08, 0x8E);
+        setentry(0x18, isr024, 0x08, 0x8E);
+        setentry(0x19, isr025, 0x08, 0x8E);
+        setentry(0x1A, isr026, 0x08, 0x8E);
+        setentry(0x1B, isr027, 0x08, 0x8E);
+        setentry(0x1C, isr028, 0x08, 0x8E);
+        setentry(0x1D, isr029, 0x08, 0x8E);
+        setentry(0x1E, isr030, 0x08, 0x8E);
+        setentry(0x1F, isr031, 0x08, 0x8E);
+        setentry(0x20, irq000, 0x08, 0x8E);
+        setentry(0x21, irq001, 0x08, 0x8E);
+        setentry(0x22, irq002, 0x08, 0x8E);
+        setentry(0x23, irq003, 0x08, 0x8E);
+        setentry(0x24, irq004, 0x08, 0x8E);
+        setentry(0x25, irq005, 0x08, 0x8E);
+        setentry(0x26, irq006, 0x08, 0x8E);
+        setentry(0x27, irq007, 0x08, 0x8E);
+        setentry(0x28, irq008, 0x08, 0x8E);
+        setentry(0x29, irq009, 0x08, 0x8E);
+        setentry(0x2A, irq010, 0x08, 0x8E);
+        setentry(0x2B, irq011, 0x08, 0x8E);
+        setentry(0x2C, irq012, 0x08, 0x8E);
+        setentry(0x2D, irq013, 0x08, 0x8E);
+        setentry(0x2E, irq014, 0x08, 0x8E);
+        setentry(0x2F, irq015, 0x08, 0x8E);
+        setentry(0x30, irq016, 0x08, 0x8E);
+        setentry(0x31, irq017, 0x08, 0x8E);
+        setentry(0x32, irq018, 0x08, 0x8E);
+        setentry(0x33, irq019, 0x08, 0x8E);
+        setentry(0x34, irq020, 0x08, 0x8E);
+        setentry(0x35, irq021, 0x08, 0x8E);
+        setentry(0x36, irq022, 0x08, 0x8E);
+        setentry(0x37, irq023, 0x08, 0x8E);
+
+        // Spurious interrupt vectors.
+        setentry(0xE7, spuriousisr, 0x08, 0x8E);
+        setentry(0xEF, spuriousisr, 0x08, 0x8E);
+        setentry(0xFF, spuriousisr, 0x08, 0x8E);
 
         // Register the generic CPU exception handler for vectors 0-31.
         for(uint8_t i = 0; i < 0x20; i++) registerhandler(i, &cpu::handler);
