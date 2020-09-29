@@ -21,7 +21,7 @@ namespace acpi {
         memset(processors, 0, sizeof(uint8_t) * ACPI_MAX_PROCESSORS);
         madt_entry_t *final = (madt_entry_t*) ((uintptr_t) madt + madt->header.length);
         madt_entry_t *start = (madt_entry_t*) ((uintptr_t) madt + sizeof(madt_t));
-        apic::isolist.count = apic::nmilist.count = 0;
+        apic::isos.count = apic::nmis.count = 0;
 
         // Perform a first sweep of the MADT to determine local APICs, I/O APICs and the number of ISOs and NMIs.
         for(madt_entry_t *cursor = start; cursor < final; cursor = (madt_entry_t*) ((uintptr_t) cursor + cursor->length)) {
@@ -32,20 +32,20 @@ namespace acpi {
                 madt_entry_ioapic_t *io = (madt_entry_ioapic_t*) cursor;
                 apic::iobase = io->address;
             } else if(cursor->type == 2) { // Type 2 specifies an interrupt source override.
-                apic::isolist.count++;
+                apic::isos.count++;
             } else if(cursor->type == 4) { // Type 4 specifies a non-maskable interrupt.
-                apic::nmilist.count++;
+                apic::nmis.count++;
             }
         }
 
         // Perform a second sweep to create and fill the ISO/NMI arrays.
-        apic::isolist.isos = (madt_entry_iso_t**) kmalloc(apic::isolist.count * sizeof(uintptr_t));
-        apic::nmilist.nmis = (madt_entry_nmi_t**) kmalloc(apic::nmilist.count * sizeof(uintptr_t));
+        apic::isos.pointers = (madt_entry_iso_t**) kmalloc(apic::isos.count * sizeof(uintptr_t));
+        apic::nmis.pointers = (madt_entry_nmi_t**) kmalloc(apic::nmis.count * sizeof(uintptr_t));
         size_t isoindex = 0, nmiindex = 0;
 
         for(madt_entry_t *cursor = start; cursor < final; cursor = (madt_entry_t*) ((uintptr_t) cursor + cursor->length)) {
-            if(cursor->type == 2) apic::isolist.isos[isoindex++] = (madt_entry_iso_t*) cursor;
-            if(cursor->type == 4) apic::nmilist.nmis[nmiindex++] = (madt_entry_nmi_t*) cursor;
+            if(cursor->type == 2) apic::isos.pointers[isoindex++] = (madt_entry_iso_t*) cursor;
+            if(cursor->type == 4) apic::nmis.pointers[nmiindex++] = (madt_entry_nmi_t*) cursor;
         }
 
         log::info("[osacpi] system MADT identified %d processors.\n\n", cpucount);

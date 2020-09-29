@@ -5,7 +5,18 @@
 #include <stdint.h>
 
 // Calculate the offset of a given IRQ in the IOREDTBL.
-#define ioredtbl(irq) ((apic::registers_t) (0x10 + 2 * irq))
+#define ioindex(irq) ((apic::registers_t) (0x10 + 2 * irq))
+
+// APIC interrupt mask, bit 16.
+#define APIC_INTERRUPT_MASK             1UL << 16
+
+// Common APIC message types.
+#define APIC_MSGTYPE_FIXED              0b000
+#define APIC_MSGTYPE_LOWEST             0b001
+#define APIC_MSGTYPE_SMI                0b010
+#define APIC_MSGTYPE_NMI                0b100
+#define APIC_MSGTYPE_INIT               0b101
+#define APIC_MSGTYPE_EXTERNAL           0b111
 
 namespace apic {
     typedef enum registers {
@@ -40,36 +51,19 @@ namespace apic {
         IOAPIC_ARBITRATION_REG          = 0x002
     } registers_t;
 
-    typedef enum flags {
-        APIC_DELIVERY_FIXED             = 0b000 << 8,
-        APIC_DELIVERY_LOWEST            = 0b001 << 8,
-        APIC_DELIVERY_SMI               = 0b010 << 8,
-        APIC_DELIVERY_NMI               = 0b100 << 8,
-        APIC_DELIVERY_INIT              = 0b101 << 8,
-        APIC_DELIVERY_EXTINT            = 0b111 << 8,
-        APIC_DESTINATION_PHYSICAL       = 0 << 11,
-        APIC_DESTINATION_LOGICAL        = 1 << 11,
-        APIC_POLARITY_HIGH              = 0 << 13,
-        APIC_POLARITY_LOW               = 1 << 13,
-        APIC_TRIGGER_EDGE               = 0 << 15,
-        APIC_TRIGGER_LEVEL              = 1 << 15,
-        APIC_INTERRUPT_UNMASKED         = 0 << 16,
-        APIC_INTERRUPT_MASKED           = 1 << 16
-    } flags_t;
-
-    typedef struct ioredtbl_entry {
+    typedef struct ioredtbl {
         // Construct an IOREDTBL entry using a 64-bit integer.
-        ioredtbl_entry(uint64_t flags) {
-            destination                 = (flags >> 56) & 0xFF;
-            masked                      = (flags >> 16) & 0x01;
-            trigger                     = (flags >> 15) & 0x01;
-            remoteirr                   = (flags >> 14) & 0x01;
-            polarity                    = (flags >> 13) & 0x01;
-            status                      = (flags >> 12) & 0x01;
-            destmode                    = (flags >> 11) & 0x01;
-            deliverymode                = (flags >> 10) & 0x07;
-            vector                      = flags & 0xFF;
-            reservedhi                  = 0;
+        ioredtbl(uint64_t flags) {
+            destination   = (flags >> 56) & 0xFF;
+            masked        = (flags >> 16) & 0x01;
+            trigger       = (flags >> 15) & 0x01;
+            remoteirr     = (flags >> 14) & 0x01;
+            polarity      = (flags >> 13) & 0x01;
+            status        = (flags >> 12) & 0x01;
+            destmode      = (flags >> 11) & 0x01;
+            deliverymode  = (flags >> 10) & 0x07;
+            vector        = flags & 0xFF;
+            reservedhi    = 0;
         }
 
         // Convert an IOREDTBL structure into a 64-bit integer.
@@ -78,30 +72,63 @@ namespace apic {
                    polarity << 13 | status << 12 | destmode << 11 | deliverymode << 10 | vector;
         }
 
-        uint64_t destination            : 8;
-        uint64_t reservedhi             : 39;
-        uint64_t masked                 : 1;
-        uint64_t trigger                : 1;
-        uint64_t remoteirr              : 1;
-        uint64_t polarity               : 1;
-        uint64_t status                 : 1;
-        uint64_t destmode               : 1;
-        uint64_t deliverymode           : 3;
-        uint64_t vector                 : 8;
-    } ioredtbl_entry_t;
+        uint64_t destination   : 8;
+        uint64_t reservedhi    : 39;
+        uint64_t masked        : 1;
+        uint64_t trigger       : 1;
+        uint64_t remoteirr     : 1;
+        uint64_t polarity      : 1;
+        uint64_t status        : 1;
+        uint64_t destmode      : 1;
+        uint64_t deliverymode  : 3;
+        uint64_t vector        : 8;
+    } ioredtbl_t;
 
-    typedef struct isolist {
-        acpi::madt_entry_iso_t **isos;
+    typedef struct lvt {
+        // Construct an LVT register using a 32-bit integer.
+        lvt(uint32_t flags) {
+            timermode    = (flags >> 17) & 0x01;
+            masked       = (flags >> 16) & 0x01;
+            trigger      = (flags >> 15) & 0x01;
+            remoteirr    = (flags >> 14) & 0x01;
+            status       = (flags >> 12) & 0x01;
+            messagetype  = (flags >> 8) & 0x07;
+            vector       = flags & 0xFF;
+            reservedhi   = 0;
+            reservedmed  = 0;
+            reservedlow  = 0;
+        }
+
+        // Convert an LVT structure into a 32-bit integer.
+        operator uint32_t() const {
+            return timermode << 17 | masked << 16 | trigger << 15 | remoteirr << 14 | 
+                   status << 12 | messagetype << 8 | vector;
+        }
+
+        uint32_t reservedhi   : 15;
+        uint32_t timermode    : 1;
+        uint32_t masked       : 1;
+        uint32_t trigger      : 1;
+        uint32_t remoteirr    : 1;
+        uint32_t reservedmed  : 1;
+        uint32_t status       : 1;
+        uint32_t reservedlow  : 1;
+        uint32_t messagetype  : 3;
+        uint32_t vector       : 8;
+    } lvt_t;
+
+    struct isolist {
+        acpi::madt_entry_iso_t **pointers;
         size_t count;
-    } apic_config_iso_t;
+    };
 
-    typedef struct nmilist {
-        acpi::madt_entry_nmi_t **nmis;
+    struct nmilist {
+        acpi::madt_entry_nmi_t **pointers;
         size_t count;
-    } apic_config_nmi_t;
+    };
 
-    extern apic_config_iso_t isolist;
-    extern apic_config_nmi_t nmilist;
+    extern struct isolist isos;
+    extern struct nmilist nmis;
     extern uintptr_t localbase;
     extern uintptr_t iobase;
 
@@ -116,12 +143,6 @@ namespace apic {
 
     // Write to a register in the I/O APIC.
     void writeio(registers_t index, uint64_t value, bool write64);
-
-    // Redirect an IRQ to an interrupt vector on a given processor in the I/O APIC.
-    void redirectio(uint8_t irq, ioredtbl_entry_t entry);
-
-    // Set an IRQ mask on the I/O APIC.
-    void setmaskio(uint8_t irq, bool mask);
 
     // Enable the current procesor's local APIC.
     void enablelocal(void);
