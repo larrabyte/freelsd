@@ -1,6 +1,7 @@
 #ifndef FREELSD_KERNEL_MULTIBOOT2_HEADER
 #define FREELSD_KERNEL_MULTIBOOT2_HEADER
 
+#include <acpi.hpp>
 #include <stdint.h>
 
 // Checks if the n-th bit of bits is set.
@@ -329,7 +330,7 @@ typedef struct multiboot_information {
     mb_tag_basicmem_t *meminfo;
     mb_tag_bootdev_t *bootdev;
     mb_tag_mmap_t *mmap;
-    mb_tag_acpi_t *rsdp;
+    acpi::rsdp_t *rsdp;
 } mb_info_t;
 
 namespace mboot {

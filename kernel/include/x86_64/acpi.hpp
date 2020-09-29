@@ -84,12 +84,6 @@ namespace acpi {
         uintptr_t *pointers;
     } rsdc_t;
 
-    // Root system description pointer.
-    extern rsdp_t *rsdptr;
-
-    // Number of processors detected by the MADT.
-    extern size_t cpucount;
-
     // Calculate an ACPI table's checksum.
     uint8_t checksum(char *address, size_t length);
 

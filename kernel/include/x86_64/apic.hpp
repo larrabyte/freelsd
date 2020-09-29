@@ -7,18 +7,26 @@
 // Calculate the offset of a given IRQ in the IOREDTBL.
 #define ioindex(irq) ((apic::registers_t) (0x10 + 2 * irq))
 
-// APIC interrupt mask, bit 16.
-#define APIC_INTERRUPT_MASK             1UL << 16
-
-// Common APIC message types.
+// Some cool definitions!
+#define APIC_DSHTYPE_IGNORE             0b00
+#define APIC_DSHTYPE_SELF               0b01
+#define APIC_DSHTYPE_ALL                0b10
+#define APIC_DSHTYPE_OTHER              0b11
 #define APIC_MSGTYPE_FIXED              0b000
 #define APIC_MSGTYPE_LOWEST             0b001
 #define APIC_MSGTYPE_SMI                0b010
 #define APIC_MSGTYPE_NMI                0b100
 #define APIC_MSGTYPE_INIT               0b101
+#define APIC_MSGTYPE_STARTUP            0b110
 #define APIC_MSGTYPE_EXTERNAL           0b111
+#define APIC_INTMASK_BIT                1UL << 16
 
 namespace apic {
+    typedef struct smpinformation {
+        uint8_t *address;
+        uint64_t codesize;
+    } __attribute__((packed)) smpdata_t;
+
     typedef enum registers {
         APIC_BASEADDRESS_MSR            = 0x01B,
         LAPIC_IDENTIFIER_REG            = 0x020,
@@ -127,6 +135,11 @@ namespace apic {
         size_t count;
     };
 
+    // Local processor APIC IDs and number of APs.
+    extern uint8_t processors[ACPI_MAX_PROCESSORS];
+    extern size_t cpucount;
+
+    // ISO and NMI lists and LAPIC/IOAPIC base addresses.
     extern struct isolist isos;
     extern struct nmilist nmis;
     extern uintptr_t localbase;
@@ -144,8 +157,14 @@ namespace apic {
     // Write to a register in the I/O APIC.
     void writeio(registers_t index, uint64_t value, bool write64);
 
+    // Send an IPI to another local APIC given an ID, type and vector.
+    void sendipi(uint8_t dsh, uint8_t id, uint8_t type, uint8_t vector);
+
     // Enable the current procesor's local APIC.
     void enablelocal(void);
+
+    // Initialise other APs after initialisebsp() has been run.
+    void initialiseaps(void);
 
     // Run by the bootstrap processor to perform initial APIC setup.
     void initialisebsp(void);

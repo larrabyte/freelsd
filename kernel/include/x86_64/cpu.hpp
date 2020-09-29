@@ -103,7 +103,7 @@ namespace cpu {
     bool supports(cpuid_feature_t feature);
 
     // Get CPU information using CPUID.
-    void initialise(void);
+    void initialisestats(void);
 }
 
 #endif

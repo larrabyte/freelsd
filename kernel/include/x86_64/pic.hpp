@@ -11,6 +11,9 @@
 #define PIC_READ_ISR        0x0B
 
 namespace pic {
+    // Check if the PIC is enabled or not.
+    extern bool enabled;
+
     // Enable the Programmable Interrupt Controller.
     void enable(void);
 

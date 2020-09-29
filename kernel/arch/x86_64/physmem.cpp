@@ -122,6 +122,5 @@ namespace mem {
         markphysused((uintptr_t) mboot::info.meminfo, mboot::info.meminfo->size);
         markphysused((uintptr_t) mboot::info.bootdev, mboot::info.bootdev->size);
         markphysused((uintptr_t) mboot::info.mmap, mboot::info.mmap->size);
-        markphysused((uintptr_t) mboot::info.rsdp, mboot::info.rsdp->size);
     }
 }

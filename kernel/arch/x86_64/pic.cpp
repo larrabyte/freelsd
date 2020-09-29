@@ -2,6 +2,8 @@
 #include <pic.hpp>
 
 namespace pic {
+    bool enabled = false;
+
     void enable(void) {
         outportb(MASTER_PIC_COMMAND, 0x11);
         outportb(SLAVE_PIC_COMMAND, 0x11);
@@ -13,6 +15,7 @@ namespace pic {
         outportb(SLAVE_PIC_DATA, 0x01);
         outportb(MASTER_PIC_DATA, 0x00);
         outportb(SLAVE_PIC_DATA, 0x00);
+        enabled = true;
     }
 
     void disable(void) {
@@ -26,6 +29,7 @@ namespace pic {
         outportb(SLAVE_PIC_DATA, 0x01);
         outportb(MASTER_PIC_DATA, 0xFF);
         outportb(SLAVE_PIC_DATA, 0xFF);
+        enabled = false;
     }
 
     void sendeoi(uint64_t vector) {

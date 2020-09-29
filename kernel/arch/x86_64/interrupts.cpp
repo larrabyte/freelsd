@@ -20,7 +20,7 @@ extern "C" {
         else ctxpanic(regs, "unhandled interrupt %ld (0x%lx) raised!", regs->isr, regs->isr);
 
         // Acknowledge the interrupt if needed.
-        if(!apic::localbase) pic::sendeoi(regs->isr);
+        if(pic::enabled) pic::sendeoi(regs->isr);
         else apic::writelocal(apic::LAPIC_END_OF_INTERRUPT_REG, 0);
     }
 }

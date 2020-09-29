@@ -66,7 +66,7 @@ namespace cpu {
         else return (registers.ecx & feature) ? true : false;
     }
 
-    void initialise(void) {
+    void initialisestats(void) {
         // Get highest standard function.
         readcpuid(0, &registers);
         stats.stdmax = registers.eax;

@@ -30,15 +30,16 @@ extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t m
     mem::initialisevirt();
     gfx::initialise();
 
-    // Last-stage initialisation.
+    // APIC/SMP initialisation.
     acpi::initialise();
     apic::initialisebsp();
-    cpu::initialise();
+    apic::initialiseaps();
+    cpu::initialisestats();
 
     // Write some debugging information to the log.
     log::info("[kernel] hello from long mode!\n");
     log::info("[kernel] framebuffer address: %p\n", gfx::mdata.buffer);
-    log::info("[kernel] end-of-kernel address: %p\n\n", &kernelend);
+    log::info("[kernel] kernel address endp: %p\n\n", &kernelend);
 
     // Write information gathered from CPUID to the log.
     log::info("[kcpuid] CPU brand name: %s\n", cpu::getbrandname());
