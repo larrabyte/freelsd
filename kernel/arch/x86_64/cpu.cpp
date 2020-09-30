@@ -2,6 +2,9 @@
 #include <errors.hpp>
 #include <cpu.hpp>
 
+// Executes the CPUID instruction using eax and returns register values in storage.
+extern "C" void readcpuid(uint32_t eax, void *storage);
+
 namespace cpu {
     static const char *exceptionstr[] = {
         "divide-by-zero exception.",

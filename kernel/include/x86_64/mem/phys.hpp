@@ -9,11 +9,14 @@
 #define PMMGR_BITMAP_ARRAY_SIZE  262144    // The size of the bitmap array (in qwords).
 #define PMMGR_BLOCK_SIZE         4096      // The size of a single block (in bytes).
 #define PMMGR_BLOCKS_PER_BYTE    8         // The number of blocks managed by one byte.
-
-extern "C" uint64_t pge64sel[3];
-extern "C" void *kernelend;
   
 namespace mem {
+    typedef struct bootdata {
+        uint64_t start;
+        uint64_t end;
+        uint64_t size;
+    } bootdata_t;
+
     extern size_t usedblocks;  // Number of used physical blocks.
     extern size_t maxblocks;   // Total number of physical blocks available.
     extern size_t totalsize;   // Total physical memory available in bytes.

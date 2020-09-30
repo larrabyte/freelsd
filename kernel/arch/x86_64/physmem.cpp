@@ -5,6 +5,10 @@
 #include <logger.hpp>
 #include <errors.hpp>
 
+// External kernel-related data.
+extern "C" mem::bootdata_t pge64sel;
+extern "C" void *kernelend;
+
 namespace mem {
     static uint64_t physmap[PMMGR_BITMAP_ARRAY_SIZE];
     size_t usedblocks;
@@ -115,7 +119,7 @@ namespace mem {
 
         // Mark the kernel and the bootstrap paging structures as in use.
         markphysused(0x100000, (size_t) &kernelend - PGE_KERNEL_VBASE);
-        markphysused(pge64sel[0], pge64sel[2]);
+        markphysused(pge64sel.start, pge64sel.size);
 
         // Mark multiboot structures as in use so they aren't corrupted by the PMM.
         markphysused((uintptr_t) mboot::info.fbinfo, mboot::info.fbinfo->common.size);

@@ -1,7 +1,6 @@
 %include "kernel/arch/x86_64/macros.asm"
 
 global bootstrap, pge64sel
-
 extern gdt64.ptr, gdt64.code, gdt64.data
 extern _init, kernelmain
 extern startbss, endbss

@@ -73,9 +73,6 @@ typedef enum cpuidfeature {
     CPU_FEATURE_PBE     = (1UL << 63) | (1 << 31)
 } cpuid_feature_t;
 
-// Executes the CPUID instruction using eax and returns register values in storage.
-extern "C" void readcpuid(uint32_t eax, void *storage);
-
 namespace cpu {
     typedef struct cpuid_registers {
         uint32_t eax;

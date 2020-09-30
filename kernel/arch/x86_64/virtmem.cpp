@@ -5,16 +5,16 @@
 #include <errors.hpp>
 #include <stdint.h>
 
-extern "C" {
-    // Control register read/write functions.
-    void writecr2(uintptr_t address);
-    void writecr3(uintptr_t address);
-    uint64_t readcr2(void);
-    uint64_t readcr3(void);
-}
+// Control register read/write functions.
+extern "C" void writecr2(uintptr_t address);
+extern "C" void writecr3(uintptr_t address);
+extern "C" uint64_t readcr2(void);
+extern "C" uint64_t readcr3(void);
 
-// The kernel's PML4, found in cabs.asm.
+// External kernel-related data.
 extern "C" mem::pge_structure_t *kernelpml4;
+extern "C" mem::bootdata_t pge64sel;
+extern "C" void *kernelend;
 
 namespace mem {
     pge_structure_t *currentpml4;
@@ -344,11 +344,8 @@ namespace mem {
             mappage(kernelpml4, PGE_REGULAR_PAGE, v, p, PGE_PRESENT_BIT | PGE_WRITABLE_BIT);
         }
 
-        // Register mem::pfhandler() as the page fault handler and free the bootstrap paging structures.
-        // We keep 0x0 in use so the virtual memory manager doesn't try and use an unmapped page.
+        // Register mem::pfhandler() as the page fault handler.
         idt::registerhandler(14, &pfhandler);
-        markphysfree(pge64sel[0], pge64sel[2]);
-        markphysused(0x0, 0x1000);
         currentpml4 = kernelpml4;
 
         // Set the framebuffer's address and reload CR3.

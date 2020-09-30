@@ -6,23 +6,19 @@
 #include <pic.hpp>
 #include <cpu.hpp>
 
-extern "C" {
-    // Configures the IDTR register with a new IDT.
-    void loadidtr(idt::ptr_t *address);
+// IDTR write and spurious ISR function definitions.
+extern "C" void loadidtr(idt::ptr_t *address);
+extern "C" void spuriousisr(void);
 
-    // Spurious interrupt handler.
-    void spuriousisr(void);
+// The common ISR dispatcher, called via commonisr.
+extern "C" void isrdispatcher(idt::regs64_t *regs) {
+    // Check for any available interrupt handlers.
+    if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
+    else ctxpanic(regs, "unhandled interrupt %ld (0x%lx) raised!", regs->isr, regs->isr);
 
-    // The common ISR dispatcher, called via commonisr.
-    void isrdispatcher(idt::regs64_t *regs) {
-        // Check for any available interrupt handlers.
-        if(idt::handlers[regs->isr]) idt::handlers[regs->isr](regs);
-        else ctxpanic(regs, "unhandled interrupt %ld (0x%lx) raised!", regs->isr, regs->isr);
-
-        // Acknowledge the interrupt if needed.
-        if(pic::enabled) pic::sendeoi(regs->isr);
-        else apic::writelocal(apic::LAPIC_END_OF_INTERRUPT_REG, 0);
-    }
+    // Acknowledge the interrupt if needed.
+    if(pic::enabled) pic::sendeoi(regs->isr);
+    else apic::writelocal(apic::LAPIC_END_OF_INTERRUPT_REG, 0);
 }
 
 namespace idt {

@@ -14,6 +14,9 @@
 #include <stdint.h>
 #include <cpu.hpp>
 
+// The end of the kernel.
+extern "C" void *kernelend;
+
 extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t mbaddr) {
     // Critical for early debugging.
     serial::initialise();
