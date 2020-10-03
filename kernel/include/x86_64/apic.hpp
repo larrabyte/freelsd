@@ -22,11 +22,6 @@
 #define APIC_INTMASK_BIT                1UL << 16
 
 namespace apic {
-    typedef struct smpinformation {
-        uint8_t *address;
-        uint64_t codesize;
-    } __attribute__((packed)) smpdata_t;
-
     typedef enum registers {
         APIC_BASEADDRESS_MSR            = 0x01B,
         LAPIC_IDENTIFIER_REG            = 0x020,
@@ -124,6 +119,24 @@ namespace apic {
         uint32_t messagetype  : 3;
         uint32_t vector       : 8;
     } lvt_t;
+
+    struct smpcomm {
+        uint32_t id;            // Accessible via [SMPCOMM_BASE + 0x00].
+        uint32_t magic;         // Accessible via [SMPCOMM_BASE + 0x04].
+        uint64_t cr3;           // Accessible via [SMPCOMM_BASE + 0x08].
+        uint64_t rsp;           // Accessible via [SMPCOMM_BASE + 0x10].
+        uint64_t entry;         // Accessible via [SMPCOMM_BASE + 0x18].
+        uint16_t gdtsize;       // Accessible via [SMPCOMM_BASE + 0x20].
+        uint64_t gdtaddress;    // Accessible via [SMPCOMM_BASE + 0x28].
+    } __attribute__((packed));
+
+    struct smpinfo {
+        void *address;
+        uint64_t codesize;
+        void *execute;
+        struct smpcomm *shared;
+        uint32_t magic;
+    } __attribute__((packed));
 
     struct isolist {
         acpi::madt_entry_iso_t **pointers;

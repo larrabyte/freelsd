@@ -36,7 +36,6 @@ extern "C" __attribute__((noreturn)) void kernelmain(uint64_t magic, uintptr_t m
     // APIC/SMP initialisation.
     acpi::initialise();
     apic::initialisebsp();
-    apic::initialiseaps();
     cpu::initialisestats();
 
     // Write some debugging information to the log.

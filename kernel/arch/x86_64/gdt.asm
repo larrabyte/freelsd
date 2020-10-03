@@ -3,6 +3,7 @@
 global gdt64.data
 global gdt64.code
 global gdt64.ptr
+global gdt64.hiptr
 
 section .mbdata
 align 8
@@ -34,3 +35,7 @@ gdt64:
     .ptr:
     dw $ - gdt64 - 1
     dq gdt64
+
+    .hiptr:
+    dw gdt64.ptr - gdt64 - 1
+    dq gdt64 + KERNEL_VBASE

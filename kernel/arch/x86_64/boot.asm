@@ -1,7 +1,8 @@
 %include "kernel/arch/x86_64/macros.asm"
 
 global bootstrap, pge64sel
-extern gdt64.ptr, gdt64.code, gdt64.data
+extern gdt64.hiptr, gdt64.ptr
+extern gdt64.code, gdt64.data
 extern _init, kernelmain
 extern startbss, endbss
 
@@ -139,7 +140,6 @@ bootstrap:
     or eax, 1 << 0              ; Enable the protected mode bit.
     mov cr0, eax                ; Write eax back into cr0.
 
-    mov ax, gdt64.data          ; Move the data descriptor into ax.
     lgdt [gdt64.ptr]            ; Load the GDTR with a pointer to the GDT.
     jmp gdt64.code:longmode     ; Far jump to load our GDT and switch to long mode.
 
@@ -149,17 +149,13 @@ earlypanic:
 
 [BITS 64]
 longmode:
+    lgdt [gdt64.hiptr]          ; Reload the GDTR with a virtual pointer.
+    mov ax, gdt64.data          ; Move the data descriptor's index into ax.
     mov ss, ax                  ; Set ss to use the data descriptor.
     mov ds, ax                  ; Set ds to use the data descriptor.
     mov es, ax                  ; Set es to use the data descriptor.
     mov fs, ax                  ; Set fs to use the data descriptor.
     mov gs, ax                  ; Set gs to use the data descriptor.
-
-    mov rcx, gdt64.ptr          ; Set rcx to the address of the GDT pointer.
-    mov rax, [rcx + 0x2]        ; Load the GDT pointer's value into rcx.
-    add rax, KERNEL_VBASE       ; Add the kernel's virtual offset to the pointer.
-    mov [rcx + 0x2], rax        ; Move the new pointer value back into the GDT's pointer.
-    lgdt [rcx]                  ; Reload the GDTR with our new virtual address.
 
     mov rax, cr0                ; Copy contents of cr0 into rax.
     or rax, 1 << 1              ; Enable bit 1 of cr0: Monitor Coprocessor (MP).

@@ -5,11 +5,14 @@ global readcr2, writecr2
 global readcr3, writecr3
 global kernelpml4
 global readcpuid
+global readgdtr
 global loadidtr
 
 section .data
 kernelpml4:
 dq pml4table
+gdtstorage:
+times 10 db 0
 
 section .bss
 align 4096
@@ -43,6 +46,11 @@ writemsr:
     shr rdx, 32                 ; Shift rdx right by 32 bits.
     mov eax, esi                ; Move the lower bits of rsi into eax.
     wrmsr                       ; Write [edx:eax] into the MSR specified in ecx.
+    ret                         ; Return to the calling function.
+
+readgdtr:
+    sgdt [gdtstorage]           ; Read the GDTR into the memory address of gdtstorage.
+    mov rax, gdtstorage         ; Move this memory address into rax to return.
     ret                         ; Return to the calling function.
 
 loadidtr:

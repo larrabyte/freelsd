@@ -99,6 +99,9 @@ namespace cpu {
     // Checks whether the CPU supports a certain feature.
     bool supports(cpuid_feature_t feature);
 
+    // This is run by APs after their initialisation.
+    void newapentry(void);
+
     // Get CPU information using CPUID.
     void initialisestats(void);
 }

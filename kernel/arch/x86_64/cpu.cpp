@@ -1,9 +1,13 @@
 #include <mem/libc.hpp>
 #include <errors.hpp>
+#include <apic.hpp>
 #include <cpu.hpp>
 
 // Executes the CPUID instruction using eax and returns register values in storage.
 extern "C" void readcpuid(uint32_t eax, void *storage);
+
+// SMP data from trampoline.asm.
+extern "C" struct apic::smpinfo smpdata;
 
 namespace cpu {
     static const char *exceptionstr[] = {
@@ -67,6 +71,10 @@ namespace cpu {
         // Return a boolean depending on whether the feature exists in the specified register.
         if(feature & CPUID_EDX_BIT) return (registers.edx & (feature ^ CPUID_EDX_BIT)) ? true : false;
         else return (registers.ecx & feature) ? true : false;
+    }
+
+    void newapentry(void) {
+        smpdata.shared->magic = smpdata.magic;
     }
 
     void initialisestats(void) {

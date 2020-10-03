@@ -1,19 +1,23 @@
 #include <interrupts.hpp>
+#include <mem/alloc.hpp>
 #include <mem/libc.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <logger.hpp>
 #include <errors.hpp>
 #include <timer.hpp>
+#include <timer.hpp>
 #include <apic.hpp>
 #include <pic.hpp>
+#include <cpu.hpp>
 
-// Model-specific register read/write functions.
+// Assembly-defined functions from cabs.asm.
+extern "C" uint64_t readgdtr(void);
 extern "C" uint64_t readmsr(uint64_t msr);
 extern "C" void writemsr(uint64_t msr, uint64_t value);
 
 // SMP data from trampoline.asm.
-extern "C" apic::smpdata_t smpdata;
+extern "C" struct apic::smpinfo smpdata;
 
 namespace apic {
     uint8_t processors[ACPI_MAX_PROCESSORS];
@@ -91,19 +95,28 @@ namespace apic {
     }
 
     void initialiseaps(void) {
-        // We already know that addresses 0x1000-0x200000 are mapped.
-        uint8_t *smparea = (uint8_t*) mem::allocatephys(2);
-        if((uintptr_t) smparea > 0xFF000) panic("could not find space for SMP initialisation!");
-        log::trace("[osapic] SMP trampoline area allocated at 0x%lx.\n", smparea);
-        log::trace("[osapic] SMP trampoline code size: %zd bytes.\n\n", smpdata.codesize);
+        // We know that the bootstrap paging structures took up addresses zero through to 0x3000.
+        // They've been supplanted by the proper PML4, so reuse these addresses for SMP. Address
+        // zero isn't mapped, so we use 0x1000-0x3000 to store the code and any shared data.
+        memcpy(smpdata.execute, smpdata.address, smpdata.codesize);
+        memcpy(&smpdata.shared->gdtsize, (void*) readgdtr(), 10);
+        smpdata.shared->cr3 = (uint64_t) mem::getkernelpml4(true);
+        smpdata.shared->entry = (uint64_t) &cpu::newapentry;
+        size_t started = 1;
 
-        memset(smparea, 0xF4, 0x1000);                       // Cover the SMP code page in HLT instructions.
-        memset(smparea + 0x1000, 0x00, 0x1000);              // Zero out the SMP stack page.
-        memcpy(smparea, smpdata.address, smpdata.codesize);  // Copy the bytecode from the trampoline the SMP code page.
+        for(size_t i = 1; i < cpucount; i++) {
+            smpdata.shared->rsp = (uint64_t) kmalloc(PGE_PTE_ADDRSPACE * 4) + PGE_PTE_ADDRSPACE * 4;
+            smpdata.shared->magic = 0;
+            smpdata.shared->id = i;
 
-        sendipi(APIC_DSHTYPE_IGNORE, processors[1], APIC_MSGTYPE_INIT, 0);
-        timer::sleep(10); // Wait 10ms for the INIT IPI to set the AP's state as specified in the MPS.
-        sendipi(APIC_DSHTYPE_IGNORE, processors[1], APIC_MSGTYPE_STARTUP, (uintptr_t) smparea >> 12);
+            sendipi(APIC_DSHTYPE_IGNORE, processors[i], APIC_MSGTYPE_INIT, 0);
+            timer::sleep(10); // Wait 10ms for the INIT IPI to set the AP's state as specified in the MPS.
+            sendipi(APIC_DSHTYPE_IGNORE, processors[i], APIC_MSGTYPE_STARTUP, (uint64_t) smpdata.execute >> 12);
+            timer::sleep(10); // Wait another 10ms before checking if the AP has been initialised.
+            if(smpdata.shared->magic == smpdata.magic) started++;
+        }
+
+        log::info("[osapic] successfully initialised %zd/%zd processors!\n\n", started, cpucount);
     }
 
     void initialisebsp(void) {
@@ -144,7 +157,10 @@ namespace apic {
         // Unmask GSI 1 and GSI 2 (mapped to IRQ1 and IRQ0, vectors 0x20 and 0x21).
         writeio(ioindex(1), readio(ioindex(1), true) & ~(APIC_INTMASK_BIT), true);
         writeio(ioindex(2), readio(ioindex(2), true) & ~(APIC_INTMASK_BIT), true);
-        log::trace("[osapic] local APIC base address: %p\n", localbase);
-        log::trace("[osapic] I/O APIC base addresses: %p\n", iobase);
+        log::info("[osapic] local APIC base address: %p\n", localbase);
+        log::info("[osapic] I/O APIC base addresses: %p\n", iobase);
+
+        // Initialise available APs.
+        initialiseaps();
     }
 }

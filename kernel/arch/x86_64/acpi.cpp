@@ -25,7 +25,7 @@ namespace acpi {
         for(madt_entry_t *cursor = start; cursor < final; cursor = (madt_entry_t*) ((uintptr_t) cursor + cursor->length)) {
             if(cursor->type == 0) { // Type 0 specifies a local APIC.
                 madt_entry_localapic_t *local = (madt_entry_localapic_t*) cursor;
-                apic::processors[apic::cpucount++] = local->apicid;
+                if(local->apicid != 0xFF) apic::processors[apic::cpucount++] = local->apicid;
             } else if(cursor->type == 1) { // Type 1 specifies an I/O APIC.
                 madt_entry_ioapic_t *io = (madt_entry_ioapic_t*) cursor;
                 apic::iobase = io->address;
@@ -46,7 +46,7 @@ namespace acpi {
             if(cursor->type == 4) apic::nmis.pointers[nmiindex++] = (madt_entry_nmi_t*) cursor;
         }
 
-        log::info("[osacpi] system MADT identified %d processors.\n\n", apic::cpucount);
+        log::info("[osacpi] system MADT identified %d physical processors.\n\n", apic::cpucount);
     }
 
     uint8_t checksum(char *address, size_t length) {
