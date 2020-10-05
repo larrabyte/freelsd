@@ -1,5 +1,4 @@
 #include <mem/libc.hpp>
-#include <stdint.h>
 
 int memcmp(const void *x, const void *y, size_t n) {
     const char *a = (const char*) x;

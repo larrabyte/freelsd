@@ -20,8 +20,6 @@
             F: Physical address offset        (bits 00-11)
 */
 
-#include <interrupts.hpp>
-#include <multiboot.hpp>
 #include <stddef.h>
 #include <stdint.h>
 

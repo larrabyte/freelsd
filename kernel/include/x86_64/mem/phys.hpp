@@ -1,7 +1,6 @@
 #ifndef FREELSD_KERNEL_MEMORY_PHYSICAL_HEADER
 #define FREELSD_KERNEL_MEMORY_PHYSICAL_HEADER
 
-#include <multiboot.hpp>
 #include <stdint.h>
 #include <stddef.h>
 

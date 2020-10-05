@@ -1,9 +1,9 @@
 #include <interrupts.hpp>
+#include <multiboot.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <mem/libc.hpp>
 #include <errors.hpp>
-#include <stdint.h>
 
 // Control register read/write functions.
 extern "C" void writecr2(uintptr_t address);

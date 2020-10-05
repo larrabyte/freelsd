@@ -1,8 +1,6 @@
 #include <mem/alloc.hpp>
 #include <mem/virt.hpp>
 #include <mem/libc.hpp>
-#include <stdint.h>
-#include <stddef.h>
 
 // Durand's Amazing Super Duper Memory functions.
 

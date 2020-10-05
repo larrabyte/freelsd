@@ -4,14 +4,11 @@
 #include <keyboard.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
-#include <string.hpp>
 #include <serial.hpp>
 #include <logger.hpp>
-#include <errors.hpp>
 #include <timer.hpp>
 #include <acpi.hpp>
 #include <apic.hpp>
-#include <stdint.h>
 #include <cpu.hpp>
 
 // The end of the kernel.

@@ -1,10 +1,8 @@
 #include <gfx/renderer.hpp>
 #include <interrupts.hpp>
-#include <multiboot.hpp>
 #include <keyboard.hpp>
 #include <errors.hpp>
 #include <hwio.hpp>
-#include <stdint.h>
 
 namespace kboard {
     static const char uslayout_lower[128] = {

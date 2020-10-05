@@ -1,7 +1,5 @@
 #include <multiboot.hpp>
 #include <serial.hpp>
-#include <stddef.h>
-#include <stdint.h>
 
 namespace mboot {
     static size_t mbisize;

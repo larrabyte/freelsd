@@ -4,6 +4,9 @@
 #include <interrupts.hpp>
 #include <stdint.h>
 
+// Checks if the n-th bit of bits is set.
+#define checkbit(bits, n) ((bits) & (1 << (n)))
+
 namespace kboard {
     // Keypress flags, starting from rightmost bit.
     // ===========================================

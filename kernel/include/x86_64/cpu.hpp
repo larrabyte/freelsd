@@ -1,7 +1,6 @@
 #ifndef FREELSD_KERNEL_CPU_HEADER
 #define FREELSD_KERNEL_CPU_HEADER
 
-#include <interrupts.hpp>
 #include <stdint.h>
 
 #define CPUID_EDX_BIT 0x8000000000000000

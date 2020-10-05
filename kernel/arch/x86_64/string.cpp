@@ -1,8 +1,4 @@
-#include <gfx/renderer.hpp>
-#include <serial.hpp>
 #include <string.hpp>
-#include <stddef.h>
-#include <stdint.h>
 
 // Static, internal storage for printk().
 static char internalbuf[32];

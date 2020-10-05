@@ -3,8 +3,6 @@
 #include <logger.hpp>
 #include <serial.hpp>
 #include <string.hpp>
-#include <stdarg.h>
-#include <stddef.h>
 
 namespace log {
     metadata_t writers[LOGGER_MAX_OUTPUTS];

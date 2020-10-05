@@ -2,9 +2,6 @@
 #include <string.hpp>
 #include <frogs.hpp>
 #include <hwio.hpp>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdarg.h>
 
 namespace serial {
     static inline uint8_t transmitempty(void) {

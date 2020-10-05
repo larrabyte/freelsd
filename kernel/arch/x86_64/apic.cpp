@@ -1,11 +1,8 @@
-#include <interrupts.hpp>
 #include <mem/alloc.hpp>
 #include <mem/libc.hpp>
 #include <mem/virt.hpp>
 #include <mem/phys.hpp>
 #include <logger.hpp>
-#include <errors.hpp>
-#include <timer.hpp>
 #include <timer.hpp>
 #include <apic.hpp>
 #include <pic.hpp>
