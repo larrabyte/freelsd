@@ -1,12 +1,12 @@
-# More executables
+# Things I don't want to be tracked.
+.stfolder/
+.vscode/
 tools/initrdgen/initrdgen
+.DS_Store
 
 # Image files
 *.iso
 *.img
-
-# Unwanted folders
-.vscode/
 
 # Prerequisites
 *.d
