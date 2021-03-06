@@ -1,4 +1,4 @@
-%include "kernel/arch/x86_64/macros.asm"
+%include "kernel/src/arch/x86_64/macros.asm"
 
 global bootstrap, pge64sel
 extern gdt64.hiptr, gdt64.ptr
@@ -91,7 +91,7 @@ bootstrap:
     jb earlypanic               ; Panic if highest function is less than 0x80000001.
 
     mov eax, 0x80000001         ; Set eax to get extended processor info from CPUID.
-    cpuid                       ; Execute CPUID again. 
+    cpuid                       ; Execute CPUID again.
 
     test edx, 1 << 29           ; Test bit 29 of edx: Long Mode (LM).
     mov eax, 0x3                ; If panicing, set eax to indicate LM non-support.
@@ -169,9 +169,6 @@ longmode:
 
     pop rbx                     ; Pop both the multiboot magic (upper) and struct (lower) into rax.
     mov rsp, stacktop           ; Load the stack pointer with the kernel's proper stack address.
-    mov rax, _init              ; Move the full 64-bit address of _init into rax.
-    call rax                    ; Call rax and initialise global constructors.
-
     mov esi, ebx                ; Move the lower 32-bits of ebx into esi and zero extend to 64-bits.
     mov rdi, rbx                ; Move the whole of rbx into rdi.
     shr rdi, 32                 ; Shift rdi by 32-bits to retrieve magic value.

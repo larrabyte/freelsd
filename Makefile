@@ -1,90 +1,65 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: default qemu qemudebug bochs bochsdebug vmware tools clean cleanall
+.PHONY: all clean dump
 
-ARCH := x86_64
-CPP  := x86_64-elf-g++
-ASM  := nasm
+TARGET  := x86_64-elf
+ARCH    := x86_64
 
-# ----------------------------------
-# Assember, compiler and QEMU flags.
-# ----------------------------------
-WARNINGS := -Wall -Wextra -Wpedantic -Wno-unused-parameter -Wno-builtin-macro-redefined
-CFLAGS   := $(WARNINGS) -D__TIMESTAMP__=\"$(shell date +'"%A, %d %B %Y %r %Z"')\" -ffreestanding \
-			-fstack-protector -fno-exceptions -fno-rtti -mcmodel=kernel -mno-red-zone -mno-sse \
-			-zmax-page-size=0x1000 -O3 -nostdlib
-
-AFLAGS := -felf64
+CPP     := clang++
+ASM     := nasm
+LINKER  := ld.lld
+DUMPER  := llvm-objdump
 
 # -----------------------------
 # Required directories & files.
 # -----------------------------
-KERNELSRC := kernel/arch/$(ARCH)
-KERNELINC := kernel/include/$(ARCH)
-KERNELOBJ := kernel/obj
+KERNELSRC := $(shell find kernel/src -maxdepth 1 -name "*.cpp")
+KERNELSRC += $(shell find kernel/src/arch/$(ARCH) -maxdepth 1 -name "*.cpp" -o -name "*.asm")
+KERNELOBJ := $(addprefix kernel/obj/, $(notdir $(addsuffix .o, $(basename $(KERNELSRC)))))
 
-CPPFILES := $(wildcard $(KERNELSRC)/*.cpp)
-ASMFILES := $(wildcard $(KERNELSRC)/*.asm)
-CRTFINAL := $(shell $(CPP) $(CFLAGS) -print-file-name=crtend.o)
-CRTBEGIN := $(shell $(CPP) $(CFLAGS) -print-file-name=crtbegin.o)
-OBJFILES := $(ASMFILES:$(KERNELSRC)/%.asm=$(KERNELOBJ)/%.o) $(CPPFILES:$(KERNELSRC)/%.cpp=$(KERNELOBJ)/%.o)
+# -----------------------------------------------------------------
+# Assember, compiler, linker and disassembler flags for the kernel.
+# -----------------------------------------------------------------
+WARNINGS  := -Wall -Wextra -Wpedantic -Wno-builtin-macro-redefined
+REDEFINES := -D__TIMESTAMP__=\"$(shell date +'"%A, %d %B %Y %r %Z"')\"
+CFLAGS    := $(WARNINGS) $(REDEFINES) --target=$(TARGET) -Ikernel/include -Ikernel/include/$(ARCH) \
+			 --std=c++20 -ffreestanding -fstack-protector -fno-exceptions -fno-rtti \
+			 -mcmodel=kernel -mno-red-zone -mno-sse -O2 -nostdlib
 
-# --------
-# Targets.
-# --------
-default: qemu
+DUMPFLAGS := --arch=$(TARGET) --disassemble --demangle --print-imm-hex --x86-asm-syntax=intel
+LFLAGS    := -T kernel/src/arch/$(ARCH)/linker.ld -z max-page-size=0x1000
+AFLAGS    := -felf64
 
-qemu: build/freelsd.iso
-	@printf "[qemuvm] Now booting FreeLSD (KVM/WHPX).\n"
-	@./scripts/virtualise.sh qemu
-
-qemudebug: objdump
-	@printf "[qemuvm] Now booting FreeLSD (QEMU debug).\n"
-	@./scripts/virtualise.sh qemudebug
-
-bochs: build/freelsd.iso
-	@printf "[vbochs] Now booting FreeLSD (no acceleration).\n"
-	@./scripts/virtualise.sh bochs
-
-bochsdebug: objdump
-	@printf "[vbochs] Now booting FreeLSD (Bochs debug).\n"
-	@./scripts/virtualise.sh bochsdebug
-
-vmware: build/freelsd.iso
-	@printf "[vmware] Now booting FreeLSD (Windows: VMware).\n"
-	@./scripts/virtualise.sh vmware
-
-objdump: build/freelsd.iso
-	@printf "[objdmp] Creating new disassembly file for kernel.bin.\n"
-	@objdump -D -M intel isoroot/kernel.bin > scripts/disassembly.log
-
-cleanall: clean
-	@rm -f isoroot/kernel.bin
-	@printf "[remove] Deleted isoroot/kernel.bin.\n"
-	@rm -f build/freelsd.iso
-	@printf "[remove] Deleted build/freelsd.iso.\n"
-	@cd tools/initrdgen && $(MAKE) --no-print-directory clean
-
-build/freelsd.iso: $(OBJFILES)
-	@printf "[linker] Linking object files and creating ISO.\n"
-	@$(CPP) -T $(KERNELSRC)/linker.ld $(CFLAGS) $(CRTBEGIN) $(sort $(OBJFILES)) $(CRTFINAL) -o isoroot/kernel.bin -lgcc
-	@./tools/initrdgen/initrdgen
-	@grub-mkrescue -o build/freelsd.iso isoroot &> /dev/null
-
-tools:
-	@cd tools/initrdgen && $(MAKE) --no-print-directory
+all: build/freelsd.iso
 
 clean:
-	@rm -f $(KERNELOBJ)/*.o
-	@printf "[remove] Deleted object files from kernel/obj.\n"
-	@rm -f scripts/*.log
-	@printf "[remove] Deleted log files from scripts/log.\n"
+	@rm --force kernel/obj/*.o
+	@rm --force build/isoroot/kernel.bin
+	@rm --force build/freelsd.iso
+	@rm --force scripts/disassembly.log
+	@printf "[remove] removed build artefacts.\n"
 
-$(KERNELOBJ)/%.o: $(KERNELSRC)/%.cpp
+dump: build/isoroot/kernel.bin
+	@$(DUMPER) $(DUMPFLAGS) build/isoroot/kernel.bin > scripts/disassembly.log
+	@printf "[dumper] kernel disassembly file created.\n"
+
+build/freelsd.iso: build/isoroot/kernel.bin
+	@grub-mkrescue -o build/freelsd.iso build/isoroot &> /dev/null
+	@printf "[mkgrub] GRUB rescue ISO created.\n"
+
+build/isoroot/kernel.bin: $(KERNELOBJ)
+	@$(LINKER) $(LFLAGS) $(KERNELOBJ) -o build/isoroot/kernel.bin
+	@printf "[linker] %s files successfully linked.\n" $(words $(KERNELOBJ))
+
+kernel/obj/%.o: kernel/src/%.cpp
+	@$(CPP) $(CFLAGS) -c $< -o $@
 	@printf "[cppobj] $< compiled.\n"
-	@$(CPP) $(CFLAGS) -I $(KERNELINC) -c $< -o $@
 
-$(KERNELOBJ)/%.o: $(KERNELSRC)/%.asm
-	@printf "[asmobj] $< assembled.\n"
+kernel/obj/%.o: kernel/src/arch/$(ARCH)/%.cpp
+	@$(CPP) $(CFLAGS) -c $< -o $@
+	@printf "[cppobj] $< compiled.\n"
+
+kernel/obj/%.o: kernel/src/arch/$(ARCH)/%.asm
 	@$(ASM) $(AFLAGS) $< -o $@
+	@printf "[asmobj] $< assembled.\n"

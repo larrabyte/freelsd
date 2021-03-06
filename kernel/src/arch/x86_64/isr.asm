@@ -1,4 +1,4 @@
-%include "kernel/arch/x86_64/macros.asm"
+%include "kernel/src/arch/x86_64/macros.asm"
 
 global spuriousisr
 extern isrdispatcher
