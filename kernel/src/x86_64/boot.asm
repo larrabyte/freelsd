@@ -1,4 +1,4 @@
-%include "kernel/src/arch/x86_64/macros.asm"
+%include "kernel/src/x86_64/macros.asm"
 
 global bootstrap, pge64sel
 extern gdt64.hiptr, gdt64.ptr
