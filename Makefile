@@ -26,32 +26,30 @@ WARNINGS  := -Wall -Wextra -Wpedantic -Wno-builtin-macro-redefined
 REDEFINES := -D__TIMESTAMP__=\"$(shell date +'"%A, %d %B %Y %r %Z"')\"
 CXXFLAGS  := $(WARNINGS) $(REDEFINES) --target=$(TARGET) -Ikernel/include -Ikernel/include/$(ARCH) \
 			 --std=c++20 -ffreestanding -fstack-protector -fno-exceptions -fno-rtti \
-			 -mcmodel=kernel -mno-red-zone -mno-sse -nostdlib -MD -MP -O2 
+			 -mcmodel=kernel -mno-red-zone -mno-sse -nostdlib -MD -MP -O2
 
 DUMPFLAGS := --arch=$(TARGET) --disassemble --demangle --print-imm-hex --x86-asm-syntax=intel
 LFLAGS    := -T kernel/src/$(ARCH)/linker.ld -z max-page-size=0x1000
 ASFLAGS   := -felf64
 
-all: build/freelsd.iso
+all: build
 -include $(KERNELDEP)
 
 clean:
 	@rm -f kernel/obj/*
-	@rm -f build/isoroot/kernel.elf
-	@rm -f build/freelsd.iso
-	@rm -f scripts/disassembly.log
+	@rm -f build/kernel.elf
 	@printf "[remove] removed build artefacts.\n"
 
-dump: build/isoroot/kernel.elf
-	@$(DUMPER) $(DUMPFLAGS) build/isoroot/kernel.elf > scripts/disassembly.log
+build: build/kernel.elf
+	@./scripts/mountdisk.sh install
+	@printf "[copier] files copied to disk image.\n"
+
+dump: build/kernel.elf
+	@$(DUMPER) $(DUMPFLAGS) build/kernel.elf > scripts/disassembly.log
 	@printf "[dumper] kernel disassembly file created.\n"
 
-build/freelsd.iso: build/isoroot/kernel.elf
-	@grub-mkrescue -o build/freelsd.iso build/isoroot &> /dev/null
-	@printf "[mkgrub] GRUB rescue ISO created.\n"
-
-build/isoroot/kernel.elf: $(KERNELOBJ)
-	@$(LINKER) $(LFLAGS) $(KERNELOBJ) -o build/isoroot/kernel.elf
+build/kernel.elf: $(KERNELOBJ)
+	@$(LINKER) $(LFLAGS) $(KERNELOBJ) -o build/kernel.elf
 	@printf "[linker] %s files successfully linked.\n" $(words $(KERNELOBJ))
 
 kernel/obj/%.o: kernel/%.cpp

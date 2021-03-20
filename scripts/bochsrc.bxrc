@@ -18,4 +18,4 @@ keyboard: type=mf, serial_delay=250, paste_delay=100000, user_shortcut=none
 mouse: type=ps2, enabled=false, toggle=ctrl+mbutton
 speaker: enabled=true, mode=sound
 log: -
-com1: enabled=true, mode=file, dev=scripts/bochs.log
+com1: enabled=true, mode=file, dev=scripts/serial.log
