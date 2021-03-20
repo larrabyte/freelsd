@@ -286,16 +286,16 @@ namespace mem {
 
         // Check the MMIO address space for already mapped addresses.
         for(uintptr_t cursor = PGE_MMIO_BASEADDR; cursor < PGE_MMIO_ENDADDR; cursor += 0x1000) {
-            uintptr_t mapped = virt2phys(kernelpml4, cursor);
+            uintptr_t mapped = virt2phys(mem::getkernelpml4(false), cursor);
             if(mapped != 0 && mapped == palign) return (void*) (cursor + offset);
         }
 
         // Find some free space in the kernel's address space if it hasn't already been mapped.
-        uintptr_t virt = findfirstfree(kernelpml4, PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, n);
+        uintptr_t virt = findfirstfree(mem::getkernelpml4(false), PGE_MMIO_BASEADDR, PGE_MMIO_ENDADDR, n);
         uintptr_t vmax = virt + (n * PGE_PTE_ADDRSPACE);
         if(virt == 0) return nullptr;
 
-        for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(kernelpml4, PGE_REGULAR_PAGE, v, palign, PGE_PRESENT_BIT | PGE_WRITABLE_BIT | PGE_UNCACHEABLE_BIT);
+        for(uintptr_t v = virt; v < vmax; v += 0x1000, palign += 0x1000) mappage(mem::getkernelpml4(false), PGE_REGULAR_PAGE, v, palign, PGE_PRESENT_BIT | PGE_WRITABLE_BIT | PGE_UNCACHEABLE_BIT);
         return (void*) (virt + offset);
     }
 

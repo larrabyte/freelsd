@@ -10,7 +10,7 @@ if [[ ! -z "$(ls -A build/mnt)" ]]; then
 fi
 
 if [[ "$platform" == "Linux" ]]; then
-    sudo loopback=$(losetup --find --show build/disk.img -o 1048576)
+    loopback=$(sudo losetup --find --show build/disk.img -o 1048576)
     mount $loopback build/mnt -o umask=000
 elif [[ "$platform" == "Darwin" ]]; then
     device=$(hdiutil attach -nomount build/disk.img | awk '/FAT/ {print $1}')

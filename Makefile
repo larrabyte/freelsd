@@ -1,7 +1,7 @@
 # ----------------------------------------------------
 # Makefile for FreeLSD, made by the larrabyte himself.
 # ----------------------------------------------------
-.PHONY: all clean dump
+.PHONY: all bochs qemu clean build dump
 
 TARGET  := x86_64-elf
 ARCH    := x86_64
@@ -32,8 +32,15 @@ DUMPFLAGS := --arch=$(TARGET) --disassemble --demangle --print-imm-hex --x86-asm
 LFLAGS    := -T kernel/src/$(ARCH)/linker.ld -z max-page-size=0x1000
 ASFLAGS   := -felf64
 
-all: build
+all: qemu
 -include $(KERNELDEP)
+
+bochs: build
+	@bochs -q -f scripts/bochsrc.bxrc
+
+qemu: build
+	@qemu-system-x86_64 -no-reboot -no-shutdown -serial stdio -drive format=raw,file=build/disk.img \
+	-M q35,accel=whpx:kvm:tcg -cpu qemu64,+pdpe1gb -smp 4
 
 clean:
 	@rm -f kernel/obj/*
@@ -41,8 +48,8 @@ clean:
 	@printf "[remove] removed build artefacts.\n"
 
 build: build/kernel.elf
-	@./scripts/mountdisk.sh install
-	@printf "[copier] files copied to disk image.\n"
+	@./scripts/mountdisk.sh install > /dev/null
+	@printf "[mkdisk] files copied to disk image.\n"
 
 dump: build/kernel.elf
 	@$(DUMPER) $(DUMPFLAGS) build/kernel.elf > scripts/disassembly.log
