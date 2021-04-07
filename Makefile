@@ -29,31 +29,33 @@ CXXFLAGS  := $(WARNINGS) $(REDEFINES) --target=$(TARGET) -Ikernel/include -Ikern
 			 -mcmodel=kernel -mno-red-zone -mno-sse -nostdlib -MD -MP -O2
 
 DUMPFLAGS := --arch=$(TARGET) --disassemble --demangle --print-imm-hex --x86-asm-syntax=intel
-LFLAGS    := -T kernel/src/$(ARCH)/linker.ld -z max-page-size=0x1000
+LFLAGS    := -T kernel/src/$(ARCH)/linker.ld
 ASFLAGS   := -felf64
 
 all: qemu
 -include $(KERNELDEP)
 
+qemu: build
+	@qemu-system-x86_64 -no-reboot -no-shutdown -serial stdio -drive format=raw,file=build/disk.img \
+	-M q35,accel=whpx:hvf:kvm:tcg -cpu qemu64,+pdpe1gb -smp 4
+
 bochs: build
 	@bochs -q -f scripts/bochsrc.bxrc
 
-qemu: build
-	@qemu-system-x86_64 -no-reboot -no-shutdown -serial stdio -drive format=raw,file=build/disk.img \
-	-M q35,accel=whpx:kvm:tcg -cpu qemu64,+pdpe1gb -smp 4
+dump: build/kernel.elf
+	@$(DUMPER) $(DUMPFLAGS) build/kernel.elf > scripts/disassembly.log
+	@printf "[dumper] kernel disassembly file created.\n"
 
 clean:
 	@rm -f kernel/obj/*
 	@rm -f build/kernel.elf
 	@printf "[remove] removed build artefacts.\n"
 
-build: build/kernel.elf
-	@./scripts/mountdisk.sh install > /dev/null
-	@printf "[mkdisk] files copied to disk image.\n"
+disk:
+	@./scripts/createdisk.sh
 
-dump: build/kernel.elf
-	@$(DUMPER) $(DUMPFLAGS) build/kernel.elf > scripts/disassembly.log
-	@printf "[dumper] kernel disassembly file created.\n"
+build: build/kernel.elf
+	@./scripts/mountdisk.sh install
 
 build/kernel.elf: $(KERNELOBJ)
 	@$(LINKER) $(LFLAGS) $(KERNELOBJ) -o build/kernel.elf

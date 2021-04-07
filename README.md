@@ -22,7 +22,12 @@ Tested on QEMU, VMWare, Bochs and on bare-metal using my laptop. VirtualBox does
 | Support for ACPI.                  |
 
 ## Compilation
-[See the wiki page on compiling FreeLSD.](https://github.com/larrabyte/freelsd/wiki/Compilation)
+Install `clang` and `nasm` using your package manager of choice.
+Execute `sudo make disk` to create an empty disk with the correct partition layout for FreeLSD.
+> I couldn't get createdisk.sh to work on macOS, so if you're trying to build FreeLSD on macOS then you'll have to run this script on an external machine and copy the disk image over to your own machine.
+
+Invoke the Makefile using `sudo make`. Use the `-jN` flag to speed up compilation (N being the number of cores in your system). This will compile the kernel and copy it to disk before launching QEMU.
+> The Makefile requires root on Linux because of losetup. If you're building on macOS, sudo is not required.
 
 ## Showcase (as of commit #176).
 ![FreeLSD Graphical Output and Serial Log](showcase.png)
