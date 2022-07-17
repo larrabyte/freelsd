@@ -7,7 +7,7 @@ ata0-master: type=disk, path="build/disk.img", mode=flat, cylinders=0, heads=0, 
 ata0-slave: type=none
 pci: enabled=1, chipset=i440fx
 vga: extension=vbe, update_freq=30, realtime=1
-cpu: count=1, ips=40000000, model=bx_generic, reset_on_triple_fault=0, cpuid_limit_winnt=0, ignore_bad_msrs=0, mwait_is_nop=0
+cpu: count=4, ips=40000000, model=bx_generic, reset_on_triple_fault=0, cpuid_limit_winnt=0, ignore_bad_msrs=0, mwait_is_nop=0
 cpuid: level=6, stepping=3, model=3, family=6, vendor_string="GenuineIntel", brand_string="              Intel(R) Pentium(R) 4 CPU        "
 cpuid: mmx=true, apic=xapic, simd=sse4_2, sse4a=true, misaligned_sse=true, sep=true
 cpuid: movbe=true, adx=true, aes=true, sha=true, xsave=true, xsaveopt=true, x86_64=true

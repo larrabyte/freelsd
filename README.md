@@ -22,19 +22,18 @@ Tested on QEMU, VMWare, Bochs and on bare-metal using my laptop. VirtualBox does
 | Support for ACPI.                  |
 
 ## Compilation
-FreeLSD uses Clang/LLVM (and NASM on x86_64) for compiling and assembling. Clang/LLVM is used here because it is inherently a cross compiler and thus does not require a recompilation to target new architectures.
+FreeLSD uses Clang/LLVM (and NASM on x86_64) for compiling and assembling.
 
-Simply install prerequisites via your favourite package manager.
+Simply install the prerequisites via your favourite package manager.
 ```
 $ sudo pacman -S llvm lld clang nasm (on Arch Linux)
-$ brew install llvm nasm (on macOS)
 ```
 
-Once the compiler and assembler are installed, execute `make disk` to create an empty disk with the correct partition layout for FreeLSD.
-> I couldn't get createdisk.sh to work on macOS, so if you're trying to build FreeLSD on macOS then you'll have to run this script on an external machine and copy the disk image over to your own machine.
+Once the compiler and assembler are installed, invoke `make disk` to create an empty disk image with the correct partition layout for FreeLSD. Then, invoke the Makefile using `make`. This will compile and link the kernel before copying it to the disk image. 
 
-Now that everything is ready, invoke the Makefile using `make`. This will compile and link the kernel before copying it to the disk image and running QEMU. Running Bochs can also be done using `make bochs`.
-> The Makefile requires root on Linux because of losetup. If you're building on macOS, sudo is not required.
+QEMU can be run immediately after by invoking `make qemu`.
+
+Bochs can also be run immediately after using `make bochs`.
 
 ## Showcase (as of commit #176).
 ![FreeLSD Graphical Output and Serial Log](showcase.png)

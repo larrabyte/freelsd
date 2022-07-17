@@ -32,17 +32,23 @@ DUMPFLAGS := --arch=$(TARGET) --disassemble --demangle --print-imm-hex --x86-asm
 LFLAGS    := -T kernel/src/$(ARCH)/linker.ld
 ASFLAGS   := -felf64
 
-all: qemu
+all: install
 -include $(KERNELDEP)
 
-qemu: build
-	@qemu-system-x86_64 -no-reboot -no-shutdown -serial stdio -drive format=raw,file=build/disk.img \
-	-M q35,accel=whpx:hvf:kvm:tcg -cpu qemu64,+pdpe1gb -smp 4
+qemu: install
+	@qemu-system-x86_64 \
+	-no-reboot \
+	-no-shutdown \
+	-serial stdio \
+	-drive format=raw,file=build/disk.img \
+	-M q35,accel=kvm \
+	-cpu host \
+	-smp 4
 
-bochs: build
+bochs: install
 	@bochs -q -f scripts/bochsrc.bxrc
 
-dump: build/kernel.elf
+dump: build
 	@$(DUMPER) $(DUMPFLAGS) build/kernel.elf > scripts/disassembly.log
 	@printf "[dumper] kernel disassembly file created.\n"
 
@@ -54,8 +60,12 @@ clean:
 disk:
 	@./scripts/createdisk.sh
 
-build: build/kernel.elf
+install: build
 	@./scripts/mountdisk.sh install
+
+build: \
+	build/kernel.elf \
+	build/grub.cfg
 
 build/kernel.elf: $(KERNELOBJ)
 	@$(LINKER) $(LFLAGS) $(KERNELOBJ) -o build/kernel.elf

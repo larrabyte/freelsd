@@ -1,7 +1,11 @@
-label: dos
-label-id: 0xf31813d0
-device: disk.img
+label: gpt
+label-id: 7D88AA5D-712C-5B44-B804-92591CB68C8D
+device: build/disk.img
 unit: sectors
+first-lba: 2048
+last-lba: 2097118
 sector-size: 512
 
-disk.img1 : start=        2048, size=      129024, type=b
+build/disk.img1 : start=        2048, size=        2048, type=21686148-6449-6E6F-744E-656564454649, uuid=7B926459-0875-DF4B-9D51-3452AE0FEFA9
+build/disk.img2 : start=        4096, size=      524288, type=C12A7328-F81F-11D2-BA4B-00A0C93EC93B, uuid=15908C23-7D35-444E-A4D8-99CD1BB5A1A8
+build/disk.img3 : start=      528384, size=     1566720, type=0FC63DAF-8483-4772-8E79-3D69D8477DE4, uuid=FDBF7507-0BB9-2A46-9F4E-EBF378BB519C
