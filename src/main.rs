@@ -1,8 +1,10 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
-use core::arch::asm;
+mod ports;
+mod uart;
+
+use core::{panic::PanicInfo, arch::asm};
 
 #[panic_handler]
 fn panic(_: &PanicInfo) -> ! {
@@ -13,6 +15,8 @@ fn panic(_: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn main() -> ! {
+    serialln!("Hello, World!");
+
     unsafe {
         asm!("hlt", options(noreturn));
     }
