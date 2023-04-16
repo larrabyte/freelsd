@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+
+if [ ! $# -eq 1 ]; then
+    SELF=$(basename "$0")
+    echo "usage: $SELF <path to kernel executable>"
+    exit 1
+fi
+
+./tools/install "$1"
+
+qemu-system-x86_64 \
+    -machine q35 \
+    -m 128M \
+    -serial stdio \
+    -no-shutdown \
+    -no-reboot \
+    -drive format=raw,file=build/disk.img \
+    -device VGA,edid=yes,xres=640,yres=480

@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+
+# Assume the presence of build/disk.img means a valid and correct image is present.
+if [ ! -e build/disk.img ]; then
+    echo "error: disk not present - unable to proceed."
+    exit 1
+fi
+
+if [ ! $# -eq 1 ]; then
+    SELF=$(basename "$0")
+    echo "usage: $SELF <path to kernel executable>"
+    exit 1
+fi
+
+# Install Limine (BIOS) onto the disk image.
+(cd deps/limine && make limine-deploy)
+./deps/limine/limine-deploy build/disk.img
+
+./tools/disk mount
+
+# Linux restricts reading/writing of mounted drives to root.
+sudo mkdir -p build/mnt/efi/EFI/BOOT
+sudo mkdir -p build/mnt/root/boot
+sudo cp deps/limine/BOOTX64.EFI build/mnt/efi/EFI/BOOT
+sudo cp deps/limine/limine.sys build/mnt/root/boot
+sudo cp tools/misc/limine.cfg build/mnt/root
+sudo cp "$1" build/mnt/root/boot/kernel.elf
+
+./tools/disk umount

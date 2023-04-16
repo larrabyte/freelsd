@@ -1,0 +1,62 @@
+#!/usr/bin/env sh
+
+OS=$(uname -s)
+
+if [ ! $# -eq 1 ]; then
+    SELF=$(basename "$0")
+    echo "usage: $SELF <create/mount/umount>"
+    exit 1
+fi
+
+if [ "$OS" = "Linux" ]; then
+
+    if [ "$1" = "create" ]; then
+        dd if=/dev/zero of=build/disk.img bs=1048576 count=1024
+        sfdisk build/disk.img < tools/misc/layout.sfdisk
+        LOOP=$(sudo losetup -P -f --show build/disk.img)
+        sudo mkfs.fat -F 32 -n "EFI System" "${LOOP}p1"
+        sudo mkfs.ext4 -L "Gilly" "${LOOP}p2"
+        sudo losetup -d "$LOOP"
+
+    elif [ "$1" = "mount" ]; then
+        LOOP=$(sudo losetup -P -f --show build/disk.img)
+        mkdir -p build/mnt/efi
+        mkdir -p build/mnt/root
+        sudo mount "${LOOP}p1" build/mnt/efi
+        sudo mount "${LOOP}p2" build/mnt/root
+
+    elif [ "$1" = "umount" ]; then
+        sudo umount build/mnt/efi
+        sudo umount build/mnt/root
+        rmdir build/mnt/efi
+        rmdir build/mnt/root
+        LOOP=$(losetup -O NAME,BACK-FILE | awk '/[build/disk.img]/{print $1}')
+        sudo losetup -d "$LOOP"
+    fi
+
+elif [ "$OS" = "Darwin" ]; then
+
+    if [ "$1" = "create" ]; then
+        echo "error: disk creation is not supported on macOS."
+        exit 1
+    fi
+
+    if [ "$1" = "mount" ]; then
+        DISK=$(hdiutil attach -nomount build/disk.img | awk 'NR==1{print $1}')
+        mkdir -p build/mnt/efi
+        mkdir -p build/mnt/root
+        mount -t msdos "${DISK}s1" build/mnt/efi
+        mount -t ufsd_ExtFS "${DISK}s2" build/mnt/root
+
+    elif [ "$1" = "umount" ]; then
+        umount build/mnt/efi
+        umount build/mnt/root
+        rmdir build/mnt/efi
+        rmdir build/mnt/root
+
+        # macOS will return the same disk device when attempting to attach an identical file.
+        DISK=$(hdiutil attach -nomount build/disk.img | awk 'NR==1{print $1}')
+        hdiutil detach "$DISK"
+    fi
+
+fi
