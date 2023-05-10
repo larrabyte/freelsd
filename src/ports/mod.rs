@@ -4,7 +4,7 @@ use core::marker::PhantomData;
 use self::traits::Blob;
 
 /// An x86_64 I/O port, which can read and/or write values of `T`.
-#[derive(Clone, Copy, Hash)]
+#[derive(Debug)]
 pub struct UnsafePort<T: Blob> {
     port: u16,
     phantom: PhantomData<T>
