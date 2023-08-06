@@ -11,23 +11,23 @@ pub struct UnsafePort<T: Blob> {
 }
 
 impl<T: Blob> UnsafePort<T> {
-    /// Creates an instance of `UnsafePort` for reading/writing values of `T`.
+    /// Create an instance of `UnsafePort` for reading/writing values of `T`.
     pub const unsafe fn new(port: u16) -> Self {
         Self {port, phantom: PhantomData}
     }
 
-    /// Reads a value of `T` from an I/O port.
+    /// Read a value of `T` from an I/O port.
     /// 
     /// # Safety
-    /// See [`traits::Blob`] for information.
+    /// See [`traits::Blob`].
     pub unsafe fn read(&mut self) -> T {
         T::read(self.port)
     }
 
-    /// Writes a value of `T` to an I/O port.
+    /// Write a value of `T` to an I/O port.
     /// 
     /// # Safety
-    /// See [`traits::Blob`] for information.
+    /// See [`traits::Blob`].
     pub unsafe fn write(&mut self, value: T) {
         T::write(self.port, value);
     }

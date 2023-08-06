@@ -5,24 +5,22 @@ use crate::ports::UnsafePort;
 use core::{fmt, hint::spin_loop};
 use spin::{Mutex, Lazy};
 
-/// Prints to COM1.
+/// Print to COM1.
 #[macro_export]
 macro_rules! serial {
     ($($arg:tt)*) => ($crate::uart::COM1.lock().format(format_args!($($arg)*)));
 }
 
-/// Prints to COM1, with a newline.
+/// Print to COM1, with a newline.
 #[macro_export]
 macro_rules! serialln {
     () => ($crate::print!("\n"));
     ($($arg:tt)*) => ($crate::serial!("{}\n", format_args!($($arg)*)));
 }
 
-// At least on x86_64, this should always be 0x3F8.
+/// At least on x86_64, this should always be 0x3F8.
 pub static COM1: Lazy<Mutex<Uart>> = Lazy::new(|| {
-    let mut uart = unsafe {Uart::new(0x3F8)};
-    uart.initialise();
-    Mutex::new(uart)
+    Mutex::new(unsafe {Uart::new(0x3F8)})
 });
 
 /// A representation of the 16650 UART.
@@ -42,13 +40,12 @@ pub struct Uart {
 }
 
 impl Uart {
-    /// Creates a new UART instance.
+    /// Create a new UART instance.
     ///
     /// # Safety
-    /// Callers must ensure that the given port really does point to a serial interface and
-    /// are responsible for ensuring that the interface is initialised before use.
-    const unsafe fn new(port: u16) -> Self {
-        Self {
+    /// Callers must ensure that the given I/O port is an uninitialised serial interface.
+    unsafe fn new(port: u16) -> Self {
+        let mut uart = Self {
             transmitter_holding: UnsafePort::new(port),
             receiver: UnsafePort::new(port),
             divisor_latch_low: UnsafePort::new(port),
@@ -61,36 +58,32 @@ impl Uart {
             line_status: UnsafePort::new(port + 5),
             modem_status: UnsafePort::new(port + 6),
             scratch: UnsafePort::new(port + 7)
-        }
+        };
+
+        // 1. Disable serial interrupts.
+        uart.interrupt_enable.write(0x00);
+
+        // 2. Enable the DLAB in order to set the baud rate.
+        uart.line_control.write(0x80);
+
+        // 3. Set the baud rate to 115,200bps.
+        uart.divisor_latch_low.write(0x01);
+        uart.divisor_latch_high.write(0x00);
+
+        // 4. Disable the DLAB and configure the serial port
+        // for 8-bit words, with no parity bits and 1 stop bit.
+        uart.line_control.write(0x03);
+
+        // 5. Enable and clear FIFO buffers and set the interrupt trigger at 14 bytes.
+        uart.fifo_control.write(0xC7);
+
+        // 6. Enable the data terminal and signal a request to send.
+        uart.modem_control.write(0x03);
+
+        uart
     }
 
-    /// Initialises the serial interface.
-    fn initialise(&mut self) {
-        // This is fine if these ports really are apart of the serial interface.
-        unsafe {
-            // 1. Disable serial interrupts.
-            self.interrupt_enable.write(0x00);
-
-            // 2. Enable the DLAB in order to set the baud rate.
-            self.line_control.write(0x80);
-
-            // 3. Set the baud rate to 115,200bps.
-            self.divisor_latch_low.write(0x01);
-            self.divisor_latch_high.write(0x00);
-
-            // 4. Disable the DLAB and configure the serial port
-            // for 8-bit words, with no parity bits and 1 stop bit.
-            self.line_control.write(0x03);
-
-            // 5. Enable and clear FIFO buffers and set the interrupt trigger at 14 bytes.
-            self.fifo_control.write(0xC7);
-
-            // 6. Enable the data terminal and signal a request to send.
-            self.modem_control.write(0x03);
-        }
-    }
-
-    /// Writes a byte out to the serial inteface.
+    /// Write a byte out to the serial inteface.
     fn write(&mut self, byte: u8) {
         // Reading the line status register has no side effects.
         // Writing to the transmitter holding buffer will send this
