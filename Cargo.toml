@@ -8,3 +8,4 @@ authors = ["Larry Tang <larrabyte@protonmail.ch>"]
 
 [dependencies]
 spin = "0.9.8"
+limine = "0.1.11"
