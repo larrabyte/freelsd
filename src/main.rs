@@ -1,3 +1,4 @@
+#![feature(panic_info_message)]
 #![no_main]
 #![no_std]
 
@@ -10,7 +11,23 @@ use crate::boot::BOOTLOADER_INFORMATION;
 use core::{panic::PanicInfo, arch::asm};
 
 #[panic_handler]
-fn panic(_: &PanicInfo) -> ! {
+fn panic(context: &PanicInfo) -> ! {
+    serial!("Kernel panic: ");
+
+    match context.message() {
+        Some(message) => serial!("{}", message),
+        None => serial!("(no message provided)")
+    };
+
+    serial!(", ");
+
+    match context.location() {
+        Some(location) => serial!("{}", location),
+        None => serial!("(no message provided)")
+    };
+
+    serial!("\n");
+
     unsafe {
         asm!("hlt", options(noreturn));
     }
