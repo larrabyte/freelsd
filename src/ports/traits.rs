@@ -2,13 +2,13 @@ use core::arch::asm;
 
 /// Indicates a type that can be read from or written to an I/O port.
 pub trait Blob {
-    /// Read a value in from an I/O port.
+    /// Reads a value in from an I/O port.
     /// 
     /// # Safety
     /// Reading values from an I/O port can have arbitrary side effects.
     unsafe fn read(port: u16) -> Self;
 
-    /// Write a value to an I/O port.
+    /// Writes a value to an I/O port.
     /// 
     /// # Safety
     /// Writing values to an I/O port can have arbitrary side effects.

@@ -15,7 +15,7 @@ fn panic(_: &PanicInfo) -> ! {
 
 #[no_mangle]
 pub extern "C" fn main() -> ! {
-    serialln!("Hello, World!");
+    serialln!("\n  ()-()\n.-(___)-. freelsd kernel\n _<   >_  you know the last plane out of sydney's almost gone?\n \\/   \\/\n");
 
     unsafe {
         asm!("hlt", options(noreturn));
