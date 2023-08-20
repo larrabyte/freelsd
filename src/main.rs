@@ -5,6 +5,7 @@
 mod ports;
 mod boot;
 mod uart;
+mod gdt;
 
 use crate::boot::BOOTLOADER_INFORMATION;
 
@@ -42,6 +43,7 @@ pub extern "C" fn main() -> ! {
     serialln!("Bootloader version: {:?}", bootloader.version.to_str().unwrap());
 
     unsafe {
+        gdt::load(&mut gdt::GDT);
         asm!("hlt", options(noreturn));
     }
 }
