@@ -43,7 +43,7 @@ pub extern "C" fn main() -> ! {
     serialln!("Bootloader version: {:?}", bootloader.version.to_str().unwrap());
 
     unsafe {
-        gdt::load(&mut gdt::GDT);
+        gdt::load();
         asm!("hlt", options(noreturn));
     }
 }
