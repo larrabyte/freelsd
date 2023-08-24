@@ -5,6 +5,7 @@
 mod ports;
 mod boot;
 mod uart;
+mod idt;
 mod gdt;
 
 use crate::boot::BOOTLOADER_INFORMATION;
@@ -44,6 +45,7 @@ pub extern "C" fn main() -> ! {
 
     unsafe {
         gdt::load();
+        idt::load();
         asm!("hlt", options(noreturn));
     }
 }
