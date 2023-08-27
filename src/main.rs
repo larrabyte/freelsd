@@ -3,6 +3,7 @@
 #![no_std]
 
 mod ports;
+mod panic;
 mod boot;
 mod uart;
 mod idt;
@@ -10,30 +11,7 @@ mod gdt;
 
 use crate::boot::BOOTLOADER_INFORMATION;
 
-use core::{panic::PanicInfo, arch::asm};
-
-#[panic_handler]
-fn panic(context: &PanicInfo) -> ! {
-    serial!("Kernel panic: ");
-
-    match context.message() {
-        Some(message) => serial!("{}", message),
-        None => serial!("(no message provided)")
-    };
-
-    serial!(", ");
-
-    match context.location() {
-        Some(location) => serial!("{}", location),
-        None => serial!("(no message provided)")
-    };
-
-    serial!("\n");
-
-    unsafe {
-        asm!("hlt", options(noreturn));
-    }
-}
+use core::arch::asm;
 
 #[no_mangle]
 pub extern "C" fn main() -> ! {
