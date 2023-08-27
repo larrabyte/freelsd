@@ -47,7 +47,7 @@ impl Descriptor {
 }
 
 impl GlobalDescriptorTable {
-    /// Creates a new global descriptor table.
+    /// Creates a pre-populated global descriptor table suitable for use in DPL 0.
     pub const fn new() -> Self {
         GlobalDescriptorTable([
             Descriptor::new_null(),
@@ -61,8 +61,13 @@ impl GlobalDescriptorTable {
     /// Loads the GDTR with this global descriptor table.
     ///
     /// # Safety
-    /// The GDTR should only be loaded during kernel initialisation.
-    pub unsafe fn load(&mut self) {
+    /// Callers must ensure that:
+    /// - A valid null descriptor exists at offset 0 (in bytes).
+    /// - A valid 64-bit DPL 0 code descriptor exists at offset 8 (in bytes).
+    /// - A valid 64-bit DPL 0 data descriptor exists at offset 16 (in bytes).
+    /// - A valid 64-bit DPL 3 code descriptor exists at offset 24 (in bytes).
+    /// - A valid 64-bit DPL 3 code descriptor exists at offset 32 (in bytes).
+    pub unsafe fn load(&'static self) {
         let ptr = GdtPointer {
             size: (size_of::<GlobalDescriptorTable>() - 1) as u16,
             pointer: self.0.as_ptr()

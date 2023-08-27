@@ -90,7 +90,8 @@ impl InterruptDescriptorTable {
     /// Loads the IDTR with this interrupt descriptor table.
     ///
     /// # Safety
-    /// The IDTR should only be loaded during kernel initialisation.
+    /// Callers must ensure that all interrupt gates are present,
+    /// 64-bit, set to DPL 0 and point to a valid handler.
     pub unsafe fn load(&'static self) {
         let ptr = IdtPointer {
             size: (size_of::<InterruptDescriptorTable>() - 1) as u16,

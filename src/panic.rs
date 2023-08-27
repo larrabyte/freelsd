@@ -1,6 +1,6 @@
-use crate::serial;
+use crate::{serial, instructions};
 
-use core::{arch::asm, panic::PanicInfo};
+use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(context: &PanicInfo) -> ! {
@@ -20,7 +20,7 @@ fn panic(context: &PanicInfo) -> ! {
 
     serial!("\n");
 
-    unsafe {
-        asm!("hlt", options(noreturn));
+    loop {
+        instructions::hlt();
     }
 }

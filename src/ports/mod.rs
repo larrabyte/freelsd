@@ -12,7 +12,7 @@ pub struct UnsafePort<T: Blob> {
 
 impl<T: Blob> UnsafePort<T> {
     /// Creates an instance of `UnsafePort` for reading/writing values of `T`.
-    pub const unsafe fn new(port: u16) -> Self {
+    pub const fn new(port: u16) -> Self {
         Self {port, phantom: PhantomData}
     }
 

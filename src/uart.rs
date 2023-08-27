@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use crate::ports::UnsafePort;
+use crate::{ports::UnsafePort, instructions};
 
-use core::{fmt, arch::asm, hint::spin_loop};
+use core::{fmt, hint::spin_loop};
 use spin::{Mutex, Lazy};
 
 // Prints to COM1.
@@ -101,9 +101,9 @@ impl Uart {
     // Implementation detail for the serial macro.
     #[doc(hidden)]
     pub fn format(&mut self, args: fmt::Arguments) {
-        unsafe {asm!("cli", options(nomem, preserves_flags))}
+        instructions::cli();
         fmt::Write::write_fmt(self, args).unwrap();
-        unsafe {asm!("sti", options(nomem, preserves_flags))}
+        instructions::sti();
     }
 }
 

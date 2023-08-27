@@ -8,9 +8,8 @@ mod asm;
 static IDT: Lazy<InterruptDescriptorTable> = Lazy::new(InterruptDescriptorTable::default);
 
 /// Load the IDTR with the kernel's interrupt descriptor table.
-///
-/// # Safety
-/// The IDTR should only be loaded during kernel initialisation.
-pub unsafe fn load() {
-    IDT.load();
+pub fn load() {
+    unsafe {
+        IDT.load();
+    }
 }
