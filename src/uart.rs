@@ -2,7 +2,7 @@
 
 use crate::ports::UnsafePort;
 
-use core::{fmt, hint::spin_loop};
+use core::{fmt, arch::asm, hint::spin_loop};
 use spin::{Mutex, Lazy};
 
 // Prints to COM1.
@@ -14,7 +14,7 @@ macro_rules! serial {
 // Prints to COM1 with a newline.
 #[macro_export]
 macro_rules! serialln {
-    () => ($crate::print!("\n"));
+    () => ($crate::serial!("\n"));
     ($($arg:tt)*) => ($crate::serial!("{}\n", format_args!($($arg)*)));
 }
 
@@ -101,7 +101,9 @@ impl Uart {
     // Implementation detail for the serial macro.
     #[doc(hidden)]
     pub fn format(&mut self, args: fmt::Arguments) {
+        unsafe {asm!("cli", options(nomem, preserves_flags))}
         fmt::Write::write_fmt(self, args).unwrap();
+        unsafe {asm!("sti", options(nomem, preserves_flags))}
     }
 }
 
