@@ -1,4 +1,4 @@
-use crate::{serial, instructions, uart::COM1};
+use crate::{serial, serialln, instructions, uart::COM1};
 use core::panic::PanicInfo;
 
 #[panic_handler]
@@ -13,22 +13,20 @@ fn panic(context: &PanicInfo) -> ! {
         COM1.force_unlock();
     }
 
-    serial!("\n");
-    serial!("Kernel panic: ");
+    serialln!();
+    serialln!("a kernel panic has occurred!");
 
-    match context.message() {
-        Some(message) => serial!("{}", message),
-        None => serial!("(no message provided)")
-    };
-
-    serial!(", ");
-
+    serial!("location: ");
     match context.location() {
-        Some(location) => serial!("{}", location),
-        None => serial!("(no message provided)")
+        Some(location) => serialln!("{}", location),
+        None => serialln!("no location provided")
     };
 
-    serial!("\n");
+    serial!("reason: ");
+    match context.message() {
+        Some(message) => serialln!("{}", message),
+        None => serialln!("no reason provided")
+    };
 
     loop {
         instructions::hlt();
