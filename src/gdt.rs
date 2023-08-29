@@ -6,7 +6,7 @@ struct Descriptor(u64);
 
 #[derive(Debug)]
 #[repr(transparent)]
-pub struct GlobalDescriptorTable([Descriptor; 5]);
+struct GlobalDescriptorTable([Descriptor; 5]);
 
 #[derive(Debug)]
 #[repr(C, packed)]
@@ -14,6 +14,8 @@ struct GdtPointer {
     size: u16,
     pointer: *const Descriptor
 }
+
+static mut GDT: GlobalDescriptorTable = GlobalDescriptorTable::new();
 
 impl Descriptor {
     /// Creates a null memory segment descriptor.
@@ -48,7 +50,7 @@ impl Descriptor {
 
 impl GlobalDescriptorTable {
     /// Creates a pre-populated global descriptor table suitable for use in DPL 0.
-    pub const fn new() -> Self {
+    const fn new() -> Self {
         GlobalDescriptorTable([
             Descriptor::new_null(),
             Descriptor::new_kernel_code(),
@@ -67,7 +69,7 @@ impl GlobalDescriptorTable {
     /// - A valid 64-bit DPL 0 data descriptor exists at offset 16 (in bytes).
     /// - A valid 64-bit DPL 3 code descriptor exists at offset 24 (in bytes).
     /// - A valid 64-bit DPL 3 code descriptor exists at offset 32 (in bytes).
-    pub unsafe fn load(&'static self) {
+    unsafe fn load(&'static self) {
         let ptr = GdtPointer {
             size: (size_of::<GlobalDescriptorTable>() - 1) as u16,
             pointer: self.0.as_ptr()
@@ -89,5 +91,12 @@ impl GlobalDescriptorTable {
             inout("rax") &ptr => _,
             options(preserves_flags)
         );
+    }
+}
+
+/// Loads the GDTR with the kernel's global descriptor table.
+pub fn load() {
+    unsafe {
+        GDT.load();
     }
 }
