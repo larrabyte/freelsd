@@ -1,5 +1,4 @@
 use self::types::InterruptDescriptorTable;
-
 use spin::Lazy;
 
 mod types;

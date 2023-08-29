@@ -1,26 +1,28 @@
 #![allow(dead_code)]
 
-use crate::{ports::UnsafePort, instructions};
-
+use crate::ports::UnsafePort;
 use core::{fmt, hint::spin_loop};
-use spin::{Mutex, Lazy};
+use spin::{Lazy, Mutex};
 
-// Prints to COM1.
+/// Prints to COM1.
 #[macro_export]
 macro_rules! serial {
     ($($arg:tt)*) => ($crate::uart::COM1.lock().format(format_args!($($arg)*)));
 }
 
-// Prints to COM1 with a newline.
+/// Prints to COM1 with a newline.
 #[macro_export]
 macro_rules! serialln {
     () => ($crate::serial!("\n"));
     ($($arg:tt)*) => ($crate::serial!("{}\n", format_args!($($arg)*)));
 }
 
-// At least on x86_64, this should always be 0x3F8.
 pub static COM1: Lazy<Mutex<Uart>> = Lazy::new(|| {
-    Mutex::new(unsafe {Uart::new(0x3F8)})
+    // On x86_64 platforms, the first serial interface
+    // should always be located at 0x3F8.
+    unsafe {
+        Mutex::new(Uart::new(0x3F8))
+    }
 });
 
 /// A representation of the 16650 UART.
@@ -86,9 +88,9 @@ impl Uart {
 
     /// Writes a byte out to the serial inteface.
     fn write(&mut self, byte: u8) {
-        // SAFETY: Reading the line status register has no side effects.
+        // Reading the line status register has no side effects.
         // Writing to the transmitter holding buffer will send this
-        // character through the serial interface, which is intended.
+        // character out to the serial interface.
         unsafe {
             while (self.line_status.read() & 0x20) == 0 {
                 spin_loop();
@@ -101,9 +103,7 @@ impl Uart {
     // Implementation detail for the serial macro.
     #[doc(hidden)]
     pub fn format(&mut self, args: fmt::Arguments) {
-        instructions::cli();
         fmt::Write::write_fmt(self, args).unwrap();
-        instructions::sti();
     }
 }
 
