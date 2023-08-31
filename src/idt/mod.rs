@@ -1,4 +1,31 @@
-use self::handlers::{panic_without_error_code, panic_with_error_code};
+use self::handlers::{
+    division_by_zero,
+    debug,
+    non_maskable_interrupt,
+    breakpoint,
+    overflow,
+    bound_range_exceeded,
+    invalid_opcode,
+    device_not_available,
+    double_fault,
+    coprocessor_segment_overrun,
+    invalid_task_state_segment,
+    segment_not_present,
+    stack_segment_fault,
+    general_protection_fault,
+    page_fault,
+    x87_floating_point_exception,
+    alignment_check,
+    machine_check,
+    simd_floating_point_exception,
+    virtualisation_exception,
+    control_protection_exception,
+    hypervisor_injection_exception,
+    vmm_communication_exception,
+    security_exception,
+    panic_without_error_code
+};
+
 use core::{arch::asm, mem::size_of, marker::PhantomData};
 use spin::Lazy;
 
@@ -33,8 +60,7 @@ pub struct InterruptDescriptorTable {
     hypervisor_injection_exception: InterruptGate<WithoutErrorCode>,
     vmm_communication_exception: InterruptGate<WithErrorCode>,
     security_exception: InterruptGate<WithErrorCode>,
-    reserved_31: InterruptGate<WithoutErrorCode>,
-    reserved_32_to_255: [InterruptGate<WithoutErrorCode>; 224]
+    reserved_31_to_255: [InterruptGate<WithoutErrorCode>; 225]
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -77,34 +103,33 @@ impl InterruptDescriptorTable {
     /// Creates a pre-populated interrupt descriptor table.
     fn new() -> Self {
         Self {
-            division_by_zero: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            debug: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            non_maskable_interrupt: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            breakpoint: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            overflow: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            bound_range_exceeded: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            invalid_opcode: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            device_not_available: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            double_fault: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            coprocessor_segment_overrun: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            invalid_task_state_segment: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            segment_not_present: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            stack_segment_fault: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            general_protection_fault: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            page_fault: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
+            division_by_zero: InterruptGate::<WithoutErrorCode>::new(division_by_zero),
+            debug: InterruptGate::<WithoutErrorCode>::new(debug),
+            non_maskable_interrupt: InterruptGate::<WithoutErrorCode>::new(non_maskable_interrupt),
+            breakpoint: InterruptGate::<WithoutErrorCode>::new(breakpoint),
+            overflow: InterruptGate::<WithoutErrorCode>::new(overflow),
+            bound_range_exceeded: InterruptGate::<WithoutErrorCode>::new(bound_range_exceeded),
+            invalid_opcode: InterruptGate::<WithoutErrorCode>::new(invalid_opcode),
+            device_not_available: InterruptGate::<WithoutErrorCode>::new(device_not_available),
+            double_fault: InterruptGate::<WithErrorCode>::new(double_fault),
+            coprocessor_segment_overrun: InterruptGate::<WithoutErrorCode>::new(coprocessor_segment_overrun),
+            invalid_task_state_segment: InterruptGate::<WithErrorCode>::new(invalid_task_state_segment),
+            segment_not_present: InterruptGate::<WithErrorCode>::new(segment_not_present),
+            stack_segment_fault: InterruptGate::<WithErrorCode>::new(stack_segment_fault),
+            general_protection_fault: InterruptGate::<WithErrorCode>::new(general_protection_fault),
+            page_fault: InterruptGate::<WithErrorCode>::new(page_fault),
             reserved_15: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            x87_floating_point_exception: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            alignment_check: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            machine_check: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            simd_floating_point_exception: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            virtualisation_exception: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            control_protection_exception: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
+            x87_floating_point_exception: InterruptGate::<WithoutErrorCode>::new(x87_floating_point_exception),
+            alignment_check: InterruptGate::<WithErrorCode>::new(alignment_check),
+            machine_check: InterruptGate::<WithoutErrorCode>::new(machine_check),
+            simd_floating_point_exception: InterruptGate::<WithoutErrorCode>::new(simd_floating_point_exception),
+            virtualisation_exception: InterruptGate::<WithoutErrorCode>::new(virtualisation_exception),
+            control_protection_exception: InterruptGate::<WithErrorCode>::new(control_protection_exception),
             reserved_22_to_27: [InterruptGate::<WithoutErrorCode>::new(panic_without_error_code); 6],
-            hypervisor_injection_exception: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            vmm_communication_exception: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            security_exception: InterruptGate::<WithErrorCode>::new(panic_with_error_code),
-            reserved_31: InterruptGate::<WithoutErrorCode>::new(panic_without_error_code),
-            reserved_32_to_255: [InterruptGate::<WithoutErrorCode>::new(panic_without_error_code); 224]
+            hypervisor_injection_exception: InterruptGate::<WithoutErrorCode>::new(hypervisor_injection_exception),
+            vmm_communication_exception: InterruptGate::<WithErrorCode>::new(vmm_communication_exception),
+            security_exception: InterruptGate::<WithErrorCode>::new(security_exception),
+            reserved_31_to_255: [InterruptGate::<WithoutErrorCode>::new(panic_without_error_code); 225]
         }
     }
 
