@@ -2,11 +2,11 @@ use core::{arch::asm, mem::size_of};
 
 #[derive(Debug)]
 #[repr(transparent)]
-struct Descriptor(u64);
+struct GlobalDescriptorTable([Descriptor; 5]);
 
 #[derive(Debug)]
 #[repr(transparent)]
-struct GlobalDescriptorTable([Descriptor; 5]);
+struct Descriptor(u64);
 
 #[derive(Debug)]
 #[repr(C, packed)]
@@ -16,6 +16,13 @@ struct GdtPointer {
 }
 
 static mut GDT: GlobalDescriptorTable = GlobalDescriptorTable::new();
+
+/// Loads the GDTR with the kernel's global descriptor table.
+pub fn load() {
+    unsafe {
+        GDT.load();
+    }
+}
 
 impl Descriptor {
     /// Creates a null memory segment descriptor.
@@ -91,12 +98,5 @@ impl GlobalDescriptorTable {
             inout("rax") &ptr => _,
             options(preserves_flags)
         );
-    }
-}
-
-/// Loads the GDTR with the kernel's global descriptor table.
-pub fn load() {
-    unsafe {
-        GDT.load();
     }
 }

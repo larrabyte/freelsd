@@ -1,4 +1,5 @@
 #![feature(panic_info_message)]
+#![feature(abi_x86_interrupt)]
 #![no_main]
 #![no_std]
 
