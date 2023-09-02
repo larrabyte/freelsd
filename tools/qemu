@@ -17,3 +17,6 @@ qemu-system-x86_64 \
     -drive format=raw,file=build/disk.img \
     -device isa-debug-exit,iobase=0xf4,iosize=0x04 \
     -device VGA,edid=yes,xres=640,yres=480
+
+# QEMU shifts the value from the ISA debug device left by one.
+exit $(($? >> 1))

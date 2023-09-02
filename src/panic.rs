@@ -1,4 +1,4 @@
-use crate::{serial, serialln, instructions, uart::COM1};
+use crate::{serial, serialln, instructions, uart::COM1, ports::UnsafePort};
 use core::panic::PanicInfo;
 
 #[panic_handler]
@@ -27,6 +27,11 @@ fn panic(context: &PanicInfo) -> ! {
         Some(message) => serialln!("{}", message),
         None => serialln!("no reason provided")
     };
+
+    // This intentionally exits QEMU as long as a debug device was setup.
+    unsafe {
+        UnsafePort::new(0xF4).write(1u32);
+    }
 
     loop {
         instructions::hlt();
