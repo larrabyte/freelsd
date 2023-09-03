@@ -7,6 +7,7 @@
 #![no_std]
 
 mod instructions;
+mod memory;
 mod ports;
 mod panic;
 mod boot;
