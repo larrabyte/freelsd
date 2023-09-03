@@ -1,5 +1,8 @@
 #![feature(panic_info_message)]
 #![feature(abi_x86_interrupt)]
+#![feature(custom_test_frameworks)]
+#![test_runner(test::dispatch)]
+#![reexport_test_harness_main = "testing"]
 #![no_main]
 #![no_std]
 
@@ -24,7 +27,44 @@ extern "C" fn main() -> ! {
     gdt::load();
     idt::load();
 
+    #[cfg(test)]
+    testing();
+
     loop {
         instructions::hlt();
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{serial, serialln, ports::UnsafePort, instructions};
+
+    pub trait Testable {
+        fn run(&self);
+    }
+
+    pub fn dispatch(tests: &[&dyn Testable]) -> ! {
+        serialln!("running {} tests", tests.len());
+
+        for test in tests {
+            test.run();
+        }
+
+        // This intentionally exits QEMU as long as a debug device was setup.
+        unsafe {
+            UnsafePort::new(0xF4).write(0u32);
+        }
+
+        loop {
+            instructions::hlt();
+        }
+    }
+
+    impl<T: Fn()> Testable for T {
+        fn run(&self) {
+            serial!("test {} ... ", core::any::type_name::<T>());
+            self();
+            serialln!("ok");
+        }
     }
 }
