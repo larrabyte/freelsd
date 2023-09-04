@@ -43,20 +43,19 @@ pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalMemoryAllocator>> = Laz
     // immediately before it is used to create the slice.
     let bitmap = unsafe {
         for byte in 0..bytes {
-            let result = (0..8)
-                .map(|i| {
-                    memory
-                        .memmap()
-                        .iter()
-                        .filter(|e| e.typ == MemoryMapEntryType::Usable /* || e.typ == MemoryMapEntryType::BootloaderReclaimable */)
-                        .find(|e| ((e.base as usize)..(e.base as usize + e.len as usize)).contains(&((byte * 8 + i) * FRAME_SIZE)))
-                        .is_some() as u8
-                })
+            base.add(byte).write(0xFF);
+        }
 
-                .enumerate()
-                .fold(0xFF, |acc, (index, bit)| acc ^ (bit << (7 - index)));
+        for entry in memory.memmap().iter().filter(|e| e.typ == MemoryMapEntryType::Usable /* || e.typ == MemoryMapEntryType::BootloaderReclaimable */) {
+            let start = (entry.base as usize + FRAME_SIZE - 1) / FRAME_SIZE;
+            let end = (entry.base as usize + entry.len as usize) / FRAME_SIZE;
 
-            base.add(byte).write(result);
+            for frame in start..end {
+                let index = frame / 8;
+                let offset = frame % 8;
+                let byte = base.add(index).read() & !(1 << (7 - offset));
+                base.add(index).write(byte);
+            }
         }
 
         core::slice::from_raw_parts_mut(base, bytes)
