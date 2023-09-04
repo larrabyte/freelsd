@@ -15,6 +15,7 @@ struct GdtPointer {
     pointer: *const Descriptor
 }
 
+// This is marked as mutable because the CPU is able to write to the GDT.
 static mut GDT: GlobalDescriptorTable = GlobalDescriptorTable::new();
 
 /// Loads the GDTR with the kernel's global descriptor table.
@@ -27,38 +28,38 @@ pub fn load() {
 impl Descriptor {
     /// Creates a null memory segment descriptor.
     const fn new_null() -> Self {
-        Descriptor(0)
+        Self(0)
     }
 
     /// Creates a kernel-mode code memory segment descriptor.
     const fn new_kernel_code() -> Self {
         // Readable + code descriptor + DPL 0 + present + long mode.
-        Descriptor(1 << 41 | 0b11 << 43 | 1 << 47 | 1 << 53)
+        Self(1 << 41 | 0b11 << 43 | 1 << 47 | 1 << 53)
     }
 
     /// Creates a user-mode code memory segment descriptor.
     const fn new_user_code() -> Self {
         // Readable + code descriptor + DPL 3 + present + long mode.
-        Descriptor(1 << 41 | 0b11 << 43 | 0b11 << 45 | 1 << 47 | 1 << 53)
+        Self(1 << 41 | 0b11 << 43 | 0b11 << 45 | 1 << 47 | 1 << 53)
     }
 
     /// Creates a kernel data memory segment descriptor.
     const fn new_kernel_data() -> Self {
         // Readable + data descriptor + DPL 0 + present + long mode.
-        Descriptor(1 << 41 | 0b10 << 43 | 1 << 47)
+        Self(1 << 41 | 0b10 << 43 | 1 << 47)
     }
 
     /// Creates a user-mode data memory segment descriptor.
     const fn new_user_data() -> Self {
         // Readable + data descriptor + DPL 3 + present + long mode.
-        Descriptor(1 << 41 | 0b10 << 43 | 0b11 << 45 | 1 << 47)
+        Self(1 << 41 | 0b10 << 43 | 0b11 << 45 | 1 << 47)
     }
 }
 
 impl GlobalDescriptorTable {
     /// Creates a pre-populated global descriptor table suitable for use in DPL 0.
     const fn new() -> Self {
-        GlobalDescriptorTable([
+        Self([
             Descriptor::new_null(),
             Descriptor::new_kernel_code(),
             Descriptor::new_kernel_data(),
