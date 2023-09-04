@@ -150,7 +150,7 @@ impl InterruptDescriptorTable {
 impl InterruptGate<WithoutErrorCode> {
     fn new(f: unsafe extern "x86-interrupt" fn(InterruptStackFrame)) -> Self {
         let address = f as u128;
-        let target = address & 0xFFFF | ((address & 0xFFFF0000) << 32) | ((address & 0xFFFFFFFF00000000) << 32);
+        let target = address & 0xffff | ((address & 0xffff_0000) << 32) | ((address & 0xffff_ffff_0000_0000) << 32);
         let segment = 1 << 19;
 
         // Target offset + kernel code segment + 64-bit interrupt gate + present.
@@ -161,7 +161,7 @@ impl InterruptGate<WithoutErrorCode> {
 impl InterruptGate<WithErrorCode> {
     fn new(f: unsafe extern "x86-interrupt" fn(InterruptStackFrame, u64)) -> Self {
         let address = f as u128;
-        let target = address & 0xFFFF | ((address & 0xFFFF0000) << 32) | ((address & 0xFFFFFFFF00000000) << 32);
+        let target = address & 0xffff | ((address & 0xffff_0000) << 32) | ((address & 0xffff_ffff_0000_0000) << 32);
         let segment = 1 << 19;
 
         // Target offset + kernel code segment + 64-bit interrupt gate + present.

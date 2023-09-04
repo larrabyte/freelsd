@@ -30,7 +30,7 @@ fn panic(context: &PanicInfo) -> ! {
 
     // This intentionally exits QEMU as long as a debug device was setup.
     unsafe {
-        UnsafePort::new(0xF4).write(1u32);
+        UnsafePort::new(0xf4).write(1u32);
     }
 
     loop {

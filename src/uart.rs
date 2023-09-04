@@ -19,9 +19,9 @@ macro_rules! serialln {
 
 pub static COM1: Lazy<Mutex<Uart>> = Lazy::new(|| {
     // On x86_64 platforms, the first serial interface
-    // should always be located at 0x3F8.
+    // should always be located at 0x3f8.
     unsafe {
-        Mutex::new(Uart::new(0x3F8))
+        Mutex::new(Uart::new(0x3f8))
     }
 });
 
@@ -78,7 +78,7 @@ impl Uart {
         uart.line_control.write(0x03);
 
         // 5. Enable and clear FIFO buffers and set the interrupt trigger at 14 bytes.
-        uart.fifo_control.write(0xC7);
+        uart.fifo_control.write(0xc7);
 
         // 6. Enable the data terminal and signal a request to send.
         uart.modem_control.write(0x03);

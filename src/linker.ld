@@ -16,7 +16,7 @@ PHDRS {
 }
 
 SECTIONS {
-    . = 0xFFFFFFFF80000000;
+    . = 0xffffffff80000000;
 
     .text ALIGN(CONSTANT(MAXPAGESIZE)) : {
         *(.text*)
