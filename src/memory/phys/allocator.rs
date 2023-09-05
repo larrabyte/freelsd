@@ -1,23 +1,23 @@
 #![allow(dead_code)]
 
+use super::frame::Frame;
 use crate::boot::MEMORY_MAP;
-use core::ptr::NonNull;
 use limine::MemoryMapEntryType;
 use spin::{Lazy, Mutex};
 
 #[derive(Debug)]
-pub struct PhysicalMemoryAllocator {
+pub struct PhysicalFrameAllocator {
     bitmap: &'static mut [u8]
 }
 
 const FRAME_SIZE: usize = 0x1000;
 
-pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalMemoryAllocator>> = Lazy::new(|| {
+pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalFrameAllocator>> = Lazy::new(|| {
     // TODO: Incorporate bootloader reclaimable memory.
     let memory = MEMORY_MAP.get_response().get().unwrap();
 
     // Since the Limine boot protocol only guarantees that usable and bootloader reclaimable
-    // entries are non-overlapping and page-aligned, we must find the last available address
+    // entries are non-overlapping and aligned to a 4KiB boundary, we must find the last available address
     // and use it to calculate the resulting size of the bitmap that covers 0..=end.
     let end = memory.memmap().iter().rev()
         .find(|e| e.typ == MemoryMapEntryType::Usable /* || e.typ == MemoryMapEntryType::BootloaderReclaimable */)
@@ -61,17 +61,17 @@ pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalMemoryAllocator>> = Laz
         core::slice::from_raw_parts_mut(base, bytes)
     };
 
-    Mutex::new(PhysicalMemoryAllocator { bitmap })
+    Mutex::new(PhysicalFrameAllocator { bitmap })
 });
 
-impl PhysicalMemoryAllocator {
+impl PhysicalFrameAllocator {
     /// Attempts to allocate a single frame of physical memory.
-    pub fn allocate(&mut self) -> Option<NonNull<u8>> {
+    pub fn allocate(&mut self) -> Option<Frame> {
         let (index, byte) = self.bitmap.iter_mut().enumerate().find(|(_, b)| **b != 0xFF)?;
         let offset = (0..8).rev().map(|v| *byte & (1 << v)).position(|b| b == 0).unwrap();
         *byte |= 1 << (7 - offset);
 
-        NonNull::new(((index * 8 + offset as usize) * FRAME_SIZE) as *mut u8)
+        Frame::new((index * 8 + offset) * FRAME_SIZE)
     }
 
     /// Deallocates a frame of physical memory.
@@ -79,8 +79,8 @@ impl PhysicalMemoryAllocator {
     /// # Safety
     /// Callers must ensure that the given frame is currently allocated via this allocator and that
     /// deallocated memory is not read from or written to afterwards.
-    pub unsafe fn deallocate(&mut self, memory: NonNull<u8>) {
-        let frame = memory.as_ptr() as usize / FRAME_SIZE;
+    pub unsafe fn deallocate(&mut self, memory: Frame) {
+        let frame = memory.addr() / FRAME_SIZE;
         self.bitmap[frame / 8] &= !(1 << (7 - frame % 8));
     }
 }
