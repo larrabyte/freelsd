@@ -66,7 +66,7 @@ pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalFrameAllocator>> = Lazy
 
 impl PhysicalFrameAllocator {
     /// Attempts to allocate a single frame of physical memory.
-    pub fn allocate(&mut self) -> Option<Frame> {
+    pub fn alloc(&mut self) -> Option<Frame> {
         let (index, byte) = self.bitmap.iter_mut().enumerate().find(|(_, b)| **b != 0xFF)?;
         let offset = (0..8).rev().map(|v| *byte & (1 << v)).position(|b| b == 0).unwrap();
         *byte |= 1 << (7 - offset);
@@ -77,11 +77,11 @@ impl PhysicalFrameAllocator {
     /// Deallocates a frame of physical memory.
     ///
     /// # Safety
-    /// Callers must ensure that the given frame is currently allocated via this allocator and that
-    /// deallocated memory is not read from or written to afterwards.
-    pub unsafe fn deallocate(&mut self, memory: Frame) {
-        let frame = memory.addr() / FRAME_SIZE;
-        self.bitmap[frame / 8] &= !(1 << (7 - frame % 8));
+    /// Callers must ensure that `frame` was allocated by this allocator and that no further reads
+    /// or writes occur to this physical frame after deallocation.
+    pub unsafe fn dealloc(&mut self, frame: Frame) {
+        let index = frame.addr() / FRAME_SIZE;
+        self.bitmap[index / 8] &= !(1 << (7 - index % 8));
     }
 }
 
@@ -91,8 +91,8 @@ mod test {
 
     #[test_case]
     fn allocator_returns_different_frames_if_memory_is_available() {
-        let a = PHYSICAL_BITMAP_ALLOCATOR.lock().allocate();
-        let b = PHYSICAL_BITMAP_ALLOCATOR.lock().allocate();
+        let a = PHYSICAL_BITMAP_ALLOCATOR.lock().alloc();
+        let b = PHYSICAL_BITMAP_ALLOCATOR.lock().alloc();
 
         match (a, b) {
             // If no memory is available, then two Nones is okay.
