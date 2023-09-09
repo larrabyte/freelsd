@@ -77,7 +77,7 @@ struct WithoutErrorCode;
 #[repr(C, packed)]
 struct IdtPointer {
     size: u16,
-    pointer: *const InterruptDescriptorTable
+    ptr: *const InterruptDescriptorTable
 }
 
 #[derive(Debug)]
@@ -140,7 +140,7 @@ impl InterruptDescriptorTable {
     unsafe fn load(&'static self) {
         let ptr = IdtPointer {
             size: (size_of::<InterruptDescriptorTable>() - 1) as u16,
-            pointer: self as *const InterruptDescriptorTable
+            ptr: self as *const InterruptDescriptorTable
         };
 
         asm!("lidt [{}]", in(reg) &ptr, options(preserves_flags));

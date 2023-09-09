@@ -12,7 +12,7 @@ struct Descriptor(u64);
 #[repr(C, packed)]
 struct GdtPointer {
     size: u16,
-    pointer: *const Descriptor
+    ptr: *const Descriptor
 }
 
 // This is marked as mutable because the CPU is able to write to the GDT.
@@ -80,7 +80,7 @@ impl GlobalDescriptorTable {
     unsafe fn load(&'static self) {
         let ptr = GdtPointer {
             size: (size_of::<GlobalDescriptorTable>() - 1) as u16,
-            pointer: self.0.as_ptr()
+            ptr: self.0.as_ptr()
         };
 
         asm!(
