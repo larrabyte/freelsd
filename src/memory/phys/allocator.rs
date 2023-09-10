@@ -1,16 +1,10 @@
-#![allow(dead_code)]
-
 use super::frame::Frame;
 use crate::boot::MEMORY_MAP;
 use limine::MemoryMapEntryType;
 use spin::{Lazy, Mutex};
 
-#[derive(Debug)]
-pub struct PhysicalFrameAllocator {
-    bitmap: &'static mut [u8]
-}
-
-const FRAME_SIZE: usize = 0x1000;
+/// A bitmap-based physical frame allocator.
+pub struct PhysicalFrameAllocator(&'static mut [u8]);
 
 pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalFrameAllocator>> = Lazy::new(|| {
     // TODO: Incorporate bootloader reclaimable memory.
@@ -25,7 +19,7 @@ pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalFrameAllocator>> = Lazy
         .expect("physical memory allocator requires memory to allocate");
 
     // Perform ceiling division to account for imprecise division.
-    let frames = (end + FRAME_SIZE - 1) / FRAME_SIZE;
+    let frames = (end + Frame::SIZE - 1) / Frame::SIZE;
     let bytes = (frames + 7) / 8;
 
     let base = memory.memmap().iter()
@@ -47,8 +41,8 @@ pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalFrameAllocator>> = Lazy
         }
 
         for entry in memory.memmap().iter().filter(|e| e.typ == MemoryMapEntryType::Usable /* || e.typ == MemoryMapEntryType::BootloaderReclaimable */) {
-            let start = (entry.base as usize + FRAME_SIZE - 1) / FRAME_SIZE;
-            let end = (entry.base as usize + entry.len as usize) / FRAME_SIZE;
+            let start = (entry.base as usize + Frame::SIZE - 1) / Frame::SIZE;
+            let end = (entry.base as usize + entry.len as usize) / Frame::SIZE;
 
             for frame in start..end {
                 let index = frame / 8;
@@ -61,45 +55,77 @@ pub static PHYSICAL_BITMAP_ALLOCATOR: Lazy<Mutex<PhysicalFrameAllocator>> = Lazy
         core::slice::from_raw_parts_mut(base, bytes)
     };
 
-    Mutex::new(PhysicalFrameAllocator { bitmap })
+    Mutex::new(PhysicalFrameAllocator(bitmap))
 });
 
 impl PhysicalFrameAllocator {
-    /// Attempts to allocate a single frame of physical memory.
+    /// Checks whether `frame` is currently marked as available for allocation.
+    pub fn available(&self, frame: Frame) -> bool {
+        let index = frame.addr() / Frame::SIZE;
+        self.0[index / 8] & (1 << (7 - index % 8)) == 0
+    }
+
+    /// Allocates a frame of physical memory, unless memory has been exhausted.
     pub fn alloc(&mut self) -> Option<Frame> {
-        let (index, byte) = self.bitmap.iter_mut().enumerate().find(|(_, b)| **b != 0xFF)?;
+        let (index, byte) = self.0.iter_mut().enumerate().find(|(_, b)| **b != 0xFF)?;
         let offset = (0..8).rev().map(|v| *byte & (1 << v)).position(|b| b == 0).unwrap();
         *byte |= 1 << (7 - offset);
 
-        Frame::new((index * 8 + offset) * FRAME_SIZE)
+        Some(Frame::containing_addr(((index * 8) + offset) * Frame::SIZE))
+    }
+
+    /// Allocates a zeroed frame of physical memory, unless memory has been exhausted.
+    pub fn alloc_zeroed(&mut self) -> Option<Frame> {
+        let frame = self.alloc()?;
+        let ptr = frame.as_non_null().as_ptr();
+
+        // The pointer should be dereferenceable as it came from a physical frame allocation,
+        // and it does not leave the bounds of the frame.
+        unsafe {
+            for i in 0..Frame::SIZE {
+                ptr.add(i).write(0x00);
+            }
+        }
+
+        Some(frame)
     }
 
     /// Deallocates a frame of physical memory.
     ///
     /// # Safety
-    /// Callers must ensure that `frame` was allocated by this allocator and that no further reads
-    /// or writes occur to this physical frame after deallocation.
+    /// Callers must ensure that `frame` was allocated by the same allocator instance and that no
+    /// further reads or writes occur after deallocation.
     pub unsafe fn dealloc(&mut self, frame: Frame) {
-        let index = frame.addr() / FRAME_SIZE;
-        self.bitmap[index / 8] &= !(1 << (7 - index % 8));
+        let index = frame.addr() / Frame::SIZE;
+        self.0[index / 8] &= !(1 << (7 - index % 8));
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::PHYSICAL_BITMAP_ALLOCATOR;
+    use super::PHYSICAL_BITMAP_ALLOCATOR as ALLOCATOR;
 
     #[test_case]
-    fn allocator_returns_different_frames_if_memory_is_available() {
-        let a = PHYSICAL_BITMAP_ALLOCATOR.lock().alloc();
-        let b = PHYSICAL_BITMAP_ALLOCATOR.lock().alloc();
+    fn allocator_marks_allocated_frames_as_unavailable() {
+        let frame = ALLOCATOR.lock().alloc().unwrap();
+        assert_eq!(ALLOCATOR.lock().available(frame), false);
+    }
 
-        match (a, b) {
-            // If no memory is available, then two Nones is okay.
-            (None, None) => {},
+    #[test_case]
+    fn allocator_allocates_disjoint_frames() {
+        let a = ALLOCATOR.lock().alloc().unwrap();
+        let b = ALLOCATOR.lock().alloc().unwrap();
+        assert_ne!(a, b);
+    }
 
-            // Otherwise, check whether the allocations are disjoint.
-            _ => assert_ne!(a, b)
-        };
+    #[test_case]
+    fn allocator_marks_deallocated_frames_as_available() {
+        let frame = ALLOCATOR.lock().alloc().unwrap();
+
+        unsafe {
+            ALLOCATOR.lock().dealloc(frame);
+        }
+
+        assert_eq!(ALLOCATOR.lock().available(frame), true);
     }
 }
