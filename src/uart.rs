@@ -1,7 +1,4 @@
-#![allow(dead_code)]
-
 use crate::ports::UnsafePort;
-use core::{fmt, hint::spin_loop};
 use spin::{Lazy, Mutex};
 
 /// Prints to COM1.
@@ -18,8 +15,7 @@ macro_rules! serialln {
 }
 
 pub static COM1: Lazy<Mutex<Uart>> = Lazy::new(|| {
-    // On x86_64 platforms, the first serial interface
-    // should always be located at 0x3f8.
+    // On x86_64 platforms, the first serial interface is located at 0x3f8.
     unsafe {
         Mutex::new(Uart::new(0x3f8))
     }
@@ -29,17 +25,13 @@ pub static COM1: Lazy<Mutex<Uart>> = Lazy::new(|| {
 #[derive(Debug)]
 pub struct Uart {
     transmitter_holding: UnsafePort<u8>,
-    receiver: UnsafePort<u8>,
     divisor_latch_low: UnsafePort<u8>,
     interrupt_enable: UnsafePort<u8>,
     divisor_latch_high: UnsafePort<u8>,
-    interrupt_identify: UnsafePort<u8>,
     fifo_control: UnsafePort<u8>,
     line_control: UnsafePort<u8>,
     modem_control: UnsafePort<u8>,
     line_status: UnsafePort<u8>,
-    modem_status: UnsafePort<u8>,
-    scratch: UnsafePort<u8>
 }
 
 impl Uart {
@@ -50,17 +42,13 @@ impl Uart {
     unsafe fn new(port: u16) -> Self {
         let mut uart = Self {
             transmitter_holding: UnsafePort::new(port),
-            receiver: UnsafePort::new(port),
             divisor_latch_low: UnsafePort::new(port),
             interrupt_enable: UnsafePort::new(port + 1),
             divisor_latch_high: UnsafePort::new(port + 1),
-            interrupt_identify: UnsafePort::new(port + 2),
             fifo_control: UnsafePort::new(port + 2),
             line_control: UnsafePort::new(port + 3),
             modem_control: UnsafePort::new(port + 4),
-            line_status: UnsafePort::new(port + 5),
-            modem_status: UnsafePort::new(port + 6),
-            scratch: UnsafePort::new(port + 7)
+            line_status: UnsafePort::new(port + 5)
         };
 
         // 1. Disable serial interrupts.
@@ -93,7 +81,7 @@ impl Uart {
         // character out to the serial interface.
         unsafe {
             while (self.line_status.read() & 0x20) == 0 {
-                spin_loop();
+                core::hint::spin_loop();
             }
 
             self.transmitter_holding.write(byte);
@@ -102,13 +90,13 @@ impl Uart {
 
     // Implementation detail for the serial macro.
     #[doc(hidden)]
-    pub fn format(&mut self, args: fmt::Arguments) {
-        fmt::Write::write_fmt(self, args).unwrap();
+    pub fn format(&mut self, args: core::fmt::Arguments) {
+        core::fmt::Write::write_fmt(self, args).unwrap();
     }
 }
 
-impl fmt::Write for Uart {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
+impl core::fmt::Write for Uart {
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
         for byte in s.bytes() {
             self.write(byte);
         }

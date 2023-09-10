@@ -45,6 +45,7 @@ mod test {
     }
 
     pub fn dispatch(tests: &[&dyn Testable]) -> ! {
+        serialln!();
         serialln!("running {} tests", tests.len());
 
         for test in tests {
